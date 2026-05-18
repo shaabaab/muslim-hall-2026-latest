@@ -1,0 +1,80 @@
+[26-Feb-2026 12:46:02 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:46:02 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:46:46 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:46:46 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:46:48 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:46:48 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:46:58 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:46:58 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:08 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:08 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:18 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:18 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:28 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:28 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:38 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[26-Feb-2026 12:47:38 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[01-Mar-2026 09:21:01 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[01-Mar-2026 09:21:01 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[01-Mar-2026 09:22:01 UTC] PHP Warning:  require(/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php): Failed to open stream: No such file or directory in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41
+[01-Mar-2026 09:22:01 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/edunxdnf/muslimhall.com/vendor/composer/../../app/Helpers/helpers.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php:41
+Stack trace:
+#0 /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php(45): {closure}()
+#1 /home/edunxdnf/muslimhall.com/vendor/autoload.php(22): ComposerAutoloaderInit2388471f4e29f867a49543b57e023ed3::getLoader()
+#2 /home/edunxdnf/muslimhall.com/public/index.php(34): require('/home/edunxdnf/...')
+#3 {main}
+  thrown in /home/edunxdnf/muslimhall.com/vendor/composer/autoload_real.php on line 41

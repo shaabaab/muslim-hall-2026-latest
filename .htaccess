@@ -1,0 +1,34 @@
+# <IfModule mod_rewrite.c>
+# # That was ONLY to protect you from 500 errors
+# # if your server did not have mod_rewrite enabled
+
+# RewriteEngine On
+# # RewriteBase /
+# # NOT needed unless you're using mod_alias to redirect
+
+# RewriteCond %{REQUEST_URI} !/public
+# RewriteRule ^(.*)$ public/$1 [L]
+# # Direct all requests to /public folder
+
+# </IfModule>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !/public
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# ── Large File Upload Limits ──────────────────────────────────────
+<IfModule mod_php.c>
+    php_value upload_max_filesize 6144M
+    php_value post_max_size 6144M
+    php_value memory_limit 512M
+    php_value max_execution_time 300
+    php_value max_input_time 600
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 6144M
+    php_value post_max_size 6144M
+    php_value memory_limit 512M
+    php_value max_execution_time 300
+    php_value max_input_time 600
+</IfModule>

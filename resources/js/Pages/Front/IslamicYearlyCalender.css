@@ -1,0 +1,518 @@
+:root {
+  --primary: #1a5d1a;
+  --primary-light: #f0f7f0;
+  --accent: #d4a017;
+  --text-main: #2d3436;
+  --text-muted: #636e72;
+  --bg-app: #f8f9fa;
+  --white: #ffffff;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 10px 25px rgba(0,0,0,0.08);
+  --radius: 12px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+/* RTL Support */
+.rtl { direction: rtl; }
+.ltr { direction: ltr; }
+
+/* Card Main */
+.calendar-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin: 2rem 0;
+   border: 1px solid #33333315;
+}
+
+/* Header Section */
+.card-header-main {
+  background: var(--primary);
+  color: var(--white);
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-section h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.icon-box {
+  background: rgba(255,255,255,0.2);
+  padding: 0.8rem;
+  border-radius: 10px;
+  display: flex;
+}
+
+.today-badge {
+  margin: 0.2rem 0 0;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+/* Language Switcher */
+.language-nav {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(0,0,0,0.1);
+  padding: 0.3rem;
+  border-radius: 30px;
+}
+
+.lang-pill {
+  border: none;
+  background: transparent;
+  color: var(--white);
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+
+.lang-pill.active {
+  background: var(--white);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Controls Bar */
+.controls-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.view-switcher {
+  background: var(--primary-light);
+  padding: 0.3rem;
+  border-radius: 8px;
+  display: flex;
+}
+
+.view-switcher button {
+  border: none;
+  background: transparent;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.view-switcher button.active {
+  background: var(--white);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.year-stepper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.year-stepper button {
+  border: 1px solid #ddd;
+  background: var(--white);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.year-stepper button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.year-display {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+/* Monthly Table */
+.month-info-header {
+  padding: 1.5rem 2rem;
+  text-align: center;
+}
+
+.month-info-header h2 {
+  margin: 0;
+  color: var(--primary);
+}
+
+.month-grid-wrapper {
+  padding: 0 1rem;
+}
+
+.month-grid-header {
+  display: grid;
+  grid-template-columns: 80px 1.5fr 1fr 2fr;
+  padding: 1rem;
+  background: #fdfdfd;
+  font-weight: 700;
+  border-bottom: 2px solid var(--primary-light);
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 80px 1.5fr 1fr 2fr;
+  padding: 1rem;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.day-row.is-today {
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary);
+}
+
+.event-tag {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.event-tag.important { background: #ffeaa7; color: #d35400; }
+.event-tag.very-important { background: #ff7675; color: white; }
+.event-tag.celebration { background: #55efc4; color: #00b894; }
+
+/* Month Selector Ribbon */
+.month-selector-ribbon {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  scrollbar-width: none;
+}
+
+.month-selector-ribbon button {
+  flex: 0 0 auto;
+  padding: 0.6rem 1.2rem;
+  border-radius: 20px;
+  border: 1px solid #eee;
+  background: var(--white);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.month-selector-ribbon button.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Yearly Grid */
+.yearly-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.year-month-card {
+  border: 1px solid #eee;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  text-align: center;
+  transition: var(--transition);
+}
+
+.year-month-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-sm);
+}
+
+.view-btn {
+  margin-top: 1rem;
+  border: none;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Footer Section */
+.card-footer-info {
+  padding: 2rem;
+  background: #fcfcfc;
+  border-top: 1px solid #eee;
+}
+
+.legend-box {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot.very-important { background: #ff7675; }
+.dot.important { background: #ffeaa7; }
+.dot.celebration { background: #55efc4; }
+
+.info-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Animations */
+.fade { opacity: 0.5; transition: opacity 0.4s; }
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .month-grid-header, .day-row {
+    grid-template-columns: 50px 1.2fr 1fr;
+  }
+  .hide-mobile, .event-cell { display: none; }
+  .card-header-main { padding: 1.5rem; text-align: center; justify-content: center; }
+  .year-display { font-size: 1.4rem; }
+}
+
+@media (max-width: 400px) {
+  .view-switcher button { padding: 0.5rem 0.8rem; font-size: 0.8rem; }
+}
+/* Base Page Style */
+.prayer-page-wrapper {
+  background-color: #0b0f19;
+  min-height: 100vh;
+  color: #ffffff;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Fluid Container - No fixed breakpoints */
+.prayer-fluid-container {
+  width: 92%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 0;
+}
+
+.prayer-hero-section {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.prayer-title-icon {
+  color: #0ea5e9;
+  margin-bottom: 1rem;
+}
+
+.prayer-title {
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.prayer-subtitle {
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+/* Date Badges */
+.prayer-date-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.prayer-date-badge {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prayer-hijri-highlight {
+  border-color: #0ea5e9;
+  background: rgba(14, 165, 233, 0.1);
+  color: #38bdf8;
+}
+
+/* Controls */
+.prayer-control-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  background: #161e2d;
+  padding: 1.5rem;
+  border-radius: 20px;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.prayer-select-wrapper {
+  display: flex;
+  align-items: center;
+  background: #0b0f19;
+  padding: 0 1rem;
+  border-radius: 12px;
+  border: 1px solid #2d3748;
+}
+
+.prayer-custom-select {
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 1rem 0.5rem;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+}
+
+.prayer-refresh-btn {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.prayer-refresh-btn:hover {
+  background: #0284c7;
+  transform: translateY(-2px);
+}
+
+/* Prayer Grid */
+.prayer-grid-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.25rem;
+}
+
+.prayer-time-card {
+  background: #161e2d;
+  padding: 2.5rem 1rem;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #2d3748;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.active-prayer {
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+  border-color: transparent;
+  transform: scale(1.05);
+  box-shadow: 0 20px 25px -5px rgba(14, 165, 233, 0.3);
+}
+
+.next-prayer {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 15px rgba(14, 165, 233, 0.1);
+}
+
+.prayer-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+}
+
+.active-prayer .prayer-label { color: rgba(255,255,255,0.8); }
+
+.prayer-time-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.prayer-status-tag, .prayer-status-tag-next {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 0.65rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* Animation */
+.prayer-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.prayer-meta-footer {
+  margin-top: 4rem;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 2rem;
+  border-top: 1px solid #1e293b;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* Mobile Tweak */
+@media (max-width: 480px) {
+  .prayer-grid-wrapper {
+    grid-template-columns: 1fr 1fr;
+  }
+}
