@@ -157,21 +157,33 @@ class FrontendController extends Controller
         }
 
         // Get related posts (same category)
-        $relatedPosts = Post::where('status', 1)
-            ->where(function ($query) {
-                $query->whereNull('hidden_at')
-                    ->orWhere('status', 1);
-            })->with(['category', 'author'])
-            ->where('category_id', $post->category_id)
-            ->orWhere('lang_id', $post->lang_id)
+         // $relatedPosts = Post::where('status', 1)
+        //     ->where(function ($query) {
+        //         $query->whereNull('hidden_at')
+        //             ->orWhere('status', 1);
+        //     })->with(['category', 'author'])
+        //     ->where('category_id', $post->category_id)
+        //     ->orWhere('lang_id', $post->lang_id)
+        //     ->where('id', '!=', $post->id)
+        //     ->where('status', 1)
+        //     ->latest()
+        //     ->limit(3)
+        //     ->get();
+        $relatedPosts = Post::with(['category', 'author'])
             ->where('id', '!=', $post->id)
             ->where('status', 1)
+            ->where('permission', Post::PERMISSION_APPROVED)
+            ->whereNull('hidden_at')
+            ->where(function ($query) use ($post) {
+                $query->where('category_id', $post->category_id)
+                    ->orWhere('lang_id', $post->lang_id);
+            })
             ->latest()
             ->limit(3)
             ->get();
 
-        $metaImage = $post->image 
-            ? \App\Services\ServiceClass::getFileUrl($post->image) 
+        $metaImage = $post->image
+            ? \App\Services\ServiceClass::getFileUrl($post->image)
             : ($post->thumbnail ? \App\Services\ServiceClass::getFileUrl($post->thumbnail) : null);
 
         return Inertia::render('Front/PostDetails', [
@@ -216,57 +228,55 @@ class FrontendController extends Controller
         ]);
     }
 
-public function contestSingle($id)
-{
-    $contest = Contest::with([
-        'creator',
-        'prizes',
-        'entries.user',
-        'category',
-        'reviews',
-        'winners',
-        'contestSponsor',
-        'votes'
-    ])->withCount('contestSponsor')->findOrFail($id);
+    public function contestSingle($id)
+    {
+        $contest = Contest::with([
+            'creator',
+            'prizes',
+            'entries.user',
+            'category',
+            'reviews',
+            'winners',
+            'contestSponsor',
+            'votes'
+        ])->withCount('contestSponsor')->findOrFail($id);
 
-    $user = auth()->user();
-    $ip = request()->ip();
+        $user = auth()->user();
+        $ip = request()->ip();
 
-    $viewerUsers = $contest->viewer_users ?? [];
-    $viewerIps = $contest->viewer_ips ?? [];
+        $viewerUsers = $contest->viewer_users ?? [];
+        $viewerIps = $contest->viewer_ips ?? [];
 
-    // if user logged in
-    if ($user) {
+        // if user logged in
+        if ($user) {
 
-        if (!in_array($user->id, $viewerUsers)) {
+            if (!in_array($user->id, $viewerUsers)) {
 
-            $viewerUsers[] = $user->id;
+                $viewerUsers[] = $user->id;
 
-            $contest->viewer_users = $viewerUsers;
-            $contest->viewer_count = $contest->viewer_count + 1;
+                $contest->viewer_users = $viewerUsers;
+                $contest->viewer_count = $contest->viewer_count + 1;
 
-            $contest->saveQuietly();
+                $contest->saveQuietly();
+            }
+        } else {
+
+            // guest users tracked by IP
+            if (!in_array($ip, $viewerIps)) {
+
+                $viewerIps[] = $ip;
+
+                $contest->viewer_ips = $viewerIps;
+                $contest->viewer_count = $contest->viewer_count + 1;
+
+                $contest->saveQuietly();
+            }
         }
 
-    } else {
-
-        // guest users tracked by IP
-        if (!in_array($ip, $viewerIps)) {
-
-            $viewerIps[] = $ip;
-
-            $contest->viewer_ips = $viewerIps;
-            $contest->viewer_count = $contest->viewer_count + 1;
-
-            $contest->saveQuietly();
-        }
-
+        return Inertia::render('Front/ContestDetail', [
+            'contest' => $contest,
+        ]);
     }
-
-    return Inertia::render('Front/ContestDetail', [
-        'contest' => $contest,
-    ]);
-}
 
 
     public function islamic($id)
@@ -284,8 +294,8 @@ public function contestSingle($id)
 
         // dd($islam);
 
-        $metaImage = $islam->thumbnail 
-            ? \App\Services\ServiceClass::getFileUrl($islam->thumbnail) 
+        $metaImage = $islam->thumbnail
+            ? \App\Services\ServiceClass::getFileUrl($islam->thumbnail)
             : null;
 
         return Inertia::render('Front/IslamicZoneDetails', [
@@ -502,7 +512,8 @@ public function contestSingle($id)
             ->where('permission', 'approved')
             ->where(function ($query) {
                 $query->whereNull('hidden_at');
-            })->with(['images', 'category', 'category.parent', 'audios'])
+            // })->with(['images', 'category', 'category.parent', 'audios'])
+            })->with(['images', 'category', 'category.parent', 'audios', 'author:id,name'])
             ->when($request->filled('search'), fn($q) => $q->search($request->search))
             ->when(
                 $request->filled('category') && $request->category !== 'all',
@@ -526,7 +537,7 @@ public function contestSingle($id)
                 fn($q) => $q->sortByOption('newest')
             )
             ->paginate(6)
-->withQueryString();
+            ->withQueryString();
 
 
         $categories = Category::with('parent')->get();
@@ -535,12 +546,12 @@ public function contestSingle($id)
             'posts' => $posts,
             'categories' => $categories,
             'filters' => [
-    'search' => $request->search ?? '',
-    'sort' => $request->sort ?? 'newest',
-    'category' => $request->category ?? 'all',
-    'subcategory' => $request->subcategory ?? 'all',
-    'page' => (int) ($request->page ?? 1),
-],
+                'search' => $request->search ?? '',
+                'sort' => $request->sort ?? 'newest',
+                'category' => $request->category ?? 'all',
+                'subcategory' => $request->subcategory ?? 'all',
+                'page' => (int) ($request->page ?? 1),
+            ],
         ]);
     }
 

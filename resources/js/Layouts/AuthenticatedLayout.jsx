@@ -45,6 +45,7 @@ import {
 import { useEffect, useState } from "react";
 import NotificationDropdown from "../Components/NotificationDropdown";
 import BackgroundUploadIndicator from "../Components/BackgroundUploadIndicator";
+import { getS3PublicUrl } from "@/Utils/s3Helpers";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -66,6 +67,12 @@ export default function AuthenticatedLayout({ header, children }) {
     const { url } = usePage();
     const { auth, reportCount } = usePage().props;
     const user = auth.user;
+
+    const profilePhotoUrl = auth?.user?.photo_url
+    ? auth.user.photo_url
+    : auth?.user?.photo
+        ? getS3PublicUrl(auth.user.photo)
+        : null;
 
     const can = (permission) => user?.permissions?.includes(permission);
     const handleLogout = () => router.post(route("logout"));
@@ -808,13 +815,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                     gap: 10,
                                 }}
                             >
-                                <Badge dot status="processing">
-                                    <Avatar
-                                        size="large"
-                                        icon={<UserOutlined />}
-                                        style={{ backgroundColor: "#001529" }}
-                                    />
-                                </Badge>
+                               <Badge dot status="processing">
+    <Avatar
+        size="large"
+        src={profilePhotoUrl || undefined}
+        icon={!profilePhotoUrl ? <UserOutlined /> : null}
+        style={{ backgroundColor: "#001529" }}
+    />
+</Badge>
                                 {!isMobile && <Text strong>{user?.name}</Text>}
                             </div>
                         </Dropdown>

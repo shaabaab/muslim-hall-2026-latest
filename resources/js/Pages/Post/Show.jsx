@@ -5,13 +5,18 @@ import {
     EyeOutlined,
     FileTextOutlined,
     FolderOpenOutlined,
+     ArrowLeftOutlined,
+    EditOutlined,
+    DeleteOutlined,
 } from "@ant-design/icons";
-import { Head, Link, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PDFViewer from "../../Components/PDFViewer";
 import PostInfoDropdown from "../../Components/PostInfoDropdown";
 import ImageContent from "../Front/ImageContent";
+import { Button, Popconfirm, Space, Tag, message } from "antd";
+
 
 export default function Show() {
     const {
@@ -22,6 +27,19 @@ export default function Show() {
         userReactionType,
         relatedPosts,
     } = usePage().props;
+
+    const handleDelete = () => {
+    router.delete(route("admin.posts.destroy", post.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            message.success("Post deleted successfully");
+            router.visit(route("admin.posts.index"));
+        },
+        onError: () => {
+            message.error("Failed to delete post");
+        },
+    });
+};
 
     const [commentText, setCommentText] = useState("");
     const [replyingTo, setReplyingTo] = useState(null);
@@ -722,6 +740,39 @@ export default function Show() {
                 )}
 
                 <div className="container mt-10">
+                    <div className="admin-actions-bar mb-4">
+    <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <Link href={route("admin.posts.index")}>
+            <Button icon={<ArrowLeftOutlined />} type="text">
+                Back to Post List
+            </Button>
+        </Link>
+
+        <Space wrap>
+            <Tag color={post.status == 1 ? "green" : "orange"}>
+                {post.status == 1 ? "PUBLISHED" : "DRAFT"}
+            </Tag>
+
+            <Link href={route("admin.posts.edit", post.id)}>
+                <Button type="primary" icon={<EditOutlined />}>
+                    Edit Post
+                </Button>
+            </Link>
+
+            <Popconfirm
+                title="Delete post?"
+                onConfirm={handleDelete}
+                okText="Yes"
+                cancelText="No"
+                okType="danger"
+            >
+                <Button danger icon={<DeleteOutlined />}>
+                    Delete
+                </Button>
+            </Popconfirm>
+        </Space>
+    </div>
+</div>
                     {/* Header Section */}
                     <header className="post-header-section">
                         <h1 className="main-heading text-center">

@@ -12,6 +12,7 @@ use App\Models\ContactInfo;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -69,19 +70,53 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
-        $user = User::where('id' ,Auth::id())->first();
+        $user = User::where('id', Auth::id())->first();
         return array_merge(parent::share($request), [
             'auth' => [
-               'user' => $user ? array_merge(
-    $user->only(['id', 'name', 'email', 'role', 'deposit']),
-    [
-        'roles' => $user->roles()->get(['id', 'name'])->toArray(),
-        'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
-        'subscriptions' => $user->subscriptions()->with('plan')->get(),
-    ]
-) : null,
+                'user' => $user ? array_merge(
+                    $user->only(['id', 'name', 'email', 'role', 'deposit', 'photo', 'bio']),
+                    [
+                        'photo_url' => $user->photo
+                            ? Storage::disk(config('filesystems.default'))->url($user->photo)
+                            : null,
+
+                        'roles' => $user->roles()->get(['id', 'name'])->toArray(),
+
+                        'permissions' => $user->getAllPermissions()
+                            ->pluck('name')
+                            ->toArray(),
+
+                        'subscriptions' => $user->subscriptions()
+                            ->with('plan')
+                            ->get(),
+                    ]
+                ) : null,
+
                 'fullUser' => $user,
             ],
+            // 'auth' => [
+            //     'user' => $request->user() ? [
+            //         'id' => $request->user()->id,
+            //         'name' => $request->user()->name,
+            //         'email' => $request->user()->email,
+            //         'role' => $request->user()->role,
+            //         'photo' => $request->user()->photo,
+            //         'photo_url' => $request->user()->photo
+            //             ? Storage::disk(config('filesystems.default'))->url($request->user()->photo)
+            //             : null,
+            //     ] : null,
+            // ],
+            // 'auth' => [
+            //     'user' => $user ? array_merge(
+            //         $user->only(['id', 'name', 'email', 'role', 'deposit']),
+            //         [
+            //             'roles' => $user->roles()->get(['id', 'name'])->toArray(),
+            //             'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+            //             'subscriptions' => $user->subscriptions()->with('plan')->get(),
+            //         ]
+            //     ) : null,
+            //     'fullUser' => $user,
+            // ],
             'social' => Social::get(),
             'contactInfo' => ContactInfo::first(),
             'footer' => Setting::first(),
@@ -94,5 +129,4 @@ class HandleInertiaRequests extends Middleware
             ],
         ]);
     }
-
 }

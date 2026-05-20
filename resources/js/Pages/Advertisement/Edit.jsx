@@ -116,10 +116,10 @@ export default function Edit({ advertisement, auth }) {
     return false;
   };
 
-  const handleImageRemove = () => {
-    setData("image", null);
-    setImagePreview(advertisement.image ? `/storage/${advertisement.image}` : null);
-  };
+  // const handleImageRemove = () => {
+  //   setData("image", null);
+  //   setImagePreview(advertisement.image ? `/storage/${advertisement.image}` : null);
+  // };
 
   const handleVideoUpload = (file) => {
     setData("video", file);
@@ -127,9 +127,29 @@ export default function Edit({ advertisement, auth }) {
     return false;
   };
 
+  // const handleVideoRemove = () => {
+  //   setData("video", null);
+  //   setVideoPreview(advertisement.video ? `/storage/${advertisement.video}` : null);
+  // };
+
+  const handleImageRemove = () => {
+    setData("image", null);
+
+    setImagePreview(
+      advertisement.image
+        ? getS3PublicUrl(advertisement.image)
+        : null
+    );
+  };
+
   const handleVideoRemove = () => {
     setData("video", null);
-    setVideoPreview(advertisement.video ? `/storage/${advertisement.video}` : null);
+
+    setVideoPreview(
+      advertisement.video
+        ? getS3PublicUrl(advertisement.video)
+        : null
+    );
   };
 
   const handleDateRangeChange = (dates) => {
@@ -520,7 +540,7 @@ export default function Edit({ advertisement, auth }) {
                         label="Advertiser Name"
                         validateStatus={errors.advertiser_name ? "error" : ""}
                         help={errors.advertiser_name}
-                    
+
                         className="mb-0"
                       >
                         <Input
@@ -534,7 +554,7 @@ export default function Edit({ advertisement, auth }) {
                         label="Advertiser Email"
                         validateStatus={errors.advertiser_email ? "error" : ""}
                         help={errors.advertiser_email}
-                      
+
                         className="mb-0"
                       >
                         <Input

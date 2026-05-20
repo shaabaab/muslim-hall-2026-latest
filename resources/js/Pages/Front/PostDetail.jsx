@@ -593,11 +593,19 @@ export default function PostDetail() {
 
                                                 <div className="card-body">
                                                     <div className="card-date">
+    <i className="far fa-clock"></i>{" "}
+    {new Date(p.created_at).toLocaleDateString()}
+    
+    <span className="card-author">
+        {" "}By {p.author?.name || "Admin"}
+    </span>
+</div>
+                                                    {/* <div className="card-date">
                                                         <i className="far fa-clock"></i>{" "}
                                                         {new Date(
                                                             p.created_at,
                                                         ).toLocaleDateString()}
-                                                    </div>
+                                                    </div> */}
 
                                                     <h3 className="card-title">
                                                         <Link
@@ -1151,12 +1159,30 @@ export default function PostDetail() {
                     flex-direction: column;
                     flex: 1;
                 }
-
-                .card-date {
-                    font-size: 12px;
-                    color: #9ca3af;
-                    margin-bottom: 8px;
+                    .card-date {
+                    display: flex;
+                    align-items: center;
+                    flex-wrap: wrap;
+                    gap: 4px;
                 }
+                                    .card-author {
+                    margin-left: 4px;
+                    color: #64748b;
+                    font-size: 13px;
+                    font-weight: 500;
+                }
+
+                .card-author::before {
+                    content: "|";
+                    margin-right: 5px;
+                    color: #94a3b8;
+                }
+
+                // .card-date {
+                //     font-size: 12px;
+                //     color: #9ca3af;
+                //     margin-bottom: 8px;
+                // }
                 .card-title {
                     font-size: 16px;
                     font-weight: 700;

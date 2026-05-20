@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Notifications\NewPostNotification;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\PostApprovedNotification;
+
 class PostManageUserController extends Controller
 {
     /**
@@ -173,12 +174,12 @@ class PostManageUserController extends Controller
 
             if ($post) {
                 if ($request->hasFile('featured_images')) {
-                   ServiceClass::uploadMultipleImages($request, 'featured_images', $post, 'images', 'posts/images');
+                    ServiceClass::uploadMultipleImages($request, 'featured_images', $post, 'images', 'posts/images');
                 }
-                
+
                 // Handle multiple videos
                 ServiceClass::syncVideos($request, 'videos', $post, 'posts/videos');
-                
+
                 // Handle multiple pdfs
                 ServiceClass::syncPdfs($request, 'pdfs', $post, 'posts/pdfs');
 
@@ -188,17 +189,17 @@ class PostManageUserController extends Controller
                 // If backgrounding, also create placeholder rows for any multiple-upload files
                 if ($request->boolean('is_background')) {
                     if ($request->filled('video_count')) {
-                        for($i=0; $i<$request->input('video_count'); $i++) {
+                        for ($i = 0; $i < $request->input('video_count'); $i++) {
                             $post->videos()->create(['video' => 'processing']);
                         }
                     }
                     if ($request->filled('pdf_count')) {
-                        for($i=0; $i<$request->input('pdf_count'); $i++) {
+                        for ($i = 0; $i < $request->input('pdf_count'); $i++) {
                             $post->pdfs()->create(['pdf' => 'processing']);
                         }
                     }
                     if ($request->filled('audio_count')) {
-                        for($i=0; $i<$request->input('audio_count'); $i++) {
+                        for ($i = 0; $i < $request->input('audio_count'); $i++) {
                             $post->audios()->create(['audio' => 'processing']);
                         }
                     }
@@ -216,15 +217,15 @@ class PostManageUserController extends Controller
             }
 
             // Notify Admins
-            $admins = User::whereHas('roles', function($q) {
+            $admins = User::whereHas('roles', function ($q) {
                 $q->where('name', 'admin')->orWhere('name', 'Super Admin');
             })->get();
-            
+
             Notification::send($admins, new NewPostNotification($post));
 
             // Determine success message
             $hasLargeFiles = $request->hasFile('video') || $request->hasFile('audio') || $request->hasFile('pdf') ||
-                             $request->filled('video_temp_path') || $request->filled('audio_temp_path') || $request->filled('pdf_temp_path');
+                $request->filled('video_temp_path') || $request->filled('audio_temp_path') || $request->filled('pdf_temp_path');
             $successMsg = $hasLargeFiles
                 ? 'Post created. Large files (video/audio/pdf) are being uploaded in the background.'
                 : 'Post created successfully.';
@@ -310,20 +311,20 @@ class PostManageUserController extends Controller
      */
     public function edit(string $id)
     {
-$post = Post::with([
-    'images',
-    'videos',
-    'pdfs',
-    'audios',
-    'language',
-    'category'
-])
-    ->where('id', $id)
-    ->where('created_by', auth()->id())
-    ->firstOrFail();
+        $post = Post::with([
+            'images',
+            'videos',
+            'pdfs',
+            'audios',
+            'language',
+            'category'
+        ])
+            ->where('id', $id)
+            ->where('created_by', auth()->id())
+            ->firstOrFail();
         $categories = Category::with('language')->active()->get();
 
-        
+
 
         return Inertia::render('UserNavSection/Post/Create', [
             'post' => [
@@ -427,21 +428,60 @@ $post = Post::with([
             /* ------------------------------
          | Upload replacements
          ------------------------------*/
-           if ($request->hasFile('thumbnail')) {
-    ServiceClass::deleteFile($post->thumbnail);
-    $thumbnailPath = ServiceClass::uploadFile(
-        $request->file('thumbnail'),
-        'posts/thumbnails'
-    );
-}
+            if ($request->hasFile('thumbnail')) {
+                ServiceClass::deleteFile($post->thumbnail);
+                $thumbnailPath = ServiceClass::uploadFile(
+                    $request->file('thumbnail'),
+                    'posts/thumbnails'
+                );
+            }
 
-if ($request->hasFile('sponsor')) {
-    ServiceClass::deleteFile($post->sponsor);
-    $sponsorPath = ServiceClass::uploadFile(
-        $request->file('sponsor'),
-        'posts/sponsors'
-    );
-}
+            if ($request->hasFile('sponsor')) {
+                ServiceClass::deleteFile($post->sponsor);
+                $sponsorPath = ServiceClass::uploadFile(
+                    $request->file('sponsor'),
+                    'posts/sponsors'
+                );
+            }
+
+            if ($request->hasFile('audio')) {
+                if ($post->audio && $post->audio !== 'processing') {
+                    ServiceClass::deleteFile($post->audio);
+                }
+
+                // $audioPath = ServiceClass::uploadLargeFile(
+                //     $request->file('audio'),
+                //     'posts/audios',
+                //     'posts',
+                //     'audio',
+                //     $post->id
+                // );
+                ServiceClass::uploadLargeFile(
+                    $request->file('audio'),
+                    'posts/audios',
+                    'posts',
+                    'audio',
+                    $post->id
+                );
+
+                $audioPath = $post->fresh()->audio;
+            } elseif ($request->filled('audio_temp_path')) {
+                if ($post->audio && $post->audio !== 'processing') {
+                    ServiceClass::deleteFile($post->audio);
+                }
+
+                $audioPath = 'processing';
+
+                ServiceClass::dispatchLargeFileJob(
+                    $request->audio_temp_path,
+                    'posts/audios',
+                    'posts',
+                    'audio',
+                    $post->id
+                );
+            } elseif ($request->boolean('is_background') && $request->filled('has_audio')) {
+                $audioPath = 'processing';
+            }
 
             /* ------------------------------
          | Media update (Multiple)
@@ -450,19 +490,19 @@ if ($request->hasFile('sponsor')) {
             ServiceClass::syncPdfs($request, 'pdfs', $post, 'posts/pdfs');
             ServiceClass::syncAudios($request, 'audios', $post, 'posts/audios');
 
-           if (
-    $request->hasFile('featured_images') ||
-    $request->filled('existing_featured_images') ||
-    $request->filled('remove_featured_images')
-) {
-    ServiceClass::syncFeaturedImages(
-        $request,
-        'featured_images',
-        $post,
-        'images',
-        'posts/images'
-    );
-}
+            if (
+                $request->hasFile('featured_images') ||
+                $request->filled('existing_featured_images') ||
+                $request->filled('remove_featured_images')
+            ) {
+                ServiceClass::syncFeaturedImages(
+                    $request,
+                    'featured_images',
+                    $post,
+                    'images',
+                    'posts/images'
+                );
+            }
 
             /* ------------------------------
          | Content handling
@@ -501,7 +541,7 @@ if ($request->hasFile('sponsor')) {
 
             // Determine success message
             $hasLargeFiles = $request->hasFile('video') || $request->hasFile('audio') || $request->hasFile('pdf') ||
-                             $request->filled('video_temp_path') || $request->filled('audio_temp_path') || $request->filled('pdf_temp_path');
+                $request->filled('video_temp_path') || $request->filled('audio_temp_path') || $request->filled('pdf_temp_path');
             $successMsg = $hasLargeFiles
                 ? 'Post updated. Large files (video/audio/pdf) are being uploaded in the background.'
                 : 'Post updated successfully.';
@@ -521,54 +561,54 @@ if ($request->hasFile('sponsor')) {
     /**
      * Remove the specified post
      */
-   public function destroy(string $id)
-{
-    try {
-        DB::beginTransaction();
+    public function destroy(string $id)
+    {
+        try {
+            DB::beginTransaction();
 
-        $post = Post::findOrFail($id);
+            $post = Post::findOrFail($id);
 
-        // Delete notifications related to this post
-        DB::table('notifications')
-            ->where(function ($query) use ($post) {
-                $query->where('type', NewPostNotification::class)
-                    ->where('data->post_id', $post->id);
-            })
-            ->orWhere(function ($query) use ($post) {
-                $query->where('type', PostApprovedNotification::class)
-                    ->where('data->post_id', $post->id);
-            })
-            ->orWhere(function ($query) use ($post) {
-                $query->where('type', NewReportNotification::class)
-                    ->where('data->reportable_type', Post::class)
-                    ->where('data->reportable_id', $post->id);
-            })
-            ->delete();
+            // Delete notifications related to this post
+            DB::table('notifications')
+                ->where(function ($query) use ($post) {
+                    $query->where('type', NewPostNotification::class)
+                        ->where('data->post_id', $post->id);
+                })
+                ->orWhere(function ($query) use ($post) {
+                    $query->where('type', PostApprovedNotification::class)
+                        ->where('data->post_id', $post->id);
+                })
+                ->orWhere(function ($query) use ($post) {
+                    $query->where('type', NewReportNotification::class)
+                        ->where('data->reportable_type', Post::class)
+                        ->where('data->reportable_id', $post->id);
+                })
+                ->delete();
 
-        // Delete reports related to this post
-        $post->reports()->delete();
+            // Delete reports related to this post
+            $post->reports()->delete();
 
-        // Delete files
-        ServiceClass::deleteFile($post->image);
-        ServiceClass::deleteFile($post->thumbnail);
-        ServiceClass::deleteFile($post->sponsor);
-        ServiceClass::deleteFile($post->pdf);
-        ServiceClass::deleteFile($post->video);
-        ServiceClass::deleteFile($post->audio);
+            // Delete files
+            ServiceClass::deleteFile($post->image);
+            ServiceClass::deleteFile($post->thumbnail);
+            ServiceClass::deleteFile($post->sponsor);
+            ServiceClass::deleteFile($post->pdf);
+            ServiceClass::deleteFile($post->video);
+            ServiceClass::deleteFile($post->audio);
 
-        $post->delete();
+            $post->delete();
 
-        DB::commit();
+            DB::commit();
 
-        return to_route('user.posts.index')
-            ->with('success', 'Post deleted successfully.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('User Post Delete Error: ' . $e->getMessage());
+            return to_route('user.posts.index')
+                ->with('success', 'Post deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('User Post Delete Error: ' . $e->getMessage());
 
-        return back()->with('error', 'Error deleting post: ' . $e->getMessage());
+            return back()->with('error', 'Error deleting post: ' . $e->getMessage());
+        }
     }
-}
 
 
 
@@ -833,19 +873,16 @@ if ($request->hasFile('sponsor')) {
         try {
             if ($type === 'audio_single') {
                 ServiceClass::dispatchLargeFileJob($tempPath, 'posts/audios', 'posts', 'audio', $post->id);
-            } 
-            elseif ($type === 'video') {
+            } elseif ($type === 'video') {
                 // Find a row that is still 'processing'
                 $video = $post->videos()->where('video', 'processing')->first();
                 if (!$video) $video = $post->videos()->create(['video' => 'processing']);
                 ServiceClass::dispatchLargeFileJob($tempPath, 'posts/videos', 'post_videos', 'video', $video->id);
-            }
-            elseif ($type === 'pdf') {
+            } elseif ($type === 'pdf') {
                 $pdf = $post->pdfs()->where('pdf', 'processing')->first();
                 if (!$pdf) $pdf = $post->pdfs()->create(['pdf' => 'processing']);
                 ServiceClass::dispatchLargeFileJob($tempPath, 'posts/pdfs', 'post_pdfs', 'pdf', $pdf->id);
-            }
-            elseif ($type === 'audio') {
+            } elseif ($type === 'audio') {
                 $audio = $post->audios()->where('audio', 'processing')->first();
                 if (!$audio) $audio = $post->audios()->create(['audio' => 'processing']);
                 ServiceClass::dispatchLargeFileJob($tempPath, 'posts/audios', 'post_audios', 'audio', $audio->id);

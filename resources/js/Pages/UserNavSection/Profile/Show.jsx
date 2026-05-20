@@ -464,32 +464,32 @@ export default function UserProfile({
                                                     <List.Item
                                                         actions={[
                                                             !isOwnAccount &&
-                                                                (isAlreadyFollowing ? (
-                                                                    <Button
-                                                                        type="default"
-                                                                        size="small"
-                                                                        onClick={() =>
-                                                                            handleUnfollow(
-                                                                                follower.id,
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Unfollow
-                                                                    </Button>
-                                                                ) : (
-                                                                    <Button
-                                                                        type="primary"
-                                                                        size="small"
-                                                                        onClick={() =>
-                                                                            handleFollow(
-                                                                                follower.id,
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Follow
-                                                                        Back
-                                                                    </Button>
-                                                                )),
+                                                            (isAlreadyFollowing ? (
+                                                                <Button
+                                                                    type="default"
+                                                                    size="small"
+                                                                    onClick={() =>
+                                                                        handleUnfollow(
+                                                                            follower.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Unfollow
+                                                                </Button>
+                                                            ) : (
+                                                                <Button
+                                                                    type="primary"
+                                                                    size="small"
+                                                                    onClick={() =>
+                                                                        handleFollow(
+                                                                            follower.id,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Follow
+                                                                    Back
+                                                                </Button>
+                                                            )),
                                                         ]}
                                                     >
                                                         <List.Item.Meta
@@ -679,7 +679,7 @@ export default function UserProfile({
 
                             <br />
 
-                            <Card>
+                            {/* <Card>
                                 <Tabs
                                     activeKey={activeTab}
                                     onChange={setActiveTab}
@@ -703,7 +703,7 @@ export default function UserProfile({
                                                             avatar={
                                                                 post.images
                                                                     ?.length >
-                                                                0 ? (
+                                                                    0 ? (
                                                                     <img
                                                                         src={`/storage/${post.images[0]?.image}`}
                                                                         alt={
@@ -804,7 +804,7 @@ export default function UserProfile({
                                         }
                                         key="contests"
                                     >
-                                        {/* Contest participations content will go here */}
+                                        
                                         <div style={{ padding: "20px" }}>
                                             {contests.length > 0 ? (
                                                 <List
@@ -844,15 +844,15 @@ export default function UserProfile({
                                                                             Positions:{" "}
                                                                             {contest.winner
                                                                                 ? `${contest.winner.position}  Positions` ||
-                                                                                  0
+                                                                                0
                                                                                 : "Participated"}{" "}
                                                                             •
                                                                             Review:{" "}
                                                                             {contest.review
                                                                                 ? contest
-                                                                                      .review
-                                                                                      .length ||
-                                                                                  0
+                                                                                    .review
+                                                                                    .length ||
+                                                                                0
                                                                                 : 0}
                                                                         </Text>
                                                                     </div>
@@ -889,7 +889,7 @@ export default function UserProfile({
                                                                 <List.Item.Meta
                                                                     avatar={
                                                                         item.image !=
-                                                                        null ? (
+                                                                            null ? (
                                                                             <img
                                                                                 src={`/storage/${item.image}`}
                                                                                 alt={
@@ -979,7 +979,7 @@ export default function UserProfile({
                                                                                     style={{
                                                                                         color:
                                                                                             item.status ==
-                                                                                            "published"
+                                                                                                "published"
                                                                                                 ? "green"
                                                                                                 : "red",
                                                                                     }}
@@ -1038,7 +1038,7 @@ export default function UserProfile({
                                                                 <List.Item.Meta
                                                                     avatar={
                                                                         item.image !=
-                                                                        null ? (
+                                                                            null ? (
                                                                             <img
                                                                                 src={`/storage/${item.image}`}
                                                                                 alt={
@@ -1119,7 +1119,7 @@ export default function UserProfile({
                                                                                     style={{
                                                                                         color:
                                                                                             item.status ==
-                                                                                            "published"
+                                                                                                "published"
                                                                                                 ? "green"
                                                                                                 : "red",
                                                                                     }}
@@ -1159,7 +1159,7 @@ export default function UserProfile({
                                         )}
                                     </TabPane>
                                 </Tabs>
-                            </Card>
+                            </Card> */}
                         </>
                     )}
                 </Col>

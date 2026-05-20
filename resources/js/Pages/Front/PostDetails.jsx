@@ -912,6 +912,21 @@ export default function Home() {
                                     <div className="related-card-meta">
                                         <span className="related-card-date">
                                             <i className="far fa-clock"></i>{" "}
+                                            {rp.created_at ? new Date(rp.created_at).toLocaleDateString() : "N/A"}
+                                            {" "}
+                                            <span className="related-card-author">
+                                                By {rp.author?.name || "Admin"}
+                                            </span>
+                                        </span>
+
+                                        <span className="related-card-views">
+                                            <i className="far fa-eye"></i>{" "}
+                                            {rp.viewer_count || 0}
+                                        </span>
+                                    </div>
+                                    {/* <div className="related-card-meta">
+                                        <span className="related-card-date">
+                                            <i className="far fa-clock"></i>{" "}
                                             {rp.created_at
                                                 ? new Date(
                                                     rp.created_at,
@@ -922,7 +937,7 @@ export default function Home() {
                                             <i className="far fa-eye"></i>{" "}
                                             {rp.viewer_count || 0}
                                         </span>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </Link>
                         </div>
@@ -999,8 +1014,8 @@ export default function Home() {
                                                     handleReaction(type)
                                                 }
                                                 className={`react-bubble ${userReaction?.type === type
-                                                        ? "active"
-                                                        : ""
+                                                    ? "active"
+                                                    : ""
                                                     }`}
                                             >
                                                 <i className={config.icon}></i>{" "}
@@ -1752,9 +1767,22 @@ export default function Home() {
 
                     .related-card-date,
                     .related-card-views {
-                        display: flex;
+                        display: inline-flex;
                         align-items: center;
-                        gap: 3px;
+                        flex-wrap: wrap;
+                        gap: 4px;
+                    }
+                        .related-card-author {
+                        margin-left: 4px;
+                        color: #64748b;
+                        font-size: 12px;
+                        font-weight: 500;
+                    }
+
+                    .related-card-author::before {
+                        content: "|";
+                        margin-right: 5px;
+                        color: #94a3b8;
                     }
 
                     .engagement-row {
@@ -2151,12 +2179,12 @@ export default function Home() {
                         color: #94a3b8;
                         font-weight: 700;
                     }
-                    .related-card-date,
-                    .related-card-views {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 5px;
-                    }
+                    // .related-card-date,
+                    // .related-card-views {
+                    //     display: inline-flex;
+                    //     align-items: center;
+                    //     gap: 5px;
+                    // }
 
                     @media (max-width: 1024px) {
                         .content-grid {

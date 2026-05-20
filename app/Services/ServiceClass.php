@@ -206,7 +206,7 @@ class ServiceClass
         $model,
         string $relation,
         string $directory,
-?int $maxFiles = null,
+        ?int $maxFiles = null,
         ?string $disk = null
     ): bool|string {
         if (!$request->hasFile($inputName)) {
@@ -220,8 +220,8 @@ class ServiceClass
         }
 
         if ($maxFiles !== null && count($files) > $maxFiles) {
-    return "Maximum {$maxFiles} images allowed.";
-}
+            return "Maximum {$maxFiles} images allowed.";
+        }
 
         foreach ($files as $file) {
             $path = self::uploadFile($file, $directory, $disk);
@@ -244,7 +244,7 @@ class ServiceClass
         $model,
         string $relation,
         string $directory,
-?int $maxFiles = null,
+        ?int $maxFiles = null,
         ?string $disk = null
     ): bool {
         if (!$request->hasFile($inputName)) {
@@ -253,9 +253,9 @@ class ServiceClass
 
         $images = $request->file($inputName);
 
-       if ($maxFiles !== null && count($images) > $maxFiles) {
-    throw new \Exception("Maximum {$maxFiles} images allowed.");
-}
+        if ($maxFiles !== null && count($images) > $maxFiles) {
+            throw new \Exception("Maximum {$maxFiles} images allowed.");
+        }
 
         // Delete old images from S3 and DB
         self::deleteMultipleImages($model, $relation, $disk);
@@ -281,7 +281,7 @@ class ServiceClass
         $model,
         string $relation,
         string $directory,
-?int $maxFiles = null,
+        ?int $maxFiles = null,
         ?string $disk = null
     ): bool {
         $existingIds = $request->input('existing_featured_images', []);
@@ -305,9 +305,9 @@ class ServiceClass
             $currentCount = count($existingIds);
             $totalCount = $currentCount + count($newFiles);
 
-          if ($maxFiles !== null && $totalCount > $maxFiles) {
-    throw new \Exception("Maximum {$maxFiles} images allowed.");
-}
+            if ($maxFiles !== null && $totalCount > $maxFiles) {
+                throw new \Exception("Maximum {$maxFiles} images allowed.");
+            }
 
             foreach ($newFiles as $file) {
                 $path = self::uploadFile($file, $directory, $disk);
