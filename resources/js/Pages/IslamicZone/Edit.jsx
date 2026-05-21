@@ -783,7 +783,7 @@ export default function Edit({ resource, auth, langs }) {
                                     errors.calendar_type ? "error" : ""
                                 }
                                 help={errors.calendar_type}
-                                required
+                                
                             >
                                 <Select
                                     size="large"
@@ -843,12 +843,17 @@ export default function Edit({ resource, auth, langs }) {
                         )}
 
                         <Col span={24}>
-                            <Form.Item
+                            {/* <Form.Item
                                 label="Calendar Image"
                                 validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
                                 required={!resource.image && !data.image}
-                            >
+                            > */}
+                            <Form.Item
+    label="Calendar Image"
+    validateStatus={errors.image ? "error" : ""}
+    help={errors.image}
+>
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
                                     onRemove={handleMainImageRemove}
@@ -866,10 +871,15 @@ export default function Edit({ resource, auth, langs }) {
                                     </Button>
                                 </Upload>
                                 <Text type="secondary" className="block mt-1">
-                                    Required for calendar type. Recommended:
+                                    Recommended:
                                     High-quality images for calendar printing.
                                     Max: 5MB
                                 </Text>
+                                {/* <Text type="secondary" className="block mt-1">
+                                    Required for calendar type. Recommended:
+                                    High-quality images for calendar printing.
+                                    Max: 5MB
+                                </Text> */}
 
                                 {(mainImagePreview || resource.image) && (
                                     <div className="mt-4">
@@ -1056,7 +1066,7 @@ export default function Edit({ resource, auth, langs }) {
                                     errors.content_text ? "error" : ""
                                 }
                                 help={errors.content_text}
-                                required
+                                
                             >
                                 <CustomQuillEditor
                                     value={data.content_text}
@@ -1071,12 +1081,17 @@ export default function Edit({ resource, auth, langs }) {
 
                         {/* THUMBNAIL IMAGE UPLOAD */}
                         <Col span={24}>
-                            <Form.Item
+                            {/* <Form.Item
                                 label={`${contentType === "quran" ? "Quranic" : "Hadith"} Content Thumbnail Image`}
                                 validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
                                 required={!resource.image && !data.image}
-                            >
+                            > */}
+                            <Form.Item
+    label={`${contentType === "quran" ? "Quranic" : "Hadith"} Content Thumbnail Image`}
+    validateStatus={errors.image ? "error" : ""}
+    help={errors.image}
+>
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
                                     onRemove={handleMainImageRemove}
@@ -1268,7 +1283,7 @@ export default function Edit({ resource, auth, langs }) {
                                 label="Content Type"
                                 validateStatus={errors.type ? "error" : ""}
                                 help={errors.type}
-                                required
+                                
                             >
                                 <Select
                                     size="large"
@@ -1426,7 +1441,7 @@ export default function Edit({ resource, auth, langs }) {
                                 label="Status"
                                 validateStatus={errors.status ? "error" : ""}
                                 help={errors.status}
-                                required
+                                
                             >
                                 <Select
                                     value={data.status}

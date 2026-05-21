@@ -733,7 +733,7 @@ export default function Create({ auth, langs }) {
                                 label="Islamic Content Thumbnail Image"
                                 validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
-                                required
+                                
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
@@ -795,7 +795,7 @@ export default function Create({ auth, langs }) {
                                     errors.calendar_type ? "error" : ""
                                 }
                                 help={errors.calendar_type}
-                                required
+                                
                             >
                                 <Select
                                     size="large"
@@ -859,7 +859,7 @@ export default function Create({ auth, langs }) {
                                 label="Calendar Image"
                                 validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
-                                required
+                                
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
@@ -1011,7 +1011,7 @@ export default function Create({ auth, langs }) {
                                     errors.content_text ? "error" : ""
                                 }
                                 help={errors.content_text}
-                                required
+                                
                             >
                                 <CustomQuillEditor
                                     value={data.content_text}
@@ -1030,7 +1030,7 @@ export default function Create({ auth, langs }) {
                                 label={`${contentType === "quran" ? "Quranic" : "Hadith"} Content Thumbnail Image`}
                                 validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
-                                required
+                                
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
@@ -1259,7 +1259,7 @@ export default function Create({ auth, langs }) {
                                 label="Content Type"
                                 validateStatus={errors.type ? "error" : ""}
                                 help={errors.type}
-                                required
+                                
                             >
                                 <Select
                                     size="large"
@@ -1337,7 +1337,7 @@ export default function Create({ auth, langs }) {
                                 label="Title"
                                 validateStatus={errors.title ? "error" : ""}
                                 help={errors.title}
-                                required
+                                
                             >
                                 <Input
                                     size="large"
@@ -1346,6 +1346,7 @@ export default function Create({ auth, langs }) {
                                     onChange={(e) =>
                                         setData("title", e.target.value)
                                     }
+                                     required
                                 />
                             </Form.Item>
                         </Col>
@@ -1417,7 +1418,7 @@ export default function Create({ auth, langs }) {
                                 label="Status"
                                 validateStatus={errors.status ? "error" : ""}
                                 help={errors.status}
-                                required
+                                
                             >
                                 <Select
                                     value={data.status}

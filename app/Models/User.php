@@ -53,6 +53,10 @@ class User extends Authenticatable
         'last_seen_at',
     ];
 
+    //     const ROLE_USER = 0;
+    // const ROLE_MEMBER = 1;
+
+
     /**
      * The "booted" method of the model.
      *

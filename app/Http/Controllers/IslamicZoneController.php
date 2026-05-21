@@ -53,37 +53,60 @@ class IslamicZoneController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
+        // $rules = [
+        //     'title' => 'required|string|max:255',
+        //     'type' => 'required|in:quran,hadith,calendar,islamicContent',
+        //     'description' => 'nullable|string',
+        //     'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        //     'gallery' => 'nullable|array',
+        //     'gallery.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+        //     'document_file' => 'nullable|file|mimes:pdf',
+        //     'content_text' => 'nullable|string|max:100000',
+        //     'youtube_url' => 'nullable|url|max:500',
+        //     'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
+        //     'video_file' => 'nullable|file|mimes:mp4,avi,mov',
+        //     'is_featured' => 'boolean',
+        //     'status' => 'required|in:draft,published,archived',
+        //     'type' => 'required|in:quran,hadith,calendar,islamicContent',
+        //     'calendar_type' => 'nullable|required_if:type,calendar|in:islamic,ramadan,yearly',
+        //     'lang_id' => 'nullable|exists:languages,id',
+        // ];
         $rules = [
-            'title' => 'required|string|max:255',
-            'type' => 'required|in:quran,hadith,calendar,islamicContent',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-            'gallery' => 'nullable|array',
-            'gallery.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
-            'document_file' => 'nullable|file|mimes:pdf',
-            'content_text' => 'nullable|string|max:100000',
-            'youtube_url' => 'nullable|url|max:500',
-            'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
-            'video_file' => 'nullable|file|mimes:mp4,avi,mov',
-            'is_featured' => 'boolean',
-            'status' => 'required|in:draft,published,archived',
-            'type' => 'required|in:quran,hadith,calendar,islamicContent',
-            'calendar_type' => 'nullable|required_if:type,calendar|in:islamic,ramadan,yearly',
-            'lang_id' => 'nullable|exists:languages,id',
-        ];
+    'title' => 'required|string|max:255',  // Required
+    'description' => 'nullable|string',
+    'type' => 'nullable|in:quran,hadith,calendar,islamicContent',
+    'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+    'gallery' => 'nullable|array',
+    'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+    'document_file' => 'nullable|file|mimes:pdf',
+    'content_text' => 'nullable|string|max:100000',
+    'youtube_url' => 'nullable|url|max:500',
+    'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
+    'video_file' => 'nullable|file|mimes:mp4,avi,mov',
+    'is_featured' => 'nullable|boolean',
+    'status' => 'nullable|in:draft,published,archived',
+    'lang_id' => 'nullable|exists:languages,id',
+    'calendar_type' => 'nullable|in:islamic,ramadan,yearly',
+];
 
 
 
+        // if ($request->type == 'islamicContent' || $request->type == 'quran' || $request->type == 'hadith') {
+        //     if ($request->type == 'islamicContent') {
+        //         $rules['image'] = 'required|image|mimes:jpeg,png,jpg,gif|max:5120';
+        //     }
+        //     $rules['pdfs'] = 'nullable|array';
+        //     $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
+        //     if (!$request->pdf_temp_paths && !$request->hasFile('pdfs')) {
+        //         $rules['pdfs'] = 'required|array|min:1';
+        //     }
+        // }
         if ($request->type == 'islamicContent' || $request->type == 'quran' || $request->type == 'hadith') {
-            if ($request->type == 'islamicContent') {
-                $rules['image'] = 'required|image|mimes:jpeg,png,jpg,gif|max:5120';
-            }
-            $rules['pdfs'] = 'nullable|array';
-            $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
-            if (!$request->pdf_temp_paths && !$request->hasFile('pdfs')) {
-                $rules['pdfs'] = 'required|array|min:1';
-            }
-        }
+    // শুধুমাত্র Title required
+    $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120';  // optional
+    $rules['pdfs'] = 'nullable|array';                                   // optional
+    $rules['pdfs.*'] = 'nullable|file|mimes:pdf';                        // optional
+}
 
         $rules['video_temp_paths'] = 'nullable|array';
         $rules['audio_temp_paths'] = 'nullable|array';
@@ -241,37 +264,65 @@ class IslamicZoneController extends Controller
     {
         $religiousContent = IslamicZone::findOrFail($id);
 
+        // $rules = [
+        //     'title' => 'required|string|max:255',
+        //     'description' => 'nullable|string',
+        //     'type' => 'required|in:quran,hadith,calendar,islamicContent',
+        //     'calendar_type' => 'nullable|required_if:type,calendar|in:islamic,ramadan,yearly',
+        //     'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        //     'gallery' => 'nullable|array',
+        //     'gallery.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+        //     // Large files are stored to temp then uploaded via queue job — no max limit here
+        //     'document_file' => 'nullable|file|mimes:pdf',
+        //     'content_text' => 'nullable|string|max:100000',
+        //     'youtube_url' => 'nullable|url|max:500',
+        //     'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
+        //     'video_file' => 'nullable|file|mimes:mp4,avi,mov',
+        //     'is_featured' => 'boolean',
+        //     'status' => 'required|in:draft,published,archived',
+        //     'lang_id' => 'nullable|exists:languages,id',
+        //     'video_file_temp_path' => 'nullable|string',
+        //     'audio_file_temp_path' => 'nullable|string',
+        //     'document_file_temp_path' => 'nullable|string',
+        //     'pdf_temp_path' => 'nullable|string', // Added pdf_temp_path
+        // ];
         $rules = [
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => 'required|in:quran,hadith,calendar,islamicContent',
-            'calendar_type' => 'nullable|required_if:type,calendar|in:islamic,ramadan,yearly',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-            'gallery' => 'nullable|array',
-            'gallery.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
-            // Large files are stored to temp then uploaded via queue job — no max limit here
-            'document_file' => 'nullable|file|mimes:pdf',
-            'content_text' => 'nullable|string|max:100000',
-            'youtube_url' => 'nullable|url|max:500',
-            'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
-            'video_file' => 'nullable|file|mimes:mp4,avi,mov',
-            'is_featured' => 'boolean',
-            'status' => 'required|in:draft,published,archived',
-            'lang_id' => 'nullable|exists:languages,id',
-            'video_file_temp_path' => 'nullable|string',
-            'audio_file_temp_path' => 'nullable|string',
-            'document_file_temp_path' => 'nullable|string',
-            'pdf_temp_path' => 'nullable|string', // Added pdf_temp_path
-        ];
+    'title' => 'required|string|max:255',  // Required
+    'description' => 'nullable|string',
+    'type' => 'nullable|in:quran,hadith,calendar,islamicContent',
+    'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+    'gallery' => 'nullable|array',
+    'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+    'document_file' => 'nullable|file|mimes:pdf',
+    'content_text' => 'nullable|string|max:100000',
+    'youtube_url' => 'nullable|url|max:500',
+    'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
+    'video_file' => 'nullable|file|mimes:mp4,avi,mov',
+    'is_featured' => 'nullable|boolean',
+    'status' => 'nullable|in:draft,published,archived',
+    'lang_id' => 'nullable|exists:languages,id',
+    'calendar_type' => 'nullable|in:islamic,ramadan,yearly',
+];
 
+
+        // if ($request->type == 'islamicContent' || $request->type == 'quran' || $request->type == 'hadith') {
+        //     if ($request->type == 'islamicContent') {
+        //         $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120';
+        //     }
+        //     $rules['pdfs'] = 'nullable|array';
+        //     $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
+        // }
 
         if ($request->type == 'islamicContent' || $request->type == 'quran' || $request->type == 'hadith') {
-            if ($request->type == 'islamicContent') {
-                $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120';
-            }
-            $rules['pdfs'] = 'nullable|array';
-            $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
-        }
+    // শুধুমাত্র islamicContent হলে ইমেজ চেক করবে, তবে সেটিও অপশনাল (nullable)
+    if ($request->type == 'islamicContent') {
+        $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120';
+    }
+    
+    // পিডিএফ ফিল্ডগুলো সম্পূর্ণ অপশনাল (nullable) করা হলো
+    $rules['pdfs'] = 'nullable|array';
+    $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
+}
 
         $rules['video_file_temp_path'] = 'nullable|string';
         $rules['audio_file_temp_path'] = 'nullable|string';

@@ -89,6 +89,11 @@ class HandleInertiaRequests extends Middleware
                         'subscriptions' => $user->subscriptions()
                             ->with('plan')
                             ->get(),
+                       // Line 92 (existing 'banner_color' definition)
+//  'banner_color' => $request->user() 
+//                     ? ($request->user()->role == User::ROLE_MEMBER ? '#DAA520' : null) 
+//                     : null,    
+                        
                     ]
                 ) : null,
 

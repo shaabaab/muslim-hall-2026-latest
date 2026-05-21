@@ -249,6 +249,99 @@ export default function UserProfile({
             <Row gutter={[24, 24]}>
                 {/* Left Sidebar - User Info */}
                 <Col xs={24} lg={8}>
+                    {/* <Card
+                        className="text-center"
+                        style={{ backgroundColor: bannerColor }}
+                    >
+                        <Avatar
+                            size={120}
+                            src={
+                                user.photo
+                                    ? user.photo.startsWith("http")
+                                        ? user.photo
+                                        : getS3PublicUrl(user.photo)
+                                    : null
+                            }
+                            icon={!user.photo ? <UserOutlined /> : null}
+                            className="mb-3"
+                        />
+
+                        <Title level={3}>{user.name}</Title>
+
+                        <h1 className="text-gray-700 font-normal">
+                            {user.bio}
+                        </h1>
+                        <Tag
+                            className="mb-2"
+                            color={user.badges ? user.badges.color : "green"}
+                        >
+                            {user.badges ? user.badges.name : "New"}
+                        </Tag>
+                        <br />
+
+                        <div className="mb-4">
+                            <Space size="large">
+                                <div
+                                    className="cursor-pointer"
+                                    onClick={() => setShowFollowerList(true)}
+                                >
+                                    <Title level={4} className="mb-0">
+                                        {followers.length ?? 0}
+                                    </Title>
+                                    <Text className="text-primary" type="link">
+                                        Followers
+                                    </Text>
+                                </div>
+
+                                <div
+                                    className="cursor-pointer"
+                                    onClick={() => setShowFollowingList(true)}
+                                >
+                                    <Title level={4} className="mb-0 ">
+                                        {following.length ?? 0}
+                                    </Title>
+                                    <Text className="text-primary" type="link">
+                                        Following
+                                    </Text>
+                                </div>
+                            </Space>
+                        </div>
+
+                        {!isOwnProfile && (
+                            <Button
+                                type={
+                                    isFollowingProfileOwner
+                                        ? "default"
+                                        : "primary"
+                                }
+                                icon={<UserOutlined />}
+                                onClick={() =>
+                                    isFollowingProfileOwner
+                                        ? handleUnfollow(user.id)
+                                        : handleFollow(user.id)
+                                }
+                                className="mb-3"
+                                block
+                            >
+                                {isFollowingProfileOwner
+                                    ? "Unfollow"
+                                    : "Follow"}
+                            </Button>
+                        )}
+
+                        {isOwnProfile && (
+                            <Space
+                                direction="vertical"
+                                style={{ width: "100%" }}
+                            >
+                                <Link href={route("user.profile.edit")}>
+                                    <Button icon={<EditOutlined />} block>
+                                        Edit Profile
+                                    </Button>
+                                </Link>
+                            </Space>
+                        )}
+                    </Card> */}
                     <Card className="text-center">
                         <Avatar
                             size={120}
