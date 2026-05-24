@@ -13,5 +13,9 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'upload/chunk',
+        'sslcommerz/subscription/success',
+        'sslcommerz/subscription/fail',
+        'sslcommerz/subscription/cancel',
+        'sslcommerz/subscription/ipn',
     ];
 }

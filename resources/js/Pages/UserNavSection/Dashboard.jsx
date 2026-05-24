@@ -22,8 +22,12 @@ import {
     Progress,
     Tabs,
     List,
+    Button,
+    message,
 } from "antd";
+
 import { getS3PublicUrl } from "../../Utils/s3Helpers";
+
 import {
     TeamOutlined,
     SafetyCertificateOutlined,
@@ -38,30 +42,77 @@ import {
     TrophyOutlined,
     ShopOutlined,
     WalletOutlined,
+    CreditCardOutlined,
 } from "@ant-design/icons";
 
 import { useState } from "react";
+import { Link, router } from "@inertiajs/react";
 
-const { Title, Text, Link } = Typography;
+const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
 export default function Dashboard({
     user,
     auth,
+    defaultPlan,
     total_contests,
     contests,
     posts,
     communitys,
     exhibitions,
 }) {
-    const subscription = user?.subscriptions?.[0];
+    const activeSubscription = user?.subscriptions?.find((subscription) => {
+        if (Number(subscription?.status) !== 1) {
+            return false;
+        }
+
+        if (!subscription?.end_date) {
+            return false;
+        }
+
+        return (
+            dayjs(subscription.end_date).isAfter(dayjs(), "day") ||
+            dayjs(subscription.end_date).isSame(dayjs(), "day")
+        );
+    });
+
+    const subscription = activeSubscription || user?.subscriptions?.[0];
 
     const [activeTab, setActiveTab] = useState("posts");
 
-    const isMember = user?.role == 1 && user?.subscriptions?.[0]?.status == 1;
+    const isMember = Number(user?.role) === 1 && !!activeSubscription;
+
     console.log("Is Member:", isMember);
 
+    const handleDirectPayment = () => {
+        if (!defaultPlan?.id) {
+            message.error("No active paid subscription plan found.");
+            return;
+        }
+
+        router.post(
+            route("user.subscriptions.pay"),
+            {
+                plan_id: defaultPlan.id,
+            },
+            {
+                preserveScroll: true,
+                onStart: () => {
+                    message.loading("Redirecting to SSLCommerz payment gateway...", 1);
+                },
+                onError: (errors) => {
+                    message.error(
+                        errors.plan_id ||
+                            errors.error ||
+                            "Failed to start SSLCommerz payment"
+                    );
+                },
+            },
+        );
+    };
+
     let percent = 0;
+
     if (subscription?.start_date && subscription?.end_date) {
         const start = dayjs(subscription.start_date);
         const end = dayjs(subscription.end_date);
@@ -69,17 +120,18 @@ export default function Dashboard({
 
         const totalDays = end.diff(start, "day");
         const usedDays = today.diff(start, "day");
+
         percent = Math.min(Math.max((usedDays / totalDays) * 100, 0), 100);
     }
 
-    // Calculate post statistics for the chart
     const calculatePostStats = () => {
         if (!user?.posts || user.posts.length === 0) return [];
 
-        // Group by date (last 7 days)
         const last7Days = [];
+
         for (let i = 6; i >= 0; i--) {
             const date = dayjs().subtract(i, "day").format("MMM DD");
+
             last7Days.push({
                 date,
                 views: 0,
@@ -88,13 +140,12 @@ export default function Dashboard({
             });
         }
 
-        // Fill with actual data
         user.posts.forEach((post) => {
             const postDate = dayjs(post.created_at).format("MMM DD");
             const dayData = last7Days.find((day) => day.date === postDate);
 
             if (dayData) {
-                dayData.viewer_count += post.viewer_count || 0;
+                dayData.views += post.viewer_count || 0;
                 dayData.comments += post.comments_count || 0;
                 dayData.reactions += post.reactions_count || 0;
             }
@@ -105,7 +156,6 @@ export default function Dashboard({
 
     const chartData = calculatePostStats();
 
-    // Custom tooltip for the chart
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             const total = payload.reduce(
@@ -127,6 +177,7 @@ export default function Dashboard({
                             %)
                         </div>
                     ))}
+
                     {total > 0 && (
                         <div style={{ fontWeight: "bold", marginTop: "4px" }}>
                             Total: {total}
@@ -135,10 +186,10 @@ export default function Dashboard({
                 </Card>
             );
         }
+
         return null;
     };
 
-    // Calculate overall percentages
     const calculateOverallPercentages = () => {
         const totalStats = user?.posts?.reduce(
             (acc, post) => {
@@ -155,15 +206,15 @@ export default function Dashboard({
             totalStats.comments +
             totalStats.reactions;
 
-        // Fixed: Use totalStats instead of acc
-
         return {
             views:
                 total > 0
                     ? Math.round((totalStats.viewer_count / total) * 100)
                     : 0,
             comments:
-                total > 0 ? Math.round((totalStats.comments / total) * 100) : 0,
+                total > 0
+                    ? Math.round((totalStats.comments / total) * 100)
+                    : 0,
             reactions:
                 total > 0
                     ? Math.round((totalStats.reactions / total) * 100)
@@ -172,6 +223,7 @@ export default function Dashboard({
             ...totalStats,
         };
     };
+
     const overallPercentages = calculateOverallPercentages();
 
     return (
@@ -194,12 +246,17 @@ export default function Dashboard({
                                     </Link>{" "}
                                 </Text>{" "}
                                 <br />
+
                                 <Text
                                     strong
                                     type={!isMember ? "secondary" : undefined}
                                 >
                                     {isMember ? (
-                                        <Link href={route("user.contests.create")}>
+                                        <Link
+                                            href={route(
+                                                "user.contests.create",
+                                            )}
+                                        >
                                             <PlusCircleFilled /> Create Contest
                                         </Link>
                                     ) : (
@@ -231,31 +288,30 @@ export default function Dashboard({
 
                     <Col xs={24} lg={16} className="mb-2">
                         <Card style={{ height: "100%" }}>
-                            {user?.subscriptions?.length > 0 &&
-                            user?.subscriptions[0]?.status == 1 ? (
+                            {activeSubscription ? (
                                 <>
                                     <Title level={4}>
                                         Subscription Details
                                     </Title>
+
                                     <Text strong className="pr-3">
-                                        {user?.subscriptions[0]?.plan?.name ||
+                                        {subscription?.plan?.name ||
                                             "Create a Subscription Plan"}{" "}
-                                        ({user?.subscriptions[0]?.validity || 0}{" "}
-                                        Days)
+                                        ({subscription?.validity || 0} Days)
                                     </Text>
+
                                     <Text strong className="pr-3">
                                         Start:{" "}
-                                        {user?.subscriptions[0]?.start_date ||
-                                            "0/0/0"}
+                                        {subscription?.start_date || "0/0/0"}
                                     </Text>
+
                                     <Text strong className="pr-3">
                                         to End Date:{" "}
-                                        {user?.subscriptions[0]?.end_date ||
-                                            "0/0/0"}
+                                        {subscription?.end_date || "0/0/0"}
                                     </Text>
 
                                     <Progress
-                                        percent={percent.toFixed(2)}
+                                        percent={Number(percent.toFixed(2))}
                                         status={
                                             percent >= 100
                                                 ? "success"
@@ -265,10 +321,50 @@ export default function Dashboard({
                                     />
                                 </>
                             ) : (
-                                <Title level={3}>
-                                    Welcome to Muslim Hall, {user?.name}! Please
-                                    subscribe to a plan to get started.
-                                </Title>
+                                <div>
+                                    <Title level={3}>
+                                        Welcome to Muslim Hall, {user?.name}!
+                                        Please subscribe to a plan to get
+                                        started.
+                                    </Title>
+
+                                    {defaultPlan ? (
+                                        <>
+                                            <Text>
+                                                Selected Plan:{" "}
+                                                <strong>
+                                                    {defaultPlan.name}
+                                                </strong>{" "}
+                                                - Tk{" "}
+                                                <strong>
+                                                    {defaultPlan.price}
+                                                </strong>{" "}
+                                                -{" "}
+                                                <strong>
+                                                    {defaultPlan.validity}
+                                                </strong>{" "}
+                                                days
+                                            </Text>
+
+                                            <br />
+
+                                            <Button
+                                                type="primary"
+                                                size="large"
+                                                icon={<CreditCardOutlined />}
+                                                onClick={handleDirectPayment}
+                                                style={{ marginTop: 16 }}
+                                            >
+                                                Pay With SSLCommerz
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Text type="danger">
+                                            No active paid subscription plan
+                                            found.
+                                        </Text>
+                                    )}
+                                </div>
                             )}
                         </Card>
                     </Col>
@@ -293,7 +389,7 @@ export default function Dashboard({
                                 prefix={<PictureOutlined />}
                                 valueStyle={{
                                     color: "#3f8600",
-                                    fontWeight: 500, // semibold
+                                    fontWeight: 500,
                                 }}
                             />
                         </Card>
@@ -366,7 +462,6 @@ export default function Dashboard({
                     </Col>
                 </Row>
 
-                {/* Post Engagement Statistics */}
                 <Row gutter={16}>
                     <Col xs={24} sm={8} className="mb-2">
                         <Card hoverable>
@@ -382,6 +477,7 @@ export default function Dashboard({
                             />
                         </Card>
                     </Col>
+
                     <Col xs={24} sm={8} className="mb-2">
                         <Card hoverable>
                             <Statistic
@@ -396,6 +492,7 @@ export default function Dashboard({
                             />
                         </Card>
                     </Col>
+
                     <Col xs={24} sm={8} className="mb-2">
                         <Card hoverable>
                             <Statistic
@@ -412,7 +509,6 @@ export default function Dashboard({
                     </Col>
                 </Row>
 
-                {/* Chart Section */}
                 <Row gutter={16}>
                     <Col xs={24} lg={16}>
                         <Card
@@ -436,16 +532,19 @@ export default function Dashboard({
                                         <YAxis />
                                         <Tooltip content={<CustomTooltip />} />
                                         <Legend />
+
                                         <Bar
                                             dataKey="views"
                                             name="Views"
                                             fill="#1890ff"
                                         />
+
                                         <Bar
                                             dataKey="comments"
                                             name="Comments"
                                             fill="#52c41a"
                                         />
+
                                         <Bar
                                             dataKey="reactions"
                                             name="Reactions"
@@ -461,6 +560,7 @@ export default function Dashboard({
                                             color: "#d9d9d9",
                                         }}
                                     />
+
                                     <div className="mt-2">
                                         No post data available for the last 7
                                         days
@@ -481,6 +581,7 @@ export default function Dashboard({
                                     <Text strong>Total Engagement: </Text>
                                     <Text>{overallPercentages.total}</Text>
                                 </div>
+
                                 <Progress
                                     percent={overallPercentages.views}
                                     strokeColor="#1890ff"
@@ -488,6 +589,7 @@ export default function Dashboard({
                                         `Views: ${overallPercentages.views}%`
                                     }
                                 />
+
                                 <Progress
                                     percent={overallPercentages.comments}
                                     strokeColor="#52c41a"
@@ -495,6 +597,7 @@ export default function Dashboard({
                                         `Comments: ${overallPercentages.comments}%`
                                     }
                                 />
+
                                 <Progress
                                     percent={overallPercentages.reactions}
                                     strokeColor="#faad14"
@@ -534,7 +637,11 @@ export default function Dashboard({
                                                             post.images
                                                                 ?.length > 0 ? (
                                                                 <img
-                                                                    src={getS3PublicUrl(post.images[0]?.image)}
+                                                                    src={getS3PublicUrl(
+                                                                        post
+                                                                            .images[0]
+                                                                            ?.image,
+                                                                    )}
                                                                     alt={
                                                                         post.title
                                                                     }
@@ -595,7 +702,9 @@ export default function Dashboard({
                                                                         },
                                                                     )}
                                                                 </Text>
+
                                                                 <br />
+
                                                                 <Text>
                                                                     Likes:{" "}
                                                                     {post.user_reaction_count ||
@@ -631,7 +740,6 @@ export default function Dashboard({
                                     }
                                     key="contests"
                                 >
-                                    {/* Contest participations content will go here */}
                                     <div style={{ padding: "20px" }}>
                                         {contests.length > 0 ? (
                                             <List
@@ -640,7 +748,6 @@ export default function Dashboard({
                                                     <List.Item>
                                                         <List.Item.Meta
                                                             title={
-                                                                // <Link href={route('contest.show', contest.contest.slug)}>
                                                                 <Link>
                                                                     {
                                                                         contest
@@ -665,7 +772,9 @@ export default function Dashboard({
                                                                             },
                                                                         )}
                                                                     </Text>
+
                                                                     <br />
+
                                                                     <Text>
                                                                         Winner
                                                                         Positions:{" "}
@@ -785,6 +894,7 @@ export default function Dashboard({
                                                                         </Text>
 
                                                                         <br />
+
                                                                         <Text>
                                                                             Total
                                                                             Comment:{" "}
@@ -933,7 +1043,9 @@ export default function Dashboard({
                                                                                 },
                                                                             )}
                                                                         </Text>
+
                                                                         <br />
+
                                                                         <Text>
                                                                             Type:{" "}
                                                                             <strong>
@@ -972,6 +1084,7 @@ export default function Dashboard({
                                             )}
                                         </div>
                                     )}
+
                                     {!isMember && (
                                         <div
                                             style={{

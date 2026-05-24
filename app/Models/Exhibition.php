@@ -174,19 +174,27 @@ class Exhibition extends Model
     {
         switch ($sort) {
             case 'newest':
-                return $query->orderByDesc('id'); // Newest to oldest
+                return $query->orderByDesc('id');
 
             case 'oldest':
-                return $query->orderBy('id'); // Oldest to newest
+                return $query->orderBy('id');
 
+            case 'title_asc':
             case 'a_to_z':
-                return $query->orderBy('title', 'asc'); // A → Z
+                return $query->orderBy('title', 'asc');
 
+            case 'title_desc':
             case 'z_to_a':
-                return $query->orderBy('title', 'desc'); // Z → A
+                return $query->orderBy('title', 'desc');
+
+            case 'price_asc':
+                return $query->orderBy('price', 'asc');
+
+            case 'price_desc':
+                return $query->orderBy('price', 'desc');
 
             default:
-                return $query->orderByDesc('id'); // Default
+                return $query->orderByDesc('id');
         }
     }
 

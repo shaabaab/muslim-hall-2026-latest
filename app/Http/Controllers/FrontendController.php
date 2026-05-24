@@ -113,17 +113,17 @@ class FrontendController extends Controller
                 $query->whereNull('hidden_at')
                     ->orWhere('status', 1);
             })->with([
-                'category',
-                'author',
-                'images',
-                'videos',
-                'pdfs',
-                'audios',
-                'comments' => function ($query) {
-                    $query->with(['user', 'replies.user']);
-                },
-                'reactions.user',
-            ])->where('slug', $slug)
+                    'category',
+                    'author',
+                    'images',
+                    'videos',
+                    'pdfs',
+                    'audios',
+                    'comments' => function ($query) {
+                        $query->with(['user', 'replies.user']);
+                    },
+                    'reactions.user',
+                ])->where('slug', $slug)
             ->where('status', 1)
             ->first();
 
@@ -157,7 +157,7 @@ class FrontendController extends Controller
         }
 
         // Get related posts (same category)
-         // $relatedPosts = Post::where('status', 1)
+        // $relatedPosts = Post::where('status', 1)
         //     ->where(function ($query) {
         //         $query->whereNull('hidden_at')
         //             ->orWhere('status', 1);
@@ -198,12 +198,12 @@ class FrontendController extends Controller
                 'image' => $metaImage,
             ]
         ])->withViewData([
-            'meta' => [
-                'title' => $post->title,
-                'description' => Str::limit(strip_tags($post->content), 160),
-                'image' => $metaImage,
-            ]
-        ]);
+                    'meta' => [
+                        'title' => $post->title,
+                        'description' => Str::limit(strip_tags($post->content), 160),
+                        'image' => $metaImage,
+                    ]
+                ]);
     }
 
 
@@ -305,12 +305,12 @@ class FrontendController extends Controller
                 'error' => session('error'),
             ]
         ])->withViewData([
-            'meta' => [
-                'title' => $islam->title,
-                'description' => Str::limit(strip_tags($islam->description), 160),
-                'image' => $metaImage,
-            ]
-        ]);
+                    'meta' => [
+                        'title' => $islam->title,
+                        'description' => Str::limit(strip_tags($islam->description), 160),
+                        'image' => $metaImage,
+                    ]
+                ]);
     }
 
     public function communitySingle($id)
@@ -485,21 +485,65 @@ class FrontendController extends Controller
         return Inertia::render('Front/Terms');
     }
 
+    public function exhibitionDetails(Request $request)
+    {
+        $user = Auth::user();
+
+        $isMember = $user && $user->subscriptions()
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->exists();
+
+        $isAdmin = $user && $user->role == User::ROLE_ADMIN;
+
+        $canAccess = $isMember || $isAdmin;
+
+        abort_if(!$canAccess, 403, 'Access denied. You must be a member to create Exhibition posts.');
+
+        $exhibition = Exhibition::query()
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $q->search($request->search);
+            })
+            ->when($request->filled('status') && $request->status !== 'all', function ($q) use ($request) {
+                $q->status($request->status);
+            })
+            ->when($request->filled('type') && $request->type !== 'all', function ($q) use ($request) {
+                $q->type($request->type);
+            })
+            ->when($request->filled('sort'), function ($q) use ($request) {
+                $q->sortByOption($request->sort);
+            }, function ($q) {
+                $q->sortByOption('newest');
+            })
+            ->limit(5)
+            ->get();
+
+        return Inertia::render('Front/ExhibitionDetails', [
+            'exhibition' => $exhibition,
+            'member' => (bool) $isMember,
+            'filters' => $request->only(['search', 'status', 'type', 'sort']),
+        ]);
+    }
+
     public function exhibition($id)
     {
+        $user = Auth::user();
 
-        $user = User::find(Auth::id());
-        $isMember = $user->subscriptions()->where('status', Subscription::STATUS_ACTIVE)->exists();
+        $isMember = $user && $user->subscriptions()
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->exists();
+
         $isAdmin = $user && $user->role == User::ROLE_ADMIN;
+
         $canAccess = $isMember || $isAdmin;
+
         abort_if(!$canAccess, 403, 'Access denied. You must be a member to create Exhibition posts.');
 
         $exhibition = Exhibition::with([
             'comments.user',
             'comments.replies.user',
             'reactions.user',
-            'seo'
-        ])->where('id', $id)->first();
+            'seo',
+        ])->findOrFail($id);
 
         return Inertia::render('Front/ExhibitionDetail', [
             'exhibition' => $exhibition,
@@ -512,7 +556,7 @@ class FrontendController extends Controller
             ->where('permission', 'approved')
             ->where(function ($query) {
                 $query->whereNull('hidden_at');
-            // })->with(['images', 'category', 'category.parent', 'audios'])
+                // })->with(['images', 'category', 'category.parent', 'audios'])
             })->with(['images', 'category', 'category.parent', 'audios', 'author:id,name'])
             ->when($request->filled('search'), fn($q) => $q->search($request->search))
             ->when(
@@ -623,36 +667,6 @@ class FrontendController extends Controller
         ]);
     }
 
-    public function exhibitionDetails(Request $request)
-    {
-
-        $user = User::find(Auth::id());
-        $isMember = $user->subscriptions()->where('status', Subscription::STATUS_ACTIVE)->exists();
-        $isAdmin = $user && $user->role == User::ROLE_ADMIN;
-
-        $canAccess = $isMember || $isAdmin;
-        abort_if(!$canAccess, 403, 'Access denied. You must be a member to create Exhibition posts.');
-
-        $exhibition = Exhibition::when($request->filled('search'), fn($q) => $q->search($request->search))
-            ->when($request->filled('status'), fn($q) => $q->status($request->status))
-            ->when($request->filled('type'), fn($q) => $q->type($request->type))
-            ->when($request->filled('sort'), fn($q) => $q->sortByOption($request->sort), fn($q) => $q->sortByOption('newest'))
-            ->limit(5)
-            ->get();
-
-        $member = false;
-
-        $user = User::find(auth()->id());
-        if ($user && $user->subscriptions()->where('status', Subscription::STATUS_ACTIVE)->exists()) {
-            $member = true;
-        }
-
-        return Inertia::render('Front/ExhibitionDetails', [
-            'exhibition' => $exhibition,
-            'member' => $member,
-            'filters' => $request->only(['search', 'status', 'type', 'sort']),
-        ]);
-    }
 
     public function search(Request $request)
     {

@@ -30,14 +30,17 @@ export default function Login() {
     const handleSubmit = (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        console.log(route('login'))
         router.post(route("login"), formData, {
             onSuccess: () => setIsSubmitting(false),
             onError: (err) => {
                 setErrors(err);
+                console.log(err)
                 setIsSubmitting(false);
             },
             preserveState: true,
         });
+        console.log('hi')
     };
 
     return (

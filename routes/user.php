@@ -43,6 +43,11 @@ Route::get('/dashboard', [UserDashboardController::class, 'index'])
 Route::get('/auth/google', [SocialiteController::class, 'googleLogin'])->name('google.login');
 Route::get('/auth/google/callback', [SocialiteController::class, 'googleCallback'])->name('google.callback');
 
+ Route::post('/user/subscriptions/pay', [UserSubscriptionController::class, 'payWithSslCommerz'])->name('user.subscriptions.pay');
+        Route::post('/sslcommerz/subscription/success', [UserSubscriptionController::class, 'sslSuccess'])->name('sslcommerz.subscription.success');
+        Route::post('/sslcommerz/subscription/fail', [UserSubscriptionController::class, 'sslFail'])->name('sslcommerz.subscription.fail');
+        Route::post('/sslcommerz/subscription/cancel', [UserSubscriptionController::class, 'sslCancel'])->name('sslcommerz.subscription.cancel');
+        Route::post('/sslcommerz/subscription/ipn', [UserSubscriptionController::class, 'sslIpn'])->name('sslcommerz.subscription.ipn');
 
 
 // 🧑‍💻 User Routes
@@ -52,8 +57,9 @@ Route::middleware(['auth', 'verified'])
     ->group(function () {
 
 
+       
         //profile routes can be here 
-
+    
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
