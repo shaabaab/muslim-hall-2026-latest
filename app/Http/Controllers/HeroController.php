@@ -93,7 +93,7 @@ class HeroController extends Controller
             'description' => 'nullable|string',
             'status' => 'required|boolean',
             'lang_id' => 'required|integer|exists:languages,id',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+            'img' => 'nullable|image',
             'parent_id' => 'nullable|integer|exists:heros,id',
         ]);
 
@@ -150,7 +150,7 @@ class HeroController extends Controller
             'status' => 'required|boolean',
             'lang_id' => 'required|integer|exists:languages,id',
             'parent_id' => 'nullable|integer|exists:heros,id',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+            'img' => 'nullable|image',
             'remove_img' => 'nullable|boolean',
         ]);
 

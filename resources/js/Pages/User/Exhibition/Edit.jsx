@@ -1,5 +1,8 @@
-import { useForm } from '@inertiajs/react';
-import Authenticated from '@/Layouts/FrontAuthenticatedLayout';
+import { useForm, Link } from "@inertiajs/react";
+import Authenticated from "@/Layouts/FrontAuthenticatedLayout";
+import { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import {
     Form,
     Input,
@@ -13,8 +16,9 @@ import {
     Switch,
     Row,
     Col,
-    InputNumber
-} from 'antd';
+    InputNumber,
+    Alert,
+} from "antd";
 import {
     ArrowLeftOutlined,
     SaveOutlined,
@@ -23,139 +27,230 @@ import {
     FileTextOutlined,
     ShoppingOutlined,
     EditOutlined,
-    CameraOutlined,
-    PlusOutlined,
-    DeleteOutlined,
-    TeamOutlined
-} from '@ant-design/icons';
-import { Link } from '@inertiajs/react';
-import { useState } from 'react';
+} from "@ant-design/icons";
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 const { Option } = Select;
 
-export default function Edit({ exhibition, auth, langs,member }) {
+export default function Edit({ auth, exhibition, langs = [], boards = [], member }) {
+    const getFileUrl = (url, path) => {
+        if (url) {
+            return url;
+        }
+
+        if (!path) {
+            return null;
+        }
+
+        if (typeof path === "string" && path.startsWith("http")) {
+            return path;
+        }
+
+        return `/storage/${path}`;
+    };
+
+    const buildGalleryPreviews = () => {
+        if (Array.isArray(exhibition?.gallery_urls) && exhibition.gallery_urls.length > 0) {
+            return exhibition.gallery_urls.map((item) => {
+                if (typeof item === "string") {
+                    return item;
+                }
+
+                return item?.url || item?.path || null;
+            }).filter(Boolean);
+        }
+
+        if (Array.isArray(exhibition?.gallery) && exhibition.gallery.length > 0) {
+            return exhibition.gallery.map((item) => {
+                if (!item) {
+                    return null;
+                }
+
+                if (typeof item === "string" && item.startsWith("http")) {
+                    return item;
+                }
+
+                return `/storage/${item}`;
+            }).filter(Boolean);
+        }
+
+        return [];
+    };
+
     const [mainImagePreview, setMainImagePreview] = useState(
-        exhibition.image ? `/storage/${exhibition.image}` : null
-    );
-    const [galleryPreviews, setGalleryPreviews] = useState(
-        exhibition.gallery ? exhibition.gallery.map(img => `/storage/${img}`) : []
-    );
-    const [documentPreview, setDocumentPreview] = useState(
-        exhibition.document_file ? exhibition.document_file : null
+        getFileUrl(exhibition?.image_url, exhibition?.image)
     );
 
-    const { data, setData, post, processing, errors } = useForm({
-        title: exhibition.title,
-        description: exhibition.description,
-        type: exhibition.type,
+    const [sponsorImagePreview, setSponsorImagePreview] = useState(
+        getFileUrl(exhibition?.sponsor_image_url, exhibition?.sponsor_image)
+    );
+
+    const [galleryPreviews, setGalleryPreviews] = useState(buildGalleryPreviews());
+
+    const [documentPreview, setDocumentPreview] = useState(
+        exhibition?.document_file
+            ? {
+                  name: exhibition.document_file.split("/").pop(),
+                  url: getFileUrl(exhibition?.document_file_url, exhibition?.document_file),
+                  isOld: true,
+              }
+            : null
+    );
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        _method: "put",
+        exhibition_board_id: exhibition?.exhibition_board_id || "",
+        title: exhibition?.title || "",
+        description: exhibition?.description || "",
+        type: exhibition?.type || "product",
         image: null,
+        sponsor_image: null,
         gallery: [],
         document_file: null,
-        price: exhibition.price,
-        currency: exhibition.currency,
-        is_available: exhibition.is_available,
-        is_featured: exhibition.is_featured,
-        dimensions: exhibition.dimensions,
-        material: exhibition.material,
-        status: exhibition.status,
-        lang_id: exhibition.lang_id || '',
-        _method: 'PUT',
+        price: exhibition?.price || null,
+        currency: exhibition?.currency || "USD",
+        is_available: exhibition?.is_available ?? true,
+        is_featured: exhibition?.is_featured ?? false,
+        dimensions: exhibition?.dimensions || "",
+        material: exhibition?.material || "",
+        status: exhibition?.status || "draft",
+        lang_id: exhibition?.lang_id || "",
+        link: exhibition?.link || "",
     });
 
-    const submit = () => {
-        const formData = new FormData();
-        Object.keys(data).forEach(key => {
-            if (data[key] !== null && data[key] !== undefined) {
-                if (key === 'gallery' && Array.isArray(data[key])) {
-                    data[key].forEach((file, index) => {
-                        formData.append(`gallery[${index}]`, file);
-                    });
-                } else {
-                    formData.append(key, data[key]);
-                }
-            }
-        });
+    const quillModules = {
+        toolbar: [
+            [{ header: [1, 2, 3, 4, 5, 6, false] }],
+            [{ size: ["small", false, "large", "huge"] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ color: [] }, { background: [] }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ align: [] }],
+            ["link"],
+            ["clean"],
+        ],
+    };
 
-        post(route('user.exhibitions.update', exhibition.id), {
-            data: formData,
+    const quillFormats = [
+        "header",
+        "size",
+        "bold",
+        "italic",
+        "underline",
+        "strike",
+        "color",
+        "background",
+        "list",
+        "bullet",
+        "align",
+        "link",
+    ];
+
+    const currencyOptions = [
+        { value: "BDT", label: "BDT (৳)" },
+        { value: "USD", label: "USD ($)" },
+        { value: "EUR", label: "EUR (€)" },
+        { value: "GBP", label: "GBP (£)" },
+        { value: "SAR", label: "SAR (﷼)" },
+        { value: "AED", label: "AED (د.إ)" },
+    ];
+
+    const submit = () => {
+        post(route("user.exhibitions.update", exhibition.id), {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                message.success('Exhibition item updated successfully');
+                message.success("Exhibition item updated successfully. Waiting for admin approval again.");
             },
             onError: () => {
-                message.error('Error updating exhibition item');
-            }
+                message.error("Please check form errors.");
+            },
         });
     };
 
+    const resetForm = () => {
+        reset();
+
+        setMainImagePreview(getFileUrl(exhibition?.image_url, exhibition?.image));
+        setSponsorImagePreview(getFileUrl(exhibition?.sponsor_image_url, exhibition?.sponsor_image));
+        setGalleryPreviews(buildGalleryPreviews());
+
+        setDocumentPreview(
+            exhibition?.document_file
+                ? {
+                      name: exhibition.document_file.split("/").pop(),
+                      url: getFileUrl(exhibition?.document_file_url, exhibition?.document_file),
+                      isOld: true,
+                  }
+                : null
+        );
+    };
+
     const handleMainImageUpload = (file) => {
-        setData('image', file);
+        setData("image", file);
         setMainImagePreview(URL.createObjectURL(file));
         return false;
     };
 
-    const handleMainImageRemove = () => {
-        setData('image', null);
-        setMainImagePreview(exhibition.image ? `/storage/${exhibition.image}` : null);
+    const handleSponsorImageUpload = (file) => {
+        setData("sponsor_image", file);
+        setSponsorImagePreview(URL.createObjectURL(file));
+        return false;
     };
 
     const handleGalleryUpload = (file) => {
         const newGallery = [...data.gallery, file];
-        setData('gallery', newGallery);
-        setGalleryPreviews([...galleryPreviews, URL.createObjectURL(file)]);
+        setData("gallery", newGallery);
+
+        const newPreviews = [
+            ...galleryPreviews,
+            URL.createObjectURL(file),
+        ];
+
+        setGalleryPreviews(newPreviews);
+
         return false;
     };
 
     const handleGalleryRemove = (index) => {
-        const newGallery = data.gallery.filter((_, i) => i !== index);
+        const oldGalleryPreviewCount = buildGalleryPreviews().length;
+
+        if (index < oldGalleryPreviewCount && data.gallery.length === 0) {
+            message.warning("Old gallery image remove needs backend remove_gallery support. Upload new gallery to replace old gallery.");
+            return;
+        }
+
         const newPreviews = galleryPreviews.filter((_, i) => i !== index);
-        setData('gallery', newGallery);
+
+        const newGalleryStartIndex = Math.max(0, index - oldGalleryPreviewCount);
+        const newGallery = data.gallery.filter((_, i) => i !== newGalleryStartIndex);
+
         setGalleryPreviews(newPreviews);
-    };
-
-    const handleExistingGalleryRemove = (index) => {
-        const currentGallery = exhibition.gallery || [];
-        const newGallery = currentGallery.filter((_, i) => i !== index);
-
-        // Update the form data to indicate removal
-        setData('gallery_removed', [...(data.gallery_removed || []), currentGallery[index]]);
-
-        // Update previews
-        const newPreviews = galleryPreviews.filter((_, i) => i !== index);
-        setGalleryPreviews(newPreviews);
+        setData("gallery", newGallery);
     };
 
     const handleDocumentUpload = (file) => {
-        setData('document_file', file);
-        setDocumentPreview(file);
+        setData("document_file", file);
+        setDocumentPreview({
+            name: file.name,
+            url: null,
+            file,
+            isOld: false,
+        });
         return false;
     };
 
     const handleDocumentRemove = () => {
-        setData('document_file', null);
-        setDocumentPreview(exhibition.document_file ? exhibition.document_file : null);
-    };
+        setData("document_file", null);
 
-    const currencyOptions = [
-        { value: 'BDT', label: 'BDT (৳)' },
-        { value: 'USD', label: 'USD ($)' },
-        { value: 'EUR', label: 'EUR (€)' },
-        { value: 'GBP', label: 'GBP (£)' },
-        { value: 'SAR', label: 'SAR (﷼)' },
-        { value: 'AED', label: 'AED (د.إ)' },
-    ];
-
-    const getTypeIcon = (type) => {
-        switch (type) {
-            case 'product': return <ShoppingOutlined />;
-            case 'document': return <FileTextOutlined />;
-            case 'art': return <PictureOutlined />;
-            case 'photography': return <CameraOutlined />;
-            case 'craft': return <EditOutlined />;
-            default: return <ShoppingOutlined />;
+        if (exhibition?.document_file) {
+            setDocumentPreview({
+                name: exhibition.document_file.split("/").pop(),
+                url: getFileUrl(exhibition?.document_file_url, exhibition?.document_file),
+                isOld: true,
+            });
+        } else {
+            setDocumentPreview(null);
         }
     };
 
@@ -163,124 +258,200 @@ export default function Edit({ exhibition, auth, langs,member }) {
         <Authenticated user={auth.user} header="Edit Exhibition Item">
             <Card>
                 <div className="mb-6">
-                    <Link href={route('user.exhibitions.index')}>
+                    <Link href={route("user.exhibitions.index")}>
                         <Button icon={<ArrowLeftOutlined />} type="text" className="mb-4">
                             Back to Exhibitions
                         </Button>
                     </Link>
+
                     <Title level={3}>
                         <EditOutlined className="mr-2" />
                         Edit Exhibition Item
                     </Title>
+
                     <Text type="secondary">
-                        Update {exhibition.type}: {exhibition.title}
+                        Update your exhibition item. After update it will wait for admin approval again.
                     </Text>
                 </div>
+
+                {boards.length === 0 && (
+                    <Alert
+                        type="warning"
+                        showIcon
+                        className="mb-6"
+                        message="No approved board found"
+                        description="You need an approved board or approved access to another user's board before updating an exhibition."
+                    />
+                )}
 
                 <Form layout="vertical" onFinish={submit} className="max-w-4xl">
                     <Row gutter={24}>
                         <Col span={24}>
                             <Form.Item
-                                label="Item Type"
-                                validateStatus={errors.type ? 'error' : ''}
-                                help={errors.type}
+                                label="Exhibition Board"
+                                validateStatus={errors.exhibition_board_id ? "error" : ""}
+                                help={errors.exhibition_board_id}
                                 required
                             >
                                 <Select
                                     size="large"
-                                    value={data.type}
-                                    onChange={(value) => setData('type', value)}
+                                    placeholder="Select approved board"
+                                    value={data.exhibition_board_id || undefined}
+                                    onChange={(value) => setData("exhibition_board_id", value)}
                                 >
-                                    <Option value="product">
-                                        <Space><ShoppingOutlined />Product</Space>
-                                    </Option>
-                                    <Option value="document">
-                                        <Space><FileTextOutlined />Document</Space>
-                                    </Option>
-                                    <Option value="art">
-                                        <Space><PictureOutlined />Art</Space>
-                                    </Option>
-                                    <Option value="photography">
-                                        <Space><CameraOutlined />Photography</Space>
-                                    </Option>
-                                    <Option value="craft">
-                                        <Space><EditOutlined />Craft</Space>
-                                    </Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={24}>
-                            <Form.Item
-                                label="Select Language"
-                                validateStatus={errors.lang_id ? 'error' : ''}
-                                help={errors.lang_id}
-                            >
-                                <Select
-                                    size="large"
-                                    placeholder="Select Language"
-                                    value={data.lang_id}
-                                    onChange={(value) => setData('lang_id', value)}
-                                    suffixIcon={<TeamOutlined />}
-                                >
-                                    {langs.map((lang) => (
-                                        <Option key={lang.id} value={lang.id}>
-                                            {lang.name} ({lang.code})
+                                    {boards.map((board) => (
+                                        <Option key={board.id} value={board.id}>
+                                            {board.title}
                                         </Option>
                                     ))}
                                 </Select>
                             </Form.Item>
                         </Col>
 
+                        <Col span={24}>
+                            <Form.Item
+                                label="Item Type"
+                                validateStatus={errors.type ? "error" : ""}
+                                help={errors.type}
+                                required
+                            >
+                                <Select
+                                    size="large"
+                                    value={data.type}
+                                    onChange={(value) => setData("type", value)}
+                                >
+                                    <Option value="product">
+                                        <Space>
+                                            <ShoppingOutlined />
+                                            Product
+                                        </Space>
+                                    </Option>
 
+                                    <Option value="document">
+                                        <Space>
+                                            <FileTextOutlined />
+                                            Document
+                                        </Space>
+                                    </Option>
+
+                                    <Option value="art">
+                                        <Space>
+                                            <PictureOutlined />
+                                            Art
+                                        </Space>
+                                    </Option>
+
+                                    <Option value="photography">
+                                        <Space>
+                                            <PictureOutlined />
+                                            Photography
+                                        </Space>
+                                    </Option>
+
+                                    <Option value="craft">
+                                        <Space>
+                                            <EditOutlined />
+                                            Craft
+                                        </Space>
+                                    </Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
 
                         <Col span={24}>
                             <Form.Item
-                                label="Description"
-                                validateStatus={errors.description ? 'error' : ''}
-                                help={errors.description}
+                                label="Title Text Editor"
+                                validateStatus={errors.title ? "error" : ""}
+                                help={errors.title}
+                                required
                             >
-                                <TextArea
-                                    rows={4}
-                                    value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    showCount
-                                    maxLength={2000}
+                                <ReactQuill
+                                    theme="snow"
+                                    value={data.title}
+                                    onChange={(value) => setData("title", value)}
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write title. You can use bold, font size, color..."
                                 />
                             </Form.Item>
                         </Col>
 
                         <Col span={24}>
                             <Form.Item
+                                label="Description with Embedded Link"
+                                validateStatus={errors.description ? "error" : ""}
+                                help={errors.description}
+                            >
+                                <ReactQuill
+                                    theme="snow"
+                                    value={data.description}
+                                    onChange={(value) => setData("description", value)}
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write description. Select text and click link icon to embed a link."
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                            <Form.Item
                                 label="Main Image"
-                                validateStatus={errors.image ? 'error' : ''}
+                                validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
-                                    onRemove={handleMainImageRemove}
-                                    accept="image/*"
                                     showUploadList={false}
-                                    maxCount={1}
+                                    accept="image/*"
                                 >
-                                    <Button icon={<UploadOutlined />}>
-                                        {exhibition.image ? 'Change Main Image' : 'Select Main Image'}
-                                    </Button>
+                                    <Button icon={<UploadOutlined />}>Change Main Image</Button>
                                 </Upload>
 
                                 {mainImagePreview && (
                                     <div className="mt-4">
-                                        <Text strong className="block mb-2">Main Image Preview:</Text>
                                         <img
                                             src={mainImagePreview}
-                                            alt="Main preview"
+                                            alt="Main Preview"
                                             style={{
-                                                maxWidth: '300px',
-                                                maxHeight: '200px',
-                                                borderRadius: '8px',
-                                                objectFit: 'cover'
+                                                width: 220,
+                                                height: 140,
+                                                objectFit: "cover",
+                                                borderRadius: 8,
+                                                border: "1px solid #ddd",
                                             }}
-                                            className="border border-dashed border-gray-300"
+                                        />
+                                    </div>
+                                )}
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                            <Form.Item
+                                label="Sponsor Image"
+                                validateStatus={errors.sponsor_image ? "error" : ""}
+                                help={errors.sponsor_image}
+                            >
+                                <Upload
+                                    beforeUpload={handleSponsorImageUpload}
+                                    showUploadList={false}
+                                    accept="image/*"
+                                >
+                                    <Button icon={<UploadOutlined />}>Change Sponsor Image</Button>
+                                </Upload>
+
+                                {sponsorImagePreview && (
+                                    <div className="mt-4">
+                                        <img
+                                            src={sponsorImagePreview}
+                                            alt="Sponsor Preview"
+                                            style={{
+                                                width: 220,
+                                                height: 80,
+                                                objectFit: "contain",
+                                                borderRadius: 8,
+                                                border: "1px solid #ddd",
+                                                background: "#fff",
+                                            }}
                                         />
                                     </div>
                                 )}
@@ -290,350 +461,232 @@ export default function Edit({ exhibition, auth, langs,member }) {
                         <Col span={24}>
                             <Form.Item
                                 label="Gallery Images"
-                                validateStatus={errors.gallery ? 'error' : ''}
+                                validateStatus={errors.gallery ? "error" : ""}
                                 help={errors.gallery}
                             >
                                 <Upload
                                     beforeUpload={handleGalleryUpload}
-                                    accept="image/*"
                                     showUploadList={false}
+                                    accept="image/*"
                                     multiple
                                 >
-                                    <Button icon={<PlusOutlined />}>
-                                        Add to Gallery
-                                    </Button>
+                                    <Button icon={<UploadOutlined />}>Add Gallery Image</Button>
                                 </Upload>
 
-                                {(galleryPreviews.length > 0 || (exhibition.gallery && exhibition.gallery.length > 0)) && (
-                                    <div className="mt-4">
-                                        <Text strong className="block mb-2">Gallery Images:</Text>
-                                        <div className="flex flex-wrap gap-4">
-                                            {galleryPreviews.map((preview, index) => (
-                                                <div key={`new-${index}`} className="relative">
-                                                    <img
-                                                        src={preview}
-                                                        alt={`New Gallery ${index + 1}`}
-                                                        style={{
-                                                            width: '100px',
-                                                            height: '100px',
-                                                            borderRadius: '8px',
-                                                            objectFit: 'cover'
-                                                        }}
-                                                        className="border border-dashed border-blue-300"
-                                                    />
-                                                    <Button
-                                                        type="link"
-                                                        danger
-                                                        size="small"
-                                                        onClick={() => handleGalleryRemove(index)}
-                                                        style={{ position: 'absolute', top: -8, right: -8 }}
-                                                    >
-                                                        ×
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                            {exhibition.gallery && exhibition.gallery.map((img, index) => (
-                                                !data.gallery_removed?.includes(img) && (
-                                                    <div key={`existing-${index}`} className="relative">
-                                                        <img
-                                                            src={`/storage/${img}`}
-                                                            alt={`Existing Gallery ${index + 1}`}
-                                                            style={{
-                                                                width: '100px',
-                                                                height: '100px',
-                                                                borderRadius: '8px',
-                                                                objectFit: 'cover'
-                                                            }}
-                                                            className="border border-dashed border-gray-300"
-                                                        />
-                                                        <Button
-                                                            type="link"
-                                                            danger
-                                                            size="small"
-                                                            onClick={() => handleExistingGalleryRemove(index)}
-                                                            style={{ position: 'absolute', top: -8, right: -8 }}
-                                                        >
-                                                            ×
-                                                        </Button>
-                                                    </div>
-                                                )
-                                            ))}
-                                        </div>
-                                        <Text type="secondary" className="block mt-2">
-                                            {galleryPreviews.length + (exhibition.gallery ? exhibition.gallery.length : 0)} image(s) in gallery
-                                        </Text>
+                                <div className="mt-2">
+                                    <Text type="secondary">
+                                        New gallery upload will replace old gallery in backend when submitted.
+                                    </Text>
+                                </div>
+
+                                {galleryPreviews.length > 0 && (
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: 12,
+                                            flexWrap: "wrap",
+                                            marginTop: 16,
+                                        }}
+                                    >
+                                        {galleryPreviews.map((preview, index) => (
+                                            <div key={index} style={{ position: "relative" }}>
+                                                <img
+                                                    src={preview}
+                                                    alt={`Gallery ${index + 1}`}
+                                                    style={{
+                                                        width: 120,
+                                                        height: 90,
+                                                        objectFit: "cover",
+                                                        borderRadius: 8,
+                                                        border: "1px solid #ddd",
+                                                    }}
+                                                />
+
+                                                <Button
+                                                    size="small"
+                                                    danger
+                                                    onClick={() => handleGalleryRemove(index)}
+                                                    style={{
+                                                        position: "absolute",
+                                                        top: -8,
+                                                        right: -8,
+                                                    }}
+                                                >
+                                                    ×
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </Form.Item>
                         </Col>
-
-                       {member ? (
-  <>
-    <Col span={12} style={{ marginBottom: 8 }}>
-      <div>
-        <code style={{
-          fontSize: '12px',
-          color: '#faad14',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }}>
-          Premium
-        </code>
-      </div>
-      <Form.Item
-        label="Price"
-        validateStatus={errors.price ? 'error' : ''}
-        help={errors.price}
-      >
-        <InputNumber
-          style={{ width: '100%' }}
-          value={data.price}
-          onChange={(value) => setData('price', value)}
-          min={0}
-          step={0.01}
-          formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-        />
-      </Form.Item>
-    </Col>
-
-    <Col span={12} style={{ marginBottom: 8 }}>
-      <div>
-        <code style={{
-          fontSize: '12px',
-          color: '#faad14',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }}>
-          Premium
-        </code>
-      </div>
-      <Form.Item
-        label="Currency"
-        validateStatus={errors.currency ? 'error' : ''}
-        help={errors.currency}
-        required
-      >
-        <Select
-          value={data.currency}
-          onChange={(value) => setData('currency', value)}
-        >
-          {currencyOptions.map(currency => (
-            <Option key={currency.value} value={currency.value}>
-              {currency.label}
-            </Option>
-          ))}
-        </Select>
-      </Form.Item>
-    </Col>
-
-    <Col span={12} style={{ marginBottom: 8 }}>
-      <div>
-        <code style={{
-          fontSize: '12px',
-          color: '#faad14',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }}>
-          Premium
-        </code>
-      </div>
-      <Form.Item
-        label="Link (Url)"
-        validateStatus={errors.link ? 'error' : ''}
-        help={errors.link}
-        required
-      >
-        <Input
-          style={{ width: '100%' }}
-          placeholder="https://example.com"
-          value={data.link}
-          onChange={(e) => setData('link', e.target.value)}
-        />
-      </Form.Item>
-    </Col>
-  </>
-) : (
-  <>
-    <Col span={12} style={{ opacity: 0.5, marginBottom: 8, pointerEvents: 'none' }}>
-      <div>
-        <code style={{
-          fontSize: '12px',
-          color: '#faad14',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }}>
-          Premium
-        </code>
-      </div>
-      <Form.Item
-        label="Price"
-        validateStatus={errors.price ? 'error' : ''}
-        help={errors.price}
-      >
-        <InputNumber
-          style={{ width: '100%' }}
-          value={data.price}
-          onChange={(value) => setData('price', value)}
-          min={0}
-          step={0.01}
-          formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-        />
-      </Form.Item>
-    </Col>
-
-    <Col span={12} style={{ opacity: 0.5, marginBottom: 8, pointerEvents: 'none' }}>
-      <div>
-        <code style={{
-          fontSize: '12px',
-          color: '#faad14',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }}>
-          Premium
-        </code>
-      </div>
-      <Form.Item
-        label="Currency"
-        validateStatus={errors.currency ? 'error' : ''}
-        help={errors.currency}
-        required
-      >
-        <Select
-          value={data.currency}
-          onChange={(value) => setData('currency', value)}
-        >
-          {currencyOptions.map(currency => (
-            <Option key={currency.value} value={currency.value}>
-              {currency.label}
-            </Option>
-          ))}
-        </Select>
-      </Form.Item>
-    </Col>
-
-    <Col span={12} style={{ opacity: 0.5, marginBottom: 8, pointerEvents: 'none' }}>
-      <div>
-        <code style={{
-          fontSize: '12px',
-          color: '#faad14',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }}>
-          Premium
-        </code>
-      </div>
-      <Form.Item
-        label="Link (Url)"
-        validateStatus={errors.link ? 'error' : ''}
-        help={errors.link}
-        required
-      >
-        <InputNumber
-          style={{ width: '100%' }}
-          placeholder="Link (Url)"
-          value={data.link}
-          onChange={(value) => setData('link', value)}
-          min={0}
-          step={0.01}
-        />
-      </Form.Item>
-    </Col>
-  </>
-)}
-
-                        {(data.type === 'art' || data.type === 'product') && (
-                            <>
-                                <Col span={12}>
-                                    <Form.Item
-                                        label="Dimensions"
-                                        validateStatus={errors.dimensions ? 'error' : ''}
-                                        help={errors.dimensions}
-                                    >
-                                        <Input
-                                            value={data.dimensions}
-                                            onChange={(e) => setData('dimensions', e.target.value)}
-                                        />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={12}>
-                                    <Form.Item
-                                        label="Material"
-                                        validateStatus={errors.material ? 'error' : ''}
-                                        help={errors.material}
-                                    >
-                                        <Input
-                                            value={data.material}
-                                            onChange={(e) => setData('material', e.target.value)}
-                                        />
-                                    </Form.Item>
-                                </Col>
-                            </>
-                        )}
 
                         <Col span={24}>
-                            <Form.Item label="Document File">
+                            <Form.Item
+                                label="Document File"
+                                validateStatus={errors.document_file ? "error" : ""}
+                                help={errors.document_file}
+                            >
                                 <Upload
                                     beforeUpload={handleDocumentUpload}
-                                    onRemove={handleDocumentRemove}
-                                    accept=".pdf,.doc,.docx,.ppt,.pptx"
                                     showUploadList={false}
-                                    maxCount={1}
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx"
                                 >
-                                    <Button icon={<FileTextOutlined />}>
-                                        {exhibition.document_file ? 'Change Document' : 'Select Document'}
-                                    </Button>
+                                    <Button icon={<UploadOutlined />}>Change Document</Button>
                                 </Upload>
 
-                                {(documentPreview || exhibition.document_file) && (
-                                    <div className="mt-4">
-                                        <Text strong className="block mb-2">Document:</Text>
-                                        <div className="p-3 border rounded bg-gray-50">
-                                            <FileTextOutlined className="text-2xl text-blue-500 mr-2" />
-                                            <Text>
-                                                {typeof documentPreview === 'object' ? documentPreview.name : exhibition.document_file}
-                                            </Text>
-                                        </div>
+                                {documentPreview && (
+                                    <div className="mt-3">
+                                        <Space>
+                                            <FileTextOutlined />
+
+                                            {documentPreview.url ? (
+                                                <a
+                                                    href={documentPreview.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    {documentPreview.name}
+                                                </a>
+                                            ) : (
+                                                <Text>{documentPreview.name}</Text>
+                                            )}
+
+                                            {!documentPreview.isOld && (
+                                                <Button size="small" danger onClick={handleDocumentRemove}>
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </Space>
                                     </div>
                                 )}
                             </Form.Item>
                         </Col>
 
-                        <Col span={8}>
-                            <Form.Item label="Available for Sale">
-                                <Switch
-                                    checked={data.is_available}
-                                    onChange={(checked) => setData('is_available', checked)}
-                                />
-                                <Text className="ml-2">
-                                    {data.is_available ? 'Available' : 'Not Available'}
-                                </Text>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={8}>
-                            <Form.Item label="Featured Item">
-                                <Switch
-                                    checked={data.is_featured}
-                                    onChange={(checked) => setData('is_featured', checked)}
-                                />
-                                <Text className="ml-2">
-                                    {data.is_featured ? 'Featured' : 'Regular'}
-                                </Text>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={8}>
+                        <Col xs={24} md={12}>
                             <Form.Item
-                                label="Status"
-                                validateStatus={errors.status ? 'error' : ''}
-                                help={errors.status}
-                                required
+                                label="Price"
+                                validateStatus={errors.price ? "error" : ""}
+                                help={errors.price}
+                            >
+                                <InputNumber
+                                    size="large"
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                    value={data.price}
+                                    onChange={(value) => setData("price", value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Currency"
+                                validateStatus={errors.currency ? "error" : ""}
+                                help={errors.currency}
                             >
                                 <Select
+                                    size="large"
+                                    value={data.currency}
+                                    onChange={(value) => setData("currency", value)}
+                                >
+                                    {currencyOptions.map((currency) => (
+                                        <Option key={currency.value} value={currency.value}>
+                                            {currency.label}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Dimensions"
+                                validateStatus={errors.dimensions ? "error" : ""}
+                                help={errors.dimensions}
+                            >
+                                <Input
+                                    size="large"
+                                    value={data.dimensions}
+                                    onChange={(e) => setData("dimensions", e.target.value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Material"
+                                validateStatus={errors.material ? "error" : ""}
+                                help={errors.material}
+                            >
+                                <Input
+                                    size="large"
+                                    value={data.material}
+                                    onChange={(e) => setData("material", e.target.value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="External Link"
+                                validateStatus={errors.link ? "error" : ""}
+                                help={errors.link}
+                            >
+                                <Input
+                                    size="large"
+                                    placeholder="https://example.com"
+                                    value={data.link}
+                                    onChange={(e) => setData("link", e.target.value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Language"
+                                validateStatus={errors.lang_id ? "error" : ""}
+                                help={errors.lang_id}
+                            >
+                                <Select
+                                    size="large"
+                                    allowClear
+                                    placeholder="Select language"
+                                    value={data.lang_id || undefined}
+                                    onChange={(value) => setData("lang_id", value || "")}
+                                >
+                                    {langs.map((lang) => (
+                                        <Option key={lang.id} value={lang.id}>
+                                            {lang.name}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={8}>
+                            <Form.Item label="Available">
+                                <Switch
+                                    checked={data.is_available}
+                                    onChange={(checked) => setData("is_available", checked)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={8}>
+                            <Form.Item label="Featured">
+                                <Switch
+                                    checked={data.is_featured}
+                                    onChange={(checked) => setData("is_featured", checked)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={8}>
+                            <Form.Item label="Status">
+                                <Select
                                     value={data.status}
-                                    onChange={(value) => setData('status', value)}
+                                    onChange={(value) => setData("status", value)}
                                 >
                                     <Option value="draft">Draft</Option>
                                     <Option value="published">Published</Option>
@@ -644,26 +697,25 @@ export default function Edit({ exhibition, auth, langs,member }) {
                         </Col>
                     </Row>
 
-                    <Form.Item className="mt-8">
-                        <Space size="middle">
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={processing}
-                                icon={<SaveOutlined />}
-                                size="large"
-                                style={{ minWidth: '160px' }}
-                            >
-                                Update Item
-                            </Button>
+                    <div className="flex justify-end gap-3 mt-6">
+                        <Button onClick={resetForm}>
+                            Reset
+                        </Button>
 
-                            <Link href={route('user.exhibitions.index')}>
-                                <Button size="large">
-                                    Cancel
-                                </Button>
-                            </Link>
-                        </Space>
-                    </Form.Item>
+                        <Link href={route("user.exhibitions.index")}>
+                            <Button>Cancel</Button>
+                        </Link>
+
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={processing}
+                            icon={<SaveOutlined />}
+                            disabled={boards.length === 0}
+                        >
+                            Update for Approval
+                        </Button>
+                    </div>
                 </Form>
             </Card>
         </Authenticated>

@@ -1,5 +1,8 @@
-import { useForm } from '@inertiajs/react';
-import Authenticated from '@/Layouts/FrontAuthenticatedLayout';
+import { useForm, Link } from "@inertiajs/react";
+import Authenticated from "@/Layouts/FrontAuthenticatedLayout";
+import { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import {
     Form,
     Input,
@@ -13,8 +16,9 @@ import {
     Switch,
     Row,
     Col,
-    InputNumber
-} from 'antd';
+    InputNumber,
+    Alert,
+} from "antd";
 import {
     ArrowLeftOutlined,
     SaveOutlined,
@@ -23,96 +27,110 @@ import {
     FileTextOutlined,
     ShoppingOutlined,
     EditOutlined,
-    PlusOutlined
-} from '@ant-design/icons';
-import { Link } from '@inertiajs/react';
-import { useState } from 'react';
+} from "@ant-design/icons";
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 const { Option } = Select;
 
-export default function Create({ auth, langs, member }) {
+export default function Create({ auth, langs, boards, member }) {
     const [mainImagePreview, setMainImagePreview] = useState(null);
+    const [sponsorImagePreview, setSponsorImagePreview] = useState(null);
     const [galleryPreviews, setGalleryPreviews] = useState([]);
     const [documentPreview, setDocumentPreview] = useState(null);
 
-    const { data, setData, post, processing, errors } = useForm({
-        title: '',
-        description: '',
-        type: 'product',
+    const { data, setData, post, processing, errors, reset } = useForm({
+        exhibition_board_id: "",
+        title: "",
+        description: "",
+        type: "product",
         image: null,
+        sponsor_image: null,
         gallery: [],
         document_file: null,
         price: null,
-        currency: 'USD',
+        currency: "USD",
         is_available: true,
         is_featured: false,
-        dimensions: '',
-        material: '',
-        status: 'draft',
-        lang_id: '',
-        link: '',
+        dimensions: "",
+        material: "",
+        status: "draft",
+        lang_id: "",
+        link: "",
     });
 
-    const submit = () => {
-        const formData = new FormData();
-        Object.keys(data).forEach(key => {
-            if (data[key] !== null && data[key] !== undefined) {
-                if (key === 'gallery' && Array.isArray(data[key])) {
-                    data[key].forEach((file, index) => {
-                        formData.append(`gallery[${index}]`, file);
-                    });
-                } else {
-                    formData.append(key, data[key]);
-                }
-            }
-        });
+    const quillModules = {
+        toolbar: [
+            [{ header: [1, 2, 3, 4, 5, 6, false] }],
+            [{ size: ["small", false, "large", "huge"] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ color: [] }, { background: [] }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ align: [] }],
+            ["link"],
+            ["clean"],
+        ],
+    };
 
-        post(route('user.exhibitions.store'), {
-            data: formData,
+    const quillFormats = [
+        "header",
+        "size",
+        "bold",
+        "italic",
+        "underline",
+        "strike",
+        "color",
+        "background",
+        "list",
+        "bullet",
+        "align",
+        "link",
+    ];
+
+    const currencyOptions = [
+        { value: "BDT", label: "BDT (৳)" },
+        { value: "USD", label: "USD ($)" },
+        { value: "EUR", label: "EUR (€)" },
+        { value: "GBP", label: "GBP (£)" },
+        { value: "SAR", label: "SAR (﷼)" },
+        { value: "AED", label: "AED (د.إ)" },
+    ];
+
+    const submit = () => {
+        post(route("user.exhibitions.store"), {
             forceFormData: true,
             onSuccess: () => {
-                message.success('Exhibition item created successfully');
+                message.success("Exhibition item created successfully. Waiting for admin approval.");
                 resetForm();
             },
             onError: () => {
-                message.error('Error creating exhibition item');
-            }
+                message.error("Please check form errors.");
+            },
         });
     };
 
     const resetForm = () => {
-        setData({
-            title: '',
-            description: '',
-            type: 'product',
-            image: null,
-            gallery: [],
-            document_file: null,
-            price: null,
-            currency: 'USD',
-            is_available: true,
-            is_featured: false,
-            dimensions: '',
-            material: '',
-            status: 'draft',
-            link: '',
-        });
+        reset();
         setMainImagePreview(null);
+        setSponsorImagePreview(null);
         setGalleryPreviews([]);
         setDocumentPreview(null);
     };
 
     const handleMainImageUpload = (file) => {
-        setData('image', file);
+        setData("image", file);
         setMainImagePreview(URL.createObjectURL(file));
+        return false;
+    };
+
+    const handleSponsorImageUpload = (file) => {
+        setData("sponsor_image", file);
+        setSponsorImagePreview(URL.createObjectURL(file));
         return false;
     };
 
     const handleGalleryUpload = (file) => {
         const newGallery = [...data.gallery, file];
-        setData('gallery', newGallery);
+        setData("gallery", newGallery);
         setGalleryPreviews([...galleryPreviews, URL.createObjectURL(file)]);
         return false;
     };
@@ -120,61 +138,87 @@ export default function Create({ auth, langs, member }) {
     const handleGalleryRemove = (index) => {
         const newGallery = data.gallery.filter((_, i) => i !== index);
         const newPreviews = galleryPreviews.filter((_, i) => i !== index);
-        setData('gallery', newGallery);
+
+        setData("gallery", newGallery);
         setGalleryPreviews(newPreviews);
     };
 
     const handleDocumentUpload = (file) => {
-        setData('document_file', file);
+        setData("document_file", file);
         setDocumentPreview(file);
         return false;
     };
 
     const handleDocumentRemove = () => {
-        setData('document_file', null);
+        setData("document_file", null);
         setDocumentPreview(null);
     };
-
-    const currencyOptions = [
-        { value: 'BDT', label: 'BDT (৳)' },
-        { value: 'USD', label: 'USD ($)' },
-        { value: 'EUR', label: 'EUR (€)' },
-        { value: 'GBP', label: 'GBP (£)' },
-        { value: 'SAR', label: 'SAR (﷼)' },
-        { value: 'AED', label: 'AED (د.إ)' },
-    ];
 
     return (
         <Authenticated user={auth.user} header="Create Exhibition Item">
             <Card>
                 <div className="mb-6">
-                    <Link href={route('user.exhibitions.index')}>
+                    <Link href={route("user.exhibitions.index")}>
                         <Button icon={<ArrowLeftOutlined />} type="text" className="mb-4">
                             Back to Exhibitions
                         </Button>
                     </Link>
+
                     <Title level={3}>
                         <EditOutlined className="mr-2" />
                         Create New Exhibition Item
                     </Title>
+
                     <Text type="secondary">
-                        Showcase products, documents, art, photography, or crafts
+                        Select an approved board first, then submit your exhibition for admin approval.
                     </Text>
                 </div>
+
+                {boards.length === 0 && (
+                    <Alert
+                        type="warning"
+                        showIcon
+                        className="mb-6"
+                        message="No approved board found"
+                        description="You need an approved board or approved access to another user's board before creating an exhibition."
+                    />
+                )}
 
                 <Form layout="vertical" onFinish={submit} className="max-w-4xl">
                     <Row gutter={24}>
                         <Col span={24}>
                             <Form.Item
+                                label="Exhibition Board"
+                                validateStatus={errors.exhibition_board_id ? "error" : ""}
+                                help={errors.exhibition_board_id}
+                                required
+                            >
+                                <Select
+                                    size="large"
+                                    placeholder="Select approved board"
+                                    value={data.exhibition_board_id || undefined}
+                                    onChange={(value) => setData("exhibition_board_id", value)}
+                                >
+                                    {boards.map((board) => (
+                                        <Option key={board.id} value={board.id}>
+                                            {board.title}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
                                 label="Item Type"
-                                validateStatus={errors.type ? 'error' : ''}
+                                validateStatus={errors.type ? "error" : ""}
                                 help={errors.type}
                                 required
                             >
                                 <Select
                                     size="large"
                                     value={data.type}
-                                    onChange={(value) => setData('type', value)}
+                                    onChange={(value) => setData("type", value)}
                                 >
                                     <Option value="product">
                                         <Space>
@@ -212,90 +256,100 @@ export default function Create({ auth, langs, member }) {
 
                         <Col span={24}>
                             <Form.Item
-                                label="Title"
-                                validateStatus={errors.title ? 'error' : ''}
+                                label="Title Text Editor"
+                                validateStatus={errors.title ? "error" : ""}
                                 help={errors.title}
                                 required
                             >
-                                <Input
-                                    size="large"
-                                    placeholder="Enter item title"
+                                <ReactQuill
+                                    theme="snow"
                                     value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
+                                    onChange={(value) => setData("title", value)}
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write title. You can use bold, font size, color..."
                                 />
                             </Form.Item>
                         </Col>
 
                         <Col span={24}>
                             <Form.Item
-                                label="Description"
-                                validateStatus={errors.description ? 'error' : ''}
+                                label="Description with Embedded Link"
+                                validateStatus={errors.description ? "error" : ""}
                                 help={errors.description}
+                                required
                             >
-                                <TextArea
-                                    rows={4}
-                                    placeholder="Describe your exhibition item..."
+                                <ReactQuill
+                                    theme="snow"
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    showCount
-                                    maxLength={2000}
+                                    onChange={(value) => setData("description", value)}
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write description. Select text and click link icon to embed a link."
                                 />
                             </Form.Item>
                         </Col>
 
-                        <Col span={24}>
-                            <Form.Item
-                                label="Select Language"
-                                validateStatus={errors.lang_id ? 'error' : ''}
-                                help={errors.lang_id}
-                            >
-                                <Select
-                                    size="large"
-                                    placeholder="Select Language"
-                                    value={data.lang_id}
-                                    onChange={(value) => setData('lang_id', value)}
-                                    suffixIcon={<FileTextOutlined />}
-                                >
-                                    {langs.map((lang) => (
-                                        <Option key={lang.id} value={lang.id}>
-                                            {lang.name} ({lang.code})
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={24}>
+                        <Col span={12}>
                             <Form.Item
                                 label="Main Image"
-                                validateStatus={errors.image ? 'error' : ''}
+                                validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
                                 required
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
-                                    accept="image/*"
                                     showUploadList={false}
-                                    maxCount={1}
+                                    accept="image/*"
                                 >
-                                    <Button icon={<UploadOutlined />}>
-                                        Select Main Image
-                                    </Button>
+                                    <Button icon={<UploadOutlined />}>Select Main Image</Button>
                                 </Upload>
 
                                 {mainImagePreview && (
                                     <div className="mt-4">
-                                        <Text strong className="block mb-2">Main Image Preview:</Text>
                                         <img
                                             src={mainImagePreview}
-                                            alt="Main preview"
+                                            alt="Main Preview"
                                             style={{
-                                                maxWidth: '300px',
-                                                maxHeight: '200px',
-                                                borderRadius: '8px',
-                                                objectFit: 'cover'
+                                                width: 220,
+                                                height: 140,
+                                                objectFit: "cover",
+                                                borderRadius: 8,
+                                                border: "1px solid #ddd",
                                             }}
-                                            className="border border-dashed border-gray-300"
+                                        />
+                                    </div>
+                                )}
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={12}>
+                            <Form.Item
+                                label="Sponsor Image"
+                                validateStatus={errors.sponsor_image ? "error" : ""}
+                                help={errors.sponsor_image}
+                            >
+                                <Upload
+                                    beforeUpload={handleSponsorImageUpload}
+                                    showUploadList={false}
+                                    accept="image/*"
+                                >
+                                    <Button icon={<UploadOutlined />}>Select Sponsor Image</Button>
+                                </Upload>
+
+                                {sponsorImagePreview && (
+                                    <div className="mt-4">
+                                        <img
+                                            src={sponsorImagePreview}
+                                            alt="Sponsor Preview"
+                                            style={{
+                                                width: 220,
+                                                height: 80,
+                                                objectFit: "contain",
+                                                borderRadius: 8,
+                                                border: "1px solid #ddd",
+                                                background: "#fff",
+                                            }}
                                         />
                                     </div>
                                 )}
@@ -305,252 +359,211 @@ export default function Create({ auth, langs, member }) {
                         <Col span={24}>
                             <Form.Item
                                 label="Gallery Images"
-                                validateStatus={errors.gallery ? 'error' : ''}
+                                validateStatus={errors.gallery ? "error" : ""}
                                 help={errors.gallery}
                             >
                                 <Upload
                                     beforeUpload={handleGalleryUpload}
-                                    accept="image/*"
                                     showUploadList={false}
+                                    accept="image/*"
                                     multiple
                                 >
-                                    <Button icon={<PlusOutlined />}>
-                                        Add to Gallery
-                                    </Button>
+                                    <Button icon={<UploadOutlined />}>Add Gallery Image</Button>
                                 </Upload>
 
                                 {galleryPreviews.length > 0 && (
-                                    <div className="mt-4">
-                                        <Text strong className="block mb-2">Gallery Previews:</Text>
-                                        <div className="flex flex-wrap gap-4">
-                                            {galleryPreviews.map((preview, index) => (
-                                                <div key={index} className="relative">
-                                                    <img
-                                                        src={preview}
-                                                        alt={`Gallery ${index + 1}`}
-                                                        style={{
-                                                            width: '100px',
-                                                            height: '100px',
-                                                            borderRadius: '8px',
-                                                            objectFit: 'cover'
-                                                        }}
-                                                        className="border border-dashed border-gray-300"
-                                                    />
-                                                    <Button
-                                                        type="link"
-                                                        danger
-                                                        size="small"
-                                                        onClick={() => handleGalleryRemove(index)}
-                                                        style={{ position: 'absolute', top: -8, right: -8 }}
-                                                    >
-                                                        ×
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <Text type="secondary" className="block mt-2">
-                                            {galleryPreviews.length} image(s) selected
-                                        </Text>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: 12,
+                                            flexWrap: "wrap",
+                                            marginTop: 16,
+                                        }}
+                                    >
+                                        {galleryPreviews.map((preview, index) => (
+                                            <div key={index} style={{ position: "relative" }}>
+                                                <img
+                                                    src={preview}
+                                                    alt={`Gallery ${index + 1}`}
+                                                    style={{
+                                                        width: 120,
+                                                        height: 90,
+                                                        objectFit: "cover",
+                                                        borderRadius: 8,
+                                                        border: "1px solid #ddd",
+                                                    }}
+                                                />
+                                                <Button
+                                                    size="small"
+                                                    danger
+                                                    onClick={() => handleGalleryRemove(index)}
+                                                    style={{
+                                                        position: "absolute",
+                                                        top: -8,
+                                                        right: -8,
+                                                    }}
+                                                >
+                                                    ×
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </Form.Item>
                         </Col>
-                        {member && (
-                            <>
-                                <Col span={12} style={{ marginBottom: 8 }}>
-                                    <div>
-                                        <code style={{
-                                            fontSize: '12px',
-                                            color: '#faad14',
-                                            fontWeight: 'bold',
-                                            textTransform: 'uppercase'
-                                        }}>
-                                            Premium
-                                        </code>
-                                    </div>
-                                    <Form.Item
-                                        label="Price"
-                                        validateStatus={errors.price ? 'error' : ''}
-                                        help={errors.price}
-                                    >
-                                        <InputNumber
-                                            style={{ width: '100%' }}
-                                            placeholder="0.00"
-                                            value={data.price}
-                                            onChange={(value) => setData('price', value)}
-                                            min={0}
-                                            step={0.01}
-                                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                                            disabled={!data.currency}
-                                            size="large"
-                                        />
-                                    </Form.Item>
-                                </Col>
-
-                                <Col span={12} style={{ marginBottom: 8 }}>
-                                    <div>
-                                        <code style={{
-                                            fontSize: '12px',
-                                            color: '#faad14',
-                                            fontWeight: 'bold',
-                                            textTransform: 'uppercase'
-                                        }}>
-                                            Premium
-                                        </code>
-                                    </div>
-                                    <Form.Item
-                                        label="Link (Url)"
-                                        validateStatus={errors.link ? 'error' : ''}
-                                        help={errors.link}
-                                    >
-                                        <Input
-                                            style={{ width: '100%' }}
-                                            placeholder="https://example.com"
-                                            value={data.link}
-                                            onChange={(e) => setData('link', e.target.value)}
-                                            size="large"
-                                        />
-                                    </Form.Item>
-                                </Col>
-
-                                <Col span={12} style={{ marginBottom: 8 }}>
-                                    <div>
-                                        <code style={{
-                                            fontSize: '12px',
-                                            color: '#faad14',
-                                            fontWeight: 'bold',
-                                            textTransform: 'uppercase'
-                                        }}>
-                                            Premium
-                                        </code>
-                                    </div>
-                                    <Form.Item
-                                        label="Currency"
-                                        validateStatus={errors.currency ? 'error' : ''}
-                                        help={errors.currency}
-                                    >
-                                        <Select
-                                            value={data.currency}
-                                            onChange={(value) => {
-                                                setData('currency', value);
-                                                if (!data.price) {
-                                                    setData('price', 0);
-                                                }
-                                            }}
-                                            placeholder="Select currency"
-                                            size="large"
-                                            showSearch
-                                            optionFilterProp="children"
-                                            filterOption={(input, option) =>
-                                                option.children.toLowerCase().includes(input.toLowerCase())
-                                            }
-                                        >
-                                            {currencyOptions.map(currency => (
-                                                <Option key={currency.value} value={currency.value}>
-                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <span style={{ marginRight: 8 }}>{currency.symbol}</span>
-                                                        {currency.label} ({currency.value})
-                                                    </div>
-                                                </Option>
-                                            ))}
-                                        </Select>
-                                    </Form.Item>
-                                </Col>
-                            </>
-                        )}
-
-                        {(data.type === 'art' || data.type === 'product') && (
-                            <>
-                                <Col span={12}>
-                                    <Form.Item
-                                        label="Dimensions"
-                                        validateStatus={errors.dimensions ? 'error' : ''}
-                                        help={errors.dimensions}
-                                    >
-                                        <Input
-                                            placeholder="e.g., 24x36 inches, 50x70 cm"
-                                            value={data.dimensions}
-                                            onChange={(e) => setData('dimensions', e.target.value)}
-                                        />
-                                    </Form.Item>
-                                </Col>
-                                <Col span={12}>
-                                    <Form.Item
-                                        label="Material"
-                                        validateStatus={errors.material ? 'error' : ''}
-                                        help={errors.material}
-                                    >
-                                        <Input
-                                            placeholder="e.g., Oil on canvas, Wood, Metal"
-                                            value={data.material}
-                                            onChange={(e) => setData('material', e.target.value)}
-                                        />
-                                    </Form.Item>
-                                </Col>
-                            </>
-                        )}
 
                         <Col span={24}>
-                            <Form.Item label="Document File (Optional)">
+                            <Form.Item
+                                label="Document File"
+                                validateStatus={errors.document_file ? "error" : ""}
+                                help={errors.document_file}
+                            >
                                 <Upload
                                     beforeUpload={handleDocumentUpload}
-                                    onRemove={handleDocumentRemove}
-                                    accept=".pdf,.doc,.docx,.ppt,.pptx"
                                     showUploadList={false}
-                                    maxCount={1}
+                                    accept=".pdf,.doc,.docx,.ppt,.pptx"
                                 >
-                                    <Button icon={<FileTextOutlined />}>
-                                        Select Document
-                                    </Button>
+                                    <Button icon={<UploadOutlined />}>Select Document</Button>
                                 </Upload>
 
                                 {documentPreview && (
-                                    <div className="mt-4">
-                                        <Text strong className="block mb-2">Document:</Text>
-                                        <div className="p-3 border rounded bg-gray-50">
-                                            <FileTextOutlined className="text-2xl text-blue-500 mr-2" />
+                                    <div className="mt-3">
+                                        <Space>
+                                            <FileTextOutlined />
                                             <Text>{documentPreview.name}</Text>
-                                        </div>
+                                            <Button size="small" danger onClick={handleDocumentRemove}>
+                                                Remove
+                                            </Button>
+                                        </Space>
                                     </div>
                                 )}
                             </Form.Item>
                         </Col>
 
-                        <Col span={8}>
-                            <Form.Item label="Available for Sale">
-                                <Switch
-                                    checked={data.is_available}
-                                    onChange={(checked) => setData('is_available', checked)}
-                                />
-                                <Text className="ml-2">
-                                    {data.is_available ? 'Available' : 'Not Available'}
-                                </Text>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={8}>
-                            <Form.Item label="Featured Item">
-                                <Switch
-                                    checked={data.is_featured}
-                                    onChange={(checked) => setData('is_featured', checked)}
-                                />
-                                <Text className="ml-2">
-                                    {data.is_featured ? 'Featured' : 'Regular'}
-                                </Text>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={8}>
+                        <Col xs={24} md={12}>
                             <Form.Item
-                                label="Status"
-                                validateStatus={errors.status ? 'error' : ''}
-                                help={errors.status}
-                                required
+                                label="Price"
+                                validateStatus={errors.price ? "error" : ""}
+                                help={errors.price}
+                            >
+                                <InputNumber
+                                    size="large"
+                                    min={0}
+                                    style={{ width: "100%" }}
+                                    value={data.price}
+                                    onChange={(value) => setData("price", value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Currency"
+                                validateStatus={errors.currency ? "error" : ""}
+                                help={errors.currency}
                             >
                                 <Select
+                                    size="large"
+                                    value={data.currency}
+                                    onChange={(value) => setData("currency", value)}
+                                >
+                                    {currencyOptions.map((currency) => (
+                                        <Option key={currency.value} value={currency.value}>
+                                            {currency.label}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Dimensions"
+                                validateStatus={errors.dimensions ? "error" : ""}
+                                help={errors.dimensions}
+                            >
+                                <Input
+                                    size="large"
+                                    value={data.dimensions}
+                                    onChange={(e) => setData("dimensions", e.target.value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Material"
+                                validateStatus={errors.material ? "error" : ""}
+                                help={errors.material}
+                            >
+                                <Input
+                                    size="large"
+                                    value={data.material}
+                                    onChange={(e) => setData("material", e.target.value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="External Link"
+                                validateStatus={errors.link ? "error" : ""}
+                                help={errors.link}
+                            >
+                                <Input
+                                    size="large"
+                                    placeholder="https://example.com"
+                                    value={data.link}
+                                    onChange={(e) => setData("link", e.target.value)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={12}>
+                            <Form.Item
+                                label="Language"
+                                validateStatus={errors.lang_id ? "error" : ""}
+                                help={errors.lang_id}
+                            >
+                                <Select
+                                    size="large"
+                                    allowClear
+                                    placeholder="Select language"
+                                    value={data.lang_id || undefined}
+                                    onChange={(value) => setData("lang_id", value || "")}
+                                >
+                                    {langs.map((lang) => (
+                                        <Option key={lang.id} value={lang.id}>
+                                            {lang.name}
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={8}>
+                            <Form.Item label="Available">
+                                <Switch
+                                    checked={data.is_available}
+                                    onChange={(checked) => setData("is_available", checked)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={8}>
+                            <Form.Item label="Featured">
+                                <Switch
+                                    checked={data.is_featured}
+                                    onChange={(checked) => setData("is_featured", checked)}
+                                />
+                            </Form.Item>
+                        </Col>
+
+                        <Col xs={24} md={8}>
+                            <Form.Item label="Status">
+                                <Select
                                     value={data.status}
-                                    onChange={(value) => setData('status', value)}
+                                    onChange={(value) => setData("status", value)}
                                 >
                                     <Option value="draft">Draft</Option>
                                     <Option value="published">Published</Option>
@@ -561,26 +574,21 @@ export default function Create({ auth, langs, member }) {
                         </Col>
                     </Row>
 
-                    <Form.Item className="mt-8">
-                        <Space size="middle">
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={processing}
-                                icon={<SaveOutlined />}
-                                size="large"
-                                style={{ minWidth: '160px' }}
-                            >
-                                Create Exhibition Item
-                            </Button>
+                    <div className="flex justify-end gap-3 mt-6">
+                        <Link href={route("user.exhibitions.index")}>
+                            <Button>Cancel</Button>
+                        </Link>
 
-                            <Link href={route('user.exhibitions.index')}>
-                                <Button size="large">
-                                    Cancel
-                                </Button>
-                            </Link>
-                        </Space>
-                    </Form.Item>
+                        <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={processing}
+                            icon={<SaveOutlined />}
+                            disabled={boards.length === 0}
+                        >
+                            Submit for Approval
+                        </Button>
+                    </div>
                 </Form>
             </Card>
         </Authenticated>

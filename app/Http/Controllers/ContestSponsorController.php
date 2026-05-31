@@ -65,7 +65,7 @@ class ContestSponsorController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'phone_alternative' => 'nullable|string|max:20',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'photo' => 'nullable|image',
             'website' => 'nullable|url|max:255',
         ]);
 
@@ -151,7 +151,7 @@ class ContestSponsorController extends Controller
             'name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'phone_alternative' => 'nullable|string|max:20',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'photo' => 'nullable|image',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 

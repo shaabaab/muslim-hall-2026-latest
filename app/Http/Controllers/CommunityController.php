@@ -43,7 +43,7 @@ class CommunityController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image',
             'status' => 'required|in:draft,published',
             'mood'     => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -66,7 +66,7 @@ class CommunityController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image',
             'status' => 'required|in:draft,published',
             'mood'     => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -123,7 +123,7 @@ class CommunityController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image',
             'status' => 'required|in:draft,published,archived',
             'remove_image' => 'nullable|boolean',
             'mood'     => 'nullable|string|max:255',

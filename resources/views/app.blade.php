@@ -64,10 +64,8 @@
         }
     </style>
 
-    {{-- <link rel="stylesheet" href="{{ asset('build/assets/app-CcL3Oijb.css') }}">
-    <link rel="stylesheet" href="{{ asset('build/assets/app-DlImZfA0.css') }}">
-    <script src="{{ asset('build/assets/app-Df9Kpw4R.js') }}" type="module"></script>
-    <script src="{{ asset('build/assets/addEventListener-FQVK5bYy.js') }}" type="module"></script> --}}
+    {{-- <link rel="stylesheet" href="{{ asset('build/assets/app-BMY4z_I5.css') }}">
+    <script src="{{ asset('build/assets/app-BaTRNeCQ.js') }}" type="module"></script> --}}
 
     @routes
     @viteReactRefresh

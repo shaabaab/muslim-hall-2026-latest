@@ -17,16 +17,16 @@ class PostStoreRequest extends FormRequest
             'title'            => 'required|string|max:255',
             'lang_id'          => 'nullable|exists:languages,id',
             'category_id'      => 'nullable|exists:categories,id',
-            'thumbnail'        => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'thumbnail'        => 'nullable|image',
             'featured_images'  => 'nullable|array',
-            'featured_images.*'=> 'image|mimes:jpeg,png,jpg,gif',
-            'sponsor'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'featured_images.*'=> 'image',
+            'sponsor'          => 'nullable|image',
             'content'          => 'nullable|string',
 
             // Large files are stored to temp then uploaded via queue job — no max limit here
             'pdf'   => 'nullable|file|mimes:pdf',
-            'video' => 'nullable|file|mimes:mp4,avi,mov,wmv,mkv,webm',
-            'audio' => 'nullable|file|mimes:mp3,wav,ogg,m4a,aac',
+            'video' => 'nullable|file',
+            'audio' => 'nullable|file',
 
             'video_url' => 'nullable|url',
             'status'    => 'nullable|in:0,1',

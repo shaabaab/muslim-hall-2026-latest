@@ -1,5 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import Authenticated from '@/Layouts/AuthenticatedLayout';
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import {
     Form,
     Input,
@@ -142,6 +144,34 @@ export default function Create({ auth, langs }) {
         { value: 'AED', label: 'AED (د.إ)' },
     ];
 
+    const quillModules = {
+        toolbar: [
+            [{ header: [1, 2, 3, 4, 5, 6, false] }],
+            [{ size: ["small", false, "large", "huge"] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ color: [] }, { background: [] }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ align: [] }],
+            ["link"],
+            ["clean"],
+        ],
+    };
+
+    const quillFormats = [
+        "header",
+        "size",
+        "bold",
+        "italic",
+        "underline",
+        "strike",
+        "color",
+        "background",
+        "list",
+        "bullet",
+        "align",
+        "link",
+    ];
+
     return (
         <Authenticated user={auth.user} header="Create Exhibition Item">
             <Card>
@@ -210,33 +240,35 @@ export default function Create({ auth, langs }) {
 
                         <Col span={24}>
                             <Form.Item
-                                label="Title"
-                                validateStatus={errors.title ? 'error' : ''}
+                                label="Title Text Editor"
+                                validateStatus={errors.title ? "error" : ""}
                                 help={errors.title}
                                 required
                             >
-                                <Input
-                                    size="large"
-                                    placeholder="Enter item title"
+                                <ReactQuill
+                                    theme="snow"
                                     value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
+                                    onChange={(value) => setData("title", value)}
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write title. You can use bold, font size, color..."
                                 />
                             </Form.Item>
                         </Col>
 
                         <Col span={24}>
                             <Form.Item
-                                label="Description"
-                                validateStatus={errors.description ? 'error' : ''}
+                                label="Description Text Editor"
+                                validateStatus={errors.description ? "error" : ""}
                                 help={errors.description}
                             >
-                                <TextArea
-                                    rows={4}
-                                    placeholder="Describe your exhibition item..."
+                                <ReactQuill
+                                    theme="snow"
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    showCount
-                                    maxLength={2000}
+                                    onChange={(value) => setData("description", value)}
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write description. You can use bold, font size, color, list, alignment and link..."
                                 />
                             </Form.Item>
                         </Col>

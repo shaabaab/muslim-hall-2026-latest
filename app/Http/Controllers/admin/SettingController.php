@@ -50,13 +50,13 @@ class SettingController extends Controller
         }
 
         $validated = $request->validate([
-            'header_title'  => 'required|string|max:255',
-            'footer_title'  => 'required|string|max:255',
-            'footer_content'=> 'required|string',
-            'favicon'       => 'nullable|image|mimes:jpg,jpeg,png,ico|max:1024',
-            'header_logo'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'footer_logo'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'lang_id'       => 'nullable|integer',
+            'header_title' => 'required|string|max:255',
+            'footer_title' => 'required|string|max:255',
+            'footer_content' => 'required|string',
+            'favicon' => 'nullable|image',
+            'header_logo' => 'nullable|image',
+            'footer_logo' => 'nullable|image',
+            'lang_id' => 'nullable|integer',
         ]);
 
         // Upload via ServiceClass (S3)
@@ -94,13 +94,13 @@ class SettingController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'header_title'   => 'required|string|max:255',
-            'footer_title'   => 'required|string|max:255',
+            'header_title' => 'required|string|max:255',
+            'footer_title' => 'required|string|max:255',
             'footer_content' => 'required|string',
-            'favicon'        => 'nullable|image|mimes:jpg,jpeg,png,ico|max:1024',
-            'header_logo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'footer_logo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'lang_id'        => 'nullable|integer',
+            'favicon' => 'nullable|image',
+            'header_logo' => 'nullable|image',
+            'footer_logo' => 'nullable|image',
+            'lang_id' => 'nullable|integer',
         ]);
 
         $setting = Setting::findOrFail($id);
@@ -165,17 +165,19 @@ class SettingController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
+
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('subtitle', 'like', '%' . $search . '%');
+                    ->orWhere('subtitle', 'like', '%' . $search . '%');
             });
         }
 
         $sliders = $query->paginate($request->get('per_page', 10))->withQueryString();
 
-        // Optional URL mapping
         $sliders->getCollection()->transform(function ($s) {
             $s->image_url = ServiceClass::getFileUrl($s->image_path);
+            $s->is_full_width_image = (bool) $s->is_full_width_image;
+
             return $s;
         });
 
@@ -197,28 +199,28 @@ class SettingController extends Controller
     public function sliderStore(Request $request)
     {
         logger()->info('Slider Store Request Data:', $request->all());
-        // dd($request->all());
 
         $validator = \Validator::make($request->all(), [
-            'title'      => 'required|string|max:255',
-            'subtitle'   => 'nullable|string|max:255',
-            'image_path' => 'required|image|mimes:jpg,jpeg,png|max:2550',
+            'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'image_path' => 'required|image',
             'background_color' => 'nullable|string|max:20',
-            'link'       => 'nullable|string|max:255',
-            'lang_id'    => 'nullable',
+            'is_full_width_image' => 'nullable|boolean',
+            'link' => 'nullable|string|max:255',
+            'lang_id' => 'nullable',
         ]);
 
         if ($validator->fails()) {
             logger()->error('Slider Validation Failed', [
                 'errors' => $validator->errors()->toArray(),
-                'data' => $request->all()
+                'data' => $request->all(),
             ]);
+
             return back()->withErrors($validator)->withInput();
         }
 
         $validated = $validator->validated();
 
-        // Upload via ServiceClass
         $imagePath = ServiceClass::uploadFile($request->file('image_path'), 'slider');
 
         if (!$imagePath) {
@@ -226,15 +228,17 @@ class SettingController extends Controller
         }
 
         SliderSection::create([
-            'title'      => $validated['title'],
-            'subtitle'   => $validated['subtitle'] ?? null,
+            'title' => $validated['title'],
+            'subtitle' => $validated['subtitle'] ?? null,
             'image_path' => $imagePath,
             'background_color' => $validated['background_color'] ?? null,
-            'link'       => $validated['link'] ?? config('app.url'),
-            'lang_id'    => $validated['lang_id'] ?? null,
+            'is_full_width_image' => $request->boolean('is_full_width_image'),
+            'link' => $validated['link'] ?? config('app.url'),
+            'lang_id' => $validated['lang_id'] ?? null,
         ]);
 
-        return to_route('admin.settings.slider.index')->with('success', 'Slider section created successfully.');
+        return to_route('admin.settings.slider.index')
+            ->with('success', 'Slider section created successfully.');
     }
 
     public function sliderEdit($id)
@@ -243,6 +247,7 @@ class SettingController extends Controller
         $slider = SliderSection::findOrFail($id);
 
         $slider->image_url = ServiceClass::getFileUrl($slider->image_path);
+        $slider->is_full_width_image = (bool) $slider->is_full_width_image;
 
         return Inertia::render('Settings/SliderSection/Edit', [
             'slider' => $slider,
@@ -253,17 +258,17 @@ class SettingController extends Controller
     public function sliderUpdate(Request $request, $id)
     {
         $validated = $request->validate([
-            'title'      => 'required|string|max:255',
-            'subtitle'   => 'nullable|string|max:255',
-            'image_path' => 'nullable|image|mimes:jpg,jpeg,png|max:2550',
+            'title' => 'required|string|max:255',
+            'subtitle' => 'nullable|string|max:255',
+            'image_path' => 'nullable|image',
             'background_color' => 'nullable|string|max:20',
-            'link'       => 'nullable|url|max:255',
-            'lang_id'    => 'nullable|integer',
+            'is_full_width_image' => 'nullable|boolean',
+            'link' => 'nullable|string|max:255',
+            'lang_id' => 'nullable|integer',
         ]);
 
         $slider = SliderSection::findOrFail($id);
 
-        // Replace image via ServiceClass
         if ($request->hasFile('image_path')) {
             $validated['image_path'] = ServiceClass::updateFile(
                 $request->file('image_path'),
@@ -275,24 +280,29 @@ class SettingController extends Controller
         }
 
         $slider->update([
-            'title'      => $validated['title'],
-            'subtitle'   => $validated['subtitle'] ?? null,
+            'title' => $validated['title'],
+            'subtitle' => $validated['subtitle'] ?? null,
             'image_path' => $validated['image_path'] ?? $slider->image_path,
             'background_color' => $validated['background_color'] ?? $slider->background_color,
-            'link'       => $validated['link'] ?? $slider->link,
-            'lang_id'    => $validated['lang_id'] ?? $slider->lang_id,
+            'is_full_width_image' => $request->boolean('is_full_width_image'),
+            'link' => $validated['link'] ?? $slider->link,
+            'lang_id' => $validated['lang_id'] ?? $slider->lang_id,
         ]);
 
-        return to_route('admin.settings.slider.index')->with('success', 'Slider section updated successfully.');
+        return to_route('admin.settings.slider.index')
+            ->with('success', 'Slider section updated successfully.');
     }
 
     public function sliderDestroy($id)
     {
         $slider = SliderSection::findOrFail($id);
+
         ServiceClass::deleteFile($slider->image_path);
+
         $slider->delete();
 
-        return to_route('admin.settings.slider.index')->with('success', 'Slider section deleted successfully.');
+        return to_route('admin.settings.slider.index')
+            ->with('success', 'Slider section deleted successfully.');
     }
 
     // =========================
@@ -328,10 +338,10 @@ class SettingController extends Controller
             'phone_one' => 'required|string|max:20',
             'phone_two' => 'nullable|string|max:20',
             'email_two' => 'nullable|email|max:255',
-            'city'      => 'nullable|string|max:100',
-            'street'    => 'nullable|string|max:255',
-            'state'     => 'nullable|string|max:100',
-            'zip'       => 'nullable|string|max:50',
+            'city' => 'nullable|string|max:100',
+            'street' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:100',
+            'zip' => 'nullable|string|max:50',
         ]);
 
         ContactInfo::create([
@@ -341,9 +351,9 @@ class SettingController extends Controller
             'email_two' => $validated['email_two'] ?? null,
             'address' => [
                 'street' => $validated['street'] ?? null,
-                'state'  => $validated['state'] ?? null,
-                'city'   => $validated['city'] ?? null,
-                'zip'    => $validated['zip'] ?? null,
+                'state' => $validated['state'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'zip' => $validated['zip'] ?? null,
             ],
         ]);
 
@@ -363,9 +373,9 @@ class SettingController extends Controller
                 'email_two' => $contactinfo->email_two,
                 'address' => [
                     'street' => $contactinfo->address['street'] ?? null,
-                    'city'   => $contactinfo->address['city'] ?? null,
-                    'state'  => $contactinfo->address['state'] ?? null,
-                    'zip'    => $contactinfo->address['zip'] ?? null,
+                    'city' => $contactinfo->address['city'] ?? null,
+                    'state' => $contactinfo->address['state'] ?? null,
+                    'zip' => $contactinfo->address['zip'] ?? null,
                 ],
             ],
         ]);
@@ -378,10 +388,10 @@ class SettingController extends Controller
             'phone_two' => 'nullable|string|max:20',
             'email_one' => 'required|email|max:255',
             'email_two' => 'nullable|email|max:255',
-            'street'    => 'nullable|string|max:255',
-            'city'      => 'nullable|string|max:100',
-            'state'     => 'nullable|string|max:100',
-            'zip'       => 'nullable|string|max:50',
+            'street' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'zip' => 'nullable|string|max:50',
         ]);
 
         $contactInfo = ContactInfo::findOrFail($id);
@@ -393,9 +403,9 @@ class SettingController extends Controller
             'email_two' => $validated['email_two'] ?? null,
             'address' => [
                 'street' => $validated['street'] ?? null,
-                'city'   => $validated['city'] ?? null,
-                'state'  => $validated['state'] ?? null,
-                'zip'    => $validated['zip'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'state' => $validated['state'] ?? null,
+                'zip' => $validated['zip'] ?? null,
             ],
         ]);
 
@@ -492,7 +502,7 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
-            'url'  => 'required|url|max:255',
+            'url' => 'required|url|max:255',
             'icon' => 'nullable|string|max:255',
         ]);
 
@@ -514,7 +524,7 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
-            'url'  => 'required|url|max:255',
+            'url' => 'required|url|max:255',
             'icon' => 'nullable|string|max:255',
         ]);
 

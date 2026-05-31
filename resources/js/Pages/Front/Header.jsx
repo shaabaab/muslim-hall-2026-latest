@@ -40,6 +40,12 @@ export default function Header() {
                 restricted: true,
             },
             {
+                href: "/exhibition-details",
+                label: "Exhibition",
+                icon: "fa-images",
+                restricted: true,
+            },
+            {
                 href: "/contests-details",
                 label: "Contest",
                 icon: "fa-trophy",
@@ -320,7 +326,7 @@ export default function Header() {
 
                             <div className="modal-buttons">
                                 <Link
-                                    href="/register"
+                                    href="/login"
                                     className="modal-btn-primary"
                                     onClick={closeRestrictedModal}
                                 >
@@ -567,7 +573,6 @@ export default function Header() {
                                                 {l.label}
                                                 <span className="member-badge">
                                                     <i className="fas fa-crown"></i>
-                                                    Member
                                                 </span>
                                             </a>
                                         ) : (

@@ -31,6 +31,8 @@ use App\Http\Controllers\DashboardController as UserDashboardController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\user\CommunityController as UserCommunityController;
+
+use App\Http\Controllers\user\ExhibitionBoardController as UserExhibitionBoardController;
 use App\Http\Controllers\user\ExhibitionController as UserExhibitionController;
 
 
@@ -43,12 +45,36 @@ Route::get('/dashboard', [UserDashboardController::class, 'index'])
 Route::get('/auth/google', [SocialiteController::class, 'googleLogin'])->name('google.login');
 Route::get('/auth/google/callback', [SocialiteController::class, 'googleCallback'])->name('google.callback');
 
- Route::post('/user/subscriptions/pay', [UserSubscriptionController::class, 'payWithSslCommerz'])->name('user.subscriptions.pay');
-        Route::post('/sslcommerz/subscription/success', [UserSubscriptionController::class, 'sslSuccess'])->name('sslcommerz.subscription.success');
-        Route::post('/sslcommerz/subscription/fail', [UserSubscriptionController::class, 'sslFail'])->name('sslcommerz.subscription.fail');
-        Route::post('/sslcommerz/subscription/cancel', [UserSubscriptionController::class, 'sslCancel'])->name('sslcommerz.subscription.cancel');
-        Route::post('/sslcommerz/subscription/ipn', [UserSubscriptionController::class, 'sslIpn'])->name('sslcommerz.subscription.ipn');
+Route::post('/user/subscriptions/pay', [UserSubscriptionController::class, 'payWithSslCommerz'])->name('user.subscriptions.pay');
+Route::post('/sslcommerz/subscription/success', [UserSubscriptionController::class, 'sslSuccess'])->name('sslcommerz.subscription.success');
+Route::post('/sslcommerz/subscription/fail', [UserSubscriptionController::class, 'sslFail'])->name('sslcommerz.subscription.fail');
+Route::post('/sslcommerz/subscription/cancel', [UserSubscriptionController::class, 'sslCancel'])->name('sslcommerz.subscription.cancel');
+Route::post('/sslcommerz/subscription/ipn', [UserSubscriptionController::class, 'sslIpn'])->name('sslcommerz.subscription.ipn');
 
+
+Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
+    Route::resource('exhibition-boards', UserExhibitionBoardController::class)
+        ->parameters([
+            'exhibition-boards' => 'board',
+        ]);
+
+    Route::post('/exhibition-boards/{board}/request-access', [UserExhibitionBoardController::class, 'requestAccess'])
+        ->name('exhibition-boards.request-access');
+
+    Route::post('/exhibition-board-member-requests/{memberRequest}/owner-approve', [UserExhibitionBoardController::class, 'approveMemberRequest'])
+        ->name('exhibition-board-member-requests.owner-approve');
+
+    Route::post('/exhibition-board-member-requests/{memberRequest}/owner-reject', [UserExhibitionBoardController::class, 'rejectMemberRequest'])
+        ->name('exhibition-board-member-requests.owner-reject');
+
+    Route::resource('exhibitions', UserExhibitionController::class);
+
+    Route::post('/exhibitions/{exhibition}/toggle-featured', [UserExhibitionController::class, 'toggleFeatured'])
+        ->name('exhibitions.toggle-featured');
+
+    Route::post('/exhibitions/{exhibition}/mark-sold', [UserExhibitionController::class, 'markAsSold'])
+        ->name('exhibitions.mark-sold');
+});
 
 // 🧑‍💻 User Routes
 Route::middleware(['auth', 'verified'])
@@ -57,7 +83,7 @@ Route::middleware(['auth', 'verified'])
     ->group(function () {
 
 
-       
+
         //profile routes can be here 
     
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -132,7 +158,6 @@ Route::middleware(['auth', 'verified'])
 
         // 🔸 Community & Exhibition Management
         Route::resource('communities', UserCommunityController::class);
-        Route::resource('exhibitions', UserExhibitionController::class);
 
         // 🔸 Post Management
         Route::resource('posts', PostManageUserController::class)->names([
@@ -178,11 +203,30 @@ Route::prefix('islamic-zone')->name('islamic-zone.')->group(function () {
 
 // 🔸 Exhibition (User Auth Required)
 Route::prefix('exhibition')->name('exhibition.')->group(function () {
-    Route::post('/comments', [ExhibitionCommentController::class, 'store'])->name('comments.store');
-    Route::put('/comments/{comment}', [ExhibitionCommentController::class, 'update'])->name('comments.update');
-    Route::delete('/comments/{comment}', [ExhibitionCommentController::class, 'destroy'])->name('comments.destroy');
-    Route::post('/reactions/toggle', [ExhibitionReactionController::class, 'toggle'])->name('reactions.toggle');
+    Route::post('/comments', [ExhibitionCommentController::class, 'store'])
+        ->middleware('auth')
+        ->name('comments.store');
+
+    Route::post('/comments/reply', [ExhibitionCommentController::class, 'reply'])
+        ->middleware('auth')
+        ->name('comments.reply');
+
+    Route::put('/comments/{comment}', [ExhibitionCommentController::class, 'update'])
+        ->middleware('auth')
+        ->name('comments.update');
+
+    Route::delete('/comments/{comment}', [ExhibitionCommentController::class, 'destroy'])
+        ->middleware('auth')
+        ->name('comments.destroy');
+
+    Route::post('/reactions/toggle', [ExhibitionReactionController::class, 'toggle'])
+        ->middleware('auth')
+        ->name('reactions.toggle');
+
+    Route::get('/reactions/{exhibitionId}', [ExhibitionReactionController::class, 'getReactions'])
+        ->name('reactions.get');
 });
+
 // 🌍 Public Reaction Data (No Auth Needed)
 Route::get('/islamic-zone/reactions/{islamicZone}', [IslamicReactionController::class, 'getReactions'])
     ->name('islamic-zone.reactions.get');

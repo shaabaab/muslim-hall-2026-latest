@@ -1,6 +1,6 @@
 import FrontAuthenticatedLayout from "@/Layouts/FrontAuthenticatedLayout";
 import dayjs from "dayjs";
-
+import axios from "axios";
 import {
     BarChart,
     Bar,
@@ -50,7 +50,103 @@ import { Link, router } from "@inertiajs/react";
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
+const stripHtml = (html) => {
+    if (!html) return "";
+    return String(html).replace(/<[^>]*>/g, "");
+};
 
+const getCommonImageUrl = (path) => {
+    if (!path) {
+        return null;
+    }
+
+    if (String(path).startsWith("http")) {
+        return path;
+    }
+
+    if (String(path).startsWith("/storage")) {
+        return path;
+    }
+
+    if (String(path).startsWith("/")) {
+        return path;
+    }
+
+    return `/storage/${path}`;
+};
+
+const getCardDateParts = (date) => {
+    if (!date) {
+        return {
+            day: "",
+            month: "",
+        };
+    }
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+        return {
+            day: "",
+            month: "",
+        };
+    }
+
+    return {
+        day: parsedDate.toLocaleDateString("en-US", {
+            day: "2-digit",
+        }),
+        month: parsedDate
+            .toLocaleDateString("en-US", {
+                month: "short",
+            })
+            .toUpperCase(),
+    };
+};
+
+const getShortText = (text, length = 45) => {
+    const cleanText = stripHtml(text || "");
+
+    if (!cleanText) {
+        return "...";
+    }
+
+    return cleanText.length > length
+        ? `${cleanText.slice(0, length)}...`
+        : cleanText;
+};
+
+const getPostImage = (post) => {
+    if (post.images?.length > 0 && post.images[0]?.image) {
+        return getS3PublicUrl(post.images[0].image);
+    }
+
+    return null;
+};
+
+const getCommunityImage = (item) => {
+    return item.image ? getCommonImageUrl(item.image) : null;
+};
+
+const getExhibitionImage = (item) => {
+    return item.image ? getCommonImageUrl(item.image) : null;
+};
+
+const getContestImage = (contest) => {
+    if (contest.contest?.image) {
+        return getCommonImageUrl(contest.contest.image);
+    }
+
+    if (contest.contest?.thumbnail) {
+        return getCommonImageUrl(contest.contest.thumbnail);
+    }
+
+    if (contest.image) {
+        return getCommonImageUrl(contest.image);
+    }
+
+    return null;
+};
 export default function Dashboard({
     user,
     auth,
@@ -90,25 +186,61 @@ export default function Dashboard({
             return;
         }
 
-        router.post(
-            route("user.subscriptions.pay"),
-            {
-                plan_id: defaultPlan.id,
-            },
-            {
-                preserveScroll: true,
-                onStart: () => {
-                    message.loading("Redirecting to SSLCommerz payment gateway...", 1);
+        message.loading("Redirecting to SSLCommerz payment gateway...", 1);
+
+        axios
+            .post(
+                route("user.subscriptions.pay"),
+                {
+                    plan_id: defaultPlan.id,
                 },
-                onError: (errors) => {
+                {
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                }
+            )
+            .then((response) => {
+                console.log("SSLCommerz Response:", response.data);
+
+                if (response.data?.status === true && response.data?.redirect_url) {
+                    window.location.href = response.data.redirect_url;
+                    return;
+                }
+
+                message.error(
+                    response.data?.message || "SSLCommerz redirect URL not found."
+                );
+            })
+            .catch((error) => {
+                console.log("SSLCommerz Error:", error);
+                console.log("SSLCommerz Error Response:", error.response?.data);
+
+                if (error.response?.status === 419) {
+                    message.error("Session expired. Please refresh and login again.");
+                    return;
+                }
+
+                if (error.response?.status === 401) {
+                    message.error("Please login first.");
+                    return;
+                }
+
+                if (error.response?.status === 422) {
                     message.error(
-                        errors.plan_id ||
-                            errors.error ||
-                            "Failed to start SSLCommerz payment"
+                        error.response?.data?.message ||
+                        error.response?.data?.errors?.plan_id?.[0] ||
+                        "Validation failed."
                     );
-                },
-            },
-        );
+                    return;
+                }
+
+                message.error(
+                    error.response?.data?.message ||
+                    "Failed to start SSLCommerz payment."
+                );
+            });
     };
 
     let percent = 0;
@@ -375,8 +507,8 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                                (window.location.href =
-                                    route("user.posts.index"))
+                            (window.location.href =
+                                route("user.posts.index"))
                             }
                         >
                             <Statistic
@@ -399,9 +531,9 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                                (window.location.href = route(
-                                    "user.communities.index",
-                                ))
+                            (window.location.href = route(
+                                "user.communities.index",
+                            ))
                             }
                         >
                             <Statistic
@@ -421,9 +553,9 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                                (window.location.href = route(
-                                    "user.contests.index",
-                                ))
+                            (window.location.href = route(
+                                "user.contests.index",
+                            ))
                             }
                         >
                             <Statistic
@@ -443,9 +575,9 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                                (window.location.href = route(
-                                    "user.exhibitions.index",
-                                ))
+                            (window.location.href = route(
+                                "user.exhibitions.index",
+                            ))
                             }
                         >
                             <Statistic
@@ -627,108 +759,76 @@ export default function Dashboard({
                                     }
                                     key="posts"
                                 >
-                                    {posts.length > 0 ? (
-                                        <List
-                                            dataSource={posts}
-                                            renderItem={(post) => (
-                                                <List.Item>
-                                                    <List.Item.Meta
-                                                        avatar={
-                                                            post.images
-                                                                ?.length > 0 ? (
-                                                                <img
-                                                                    src={getS3PublicUrl(
-                                                                        post
-                                                                            .images[0]
-                                                                            ?.image,
-                                                                    )}
-                                                                    alt={
-                                                                        post.title
-                                                                    }
-                                                                    style={{
-                                                                        width: 90,
-                                                                        height: 60,
-                                                                        objectFit:
-                                                                            "cover",
-                                                                        borderRadius: 4,
-                                                                        marginTop:
-                                                                            "8px",
+                                    <div className="profile-card-section">
+                                        {posts.length > 0 ? (
+                                            <div className="profile-card-grid">
+                                                {posts.map((post) => {
+                                                    const dateParts = getCardDateParts(
+                                                        post.created_at,
+                                                    );
+
+                                                    const imageUrl = getPostImage(post);
+
+                                                    return (
+                                                        <Link
+                                                            key={post.id}
+                                                            target="_blank"
+                                                            href={route(
+                                                                "post-detail",
+                                                                post.slug,
+                                                            )}
+                                                            className="profile-same-card"
+                                                        >
+                                                            <div className="profile-same-date">
+                                                                <strong>{dateParts.day}</strong>
+                                                                <span>{dateParts.month}</span>
+                                                            </div>
+
+                                                            <div className="profile-same-image-wrap">
+                                                                {imageUrl ? (
+                                                                    <img
+                                                                        src={imageUrl}
+                                                                        alt={stripHtml(
+                                                                            post.title,
+                                                                        )}
+                                                                        className="profile-same-image"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="profile-same-placeholder">
+                                                                        <i className="fas fa-newspaper"></i>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="profile-same-content">
+                                                                <h3
+                                                                    className="profile-same-title"
+                                                                    dangerouslySetInnerHTML={{
+                                                                        __html:
+                                                                            post.title ||
+                                                                            "Untitled",
                                                                     }}
                                                                 />
-                                                            ) : (
-                                                                <div
-                                                                    style={{
-                                                                        width: 90,
-                                                                        height: 60,
-                                                                        background:
-                                                                            "#f0f0f0",
-                                                                        borderRadius: 4,
-                                                                        display:
-                                                                            "flex",
-                                                                        alignItems:
-                                                                            "center",
-                                                                        justifyContent:
-                                                                            "center",
-                                                                    }}
-                                                                >
-                                                                    <Text type="secondary">
-                                                                        No Image
-                                                                    </Text>
-                                                                </div>
-                                                            )
-                                                        }
-                                                        title={
-                                                            <Link
-                                                                target="_blank"
-                                                                href={route(
-                                                                    "post-detail",
-                                                                    post.slug,
-                                                                )}
-                                                            >
-                                                                {post.title}
-                                                            </Link>
-                                                        }
-                                                        description={
-                                                            <>
-                                                                <Text type="secondary">
-                                                                    {new Date(
-                                                                        post.created_at,
-                                                                    ).toLocaleDateString(
-                                                                        "en-US",
-                                                                        {
-                                                                            year: "numeric",
-                                                                            month: "long",
-                                                                            day: "numeric",
-                                                                        },
-                                                                    )}
-                                                                </Text>
 
-                                                                <br />
-
-                                                                <Text>
+                                                                <p className="profile-same-desc">
                                                                     Likes:{" "}
                                                                     {post.user_reaction_count ||
                                                                         0}{" "}
                                                                     • Comments:{" "}
                                                                     {post.all_comments_count ||
                                                                         0}
-                                                                </Text>
-                                                            </>
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    ) : (
-                                        <div
-                                            style={{
-                                                textAlign: "center",
-                                                padding: "20px",
-                                            }}
-                                        >
-                                            <Text>No Posts Available</Text>
-                                        </div>
-                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="profile-same-empty">
+                                                <Text>No Posts Available</Text>
+                                            </div>
+                                        )}
+                                    </div>
                                 </TabPane>
 
                                 <TabPane
@@ -740,68 +840,77 @@ export default function Dashboard({
                                     }
                                     key="contests"
                                 >
-                                    <div style={{ padding: "20px" }}>
+                                    <div className="profile-card-section">
                                         {contests.length > 0 ? (
-                                            <List
-                                                dataSource={contests}
-                                                renderItem={(contest) => (
-                                                    <List.Item>
-                                                        <List.Item.Meta
-                                                            title={
-                                                                <Link>
-                                                                    {
-                                                                        contest
-                                                                            .contest
-                                                                            .title
-                                                                    }
-                                                                </Link>
-                                                            }
-                                                            description={
-                                                                <div>
-                                                                    <Text type="secondary">
-                                                                        Participated
-                                                                        on:{" "}
-                                                                        {new Date(
-                                                                            contest.created_at,
-                                                                        ).toLocaleDateString(
-                                                                            "en-US",
-                                                                            {
-                                                                                year: "numeric",
-                                                                                month: "long",
-                                                                                day: "numeric",
-                                                                            },
+                                            <div className="profile-card-grid">
+                                                {contests.map((contest) => {
+                                                    const dateParts = getCardDateParts(
+                                                        contest.created_at,
+                                                    );
+
+                                                    const imageUrl = getContestImage(contest);
+
+                                                    const contestTitle =
+                                                        contest.contest?.title ||
+                                                        contest.title ||
+                                                        "Untitled";
+
+                                                    const winnerText = contest.winner
+                                                        ? `${contest.winner.position} Positions`
+                                                        : "Participated";
+
+                                                    return (
+                                                        <div
+                                                            key={contest.id}
+                                                            className="profile-same-card"
+                                                        >
+                                                            <div className="profile-same-date">
+                                                                <strong>{dateParts.day}</strong>
+                                                                <span>{dateParts.month}</span>
+                                                            </div>
+
+                                                            <div className="profile-same-image-wrap">
+                                                                {imageUrl ? (
+                                                                    <img
+                                                                        src={imageUrl}
+                                                                        alt={stripHtml(
+                                                                            contestTitle,
                                                                         )}
-                                                                    </Text>
+                                                                        className="profile-same-image"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="profile-same-placeholder">
+                                                                        <i className="fas fa-trophy"></i>
+                                                                    </div>
+                                                                )}
+                                                            </div>
 
-                                                                    <br />
+                                                            <div className="profile-same-content">
+                                                                <h3
+                                                                    className="profile-same-title"
+                                                                    dangerouslySetInnerHTML={{
+                                                                        __html: contestTitle,
+                                                                    }}
+                                                                />
 
-                                                                    <Text>
-                                                                        Winner
-                                                                        Positions:{" "}
-                                                                        {contest.winner
-                                                                            ? `${contest.winner.position}  Positions` ||
-                                                                              0
-                                                                            : "Participated"}{" "}
-                                                                        •
-                                                                        Review:{" "}
-                                                                        {contest.review
-                                                                            ? contest
-                                                                                  .review
-                                                                                  .length ||
-                                                                              0
-                                                                            : 0}
-                                                                    </Text>
-                                                                </div>
-                                                            }
-                                                        />
-                                                    </List.Item>
-                                                )}
-                                            />
+                                                                <p className="profile-same-desc">
+                                                                    {winnerText} • Review:{" "}
+                                                                    {contest.review
+                                                                        ? contest.review
+                                                                            .length || 0
+                                                                        : 0}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         ) : (
-                                            <Text>
-                                                Contest participations will be
-                                                displayed here
-                                            </Text>
+                                            <div className="profile-same-empty">
+                                                <Text>
+                                                    Contest participations will be displayed here
+                                                </Text>
+                                            </div>
                                         )}
                                     </div>
                                 </TabPane>
@@ -816,128 +925,89 @@ export default function Dashboard({
                                     key="community"
                                 >
                                     {isMember && (
-                                        <div style={{ padding: "20px" }}>
+                                        <div className="profile-card-section">
                                             {communitys.length > 0 ? (
-                                                <List
-                                                    dataSource={communitys}
-                                                    renderItem={(item) => (
-                                                        <List.Item>
-                                                            <List.Item.Meta
-                                                                avatar={
-                                                                    item.image !=
-                                                                    null ? (
+                                                <div className="profile-card-grid">
+                                                    {communitys.map((item) => {
+                                                        const dateParts = getCardDateParts(
+                                                            item.created_at,
+                                                        );
+
+                                                        const imageUrl =
+                                                            getCommunityImage(item);
+
+                                                        return (
+                                                            <Link
+                                                                key={item.id}
+                                                                href={route(
+                                                                    "community-details",
+                                                                    item.id,
+                                                                )}
+                                                                className="profile-same-card"
+                                                            >
+                                                                <div className="profile-same-date">
+                                                                    <strong>
+                                                                        {dateParts.day}
+                                                                    </strong>
+                                                                    <span>
+                                                                        {dateParts.month}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="profile-same-image-wrap">
+                                                                    {imageUrl ? (
                                                                         <img
-                                                                            src={`/storage/${item.image}`}
-                                                                            alt={
-                                                                                item.title
-                                                                            }
-                                                                            style={{
-                                                                                width: 90,
-                                                                                height: 60,
-                                                                                objectFit:
-                                                                                    "cover",
-                                                                                borderRadius: 4,
-                                                                                marginTop:
-                                                                                    "8px",
-                                                                            }}
+                                                                            src={imageUrl}
+                                                                            alt={stripHtml(
+                                                                                item.title,
+                                                                            )}
+                                                                            className="profile-same-image"
                                                                         />
                                                                     ) : (
-                                                                        <div
-                                                                            style={{
-                                                                                width: 90,
-                                                                                height: 60,
-                                                                                background:
-                                                                                    "#f0f0f0",
-                                                                                borderRadius: 4,
-                                                                                display:
-                                                                                    "flex",
-                                                                                alignItems:
-                                                                                    "center",
-                                                                                justifyContent:
-                                                                                    "center",
-                                                                            }}
-                                                                        >
-                                                                            <Text type="secondary">
-                                                                                No
-                                                                                Image
-                                                                            </Text>
+                                                                        <div className="profile-same-placeholder">
+                                                                            <i className="fas fa-users"></i>
                                                                         </div>
-                                                                    )
-                                                                }
-                                                                title={
-                                                                    <Link
-                                                                        href={route(
-                                                                            "community-details",
-                                                                            item.id,
-                                                                        )}
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="profile-same-content">
+                                                                    <h3
+                                                                        className="profile-same-title"
+                                                                        dangerouslySetInnerHTML={{
+                                                                            __html:
+                                                                                item.title ||
+                                                                                "Untitled",
+                                                                        }}
+                                                                    />
+
+                                                                    <p className="profile-same-desc">
+                                                                        Total Comment:{" "}
+                                                                        {item.comments_count ||
+                                                                            0}{" "}
+                                                                        • Total Reaction:{" "}
+                                                                        {item.likes_count || 0}
+                                                                    </p>
+
+                                                                    <p
+                                                                        className={`profile-same-status ${item.status ==
+                                                                            "published"
+                                                                            ? "published"
+                                                                            : "unpublished"
+                                                                            }`}
                                                                     >
-                                                                        {
-                                                                            item.title
-                                                                        }
-                                                                    </Link>
-                                                                }
-                                                                description={
-                                                                    <div>
-                                                                        <Text type="secondary">
-                                                                            Participated
-                                                                            on:{" "}
-                                                                            {new Date(
-                                                                                item.created_at,
-                                                                            ).toLocaleDateString(
-                                                                                "en-US",
-                                                                                {
-                                                                                    year: "numeric",
-                                                                                    month: "long",
-                                                                                    day: "numeric",
-                                                                                },
-                                                                            )}
-                                                                        </Text>
-
-                                                                        <br />
-
-                                                                        <Text>
-                                                                            Total
-                                                                            Comment:{" "}
-                                                                            <strong>
-                                                                                {
-                                                                                    item.comments_count
-                                                                                }
-                                                                            </strong>{" "}
-                                                                            •
-                                                                            Total
-                                                                            Reaction:{" "}
-                                                                            <strong>
-                                                                                {
-                                                                                    item.likes_count
-                                                                                }
-                                                                            </strong>{" "}
-                                                                            •
-                                                                            Status:{" "}
-                                                                            <strong
-                                                                                style={{
-                                                                                    color:
-                                                                                        item.status ==
-                                                                                        "published"
-                                                                                            ? "green"
-                                                                                            : "red",
-                                                                                }}
-                                                                            >
-                                                                                {
-                                                                                    item.status
-                                                                                }
-                                                                            </strong>
-                                                                        </Text>
-                                                                    </div>
-                                                                }
-                                                            />
-                                                        </List.Item>
-                                                    )}
-                                                />
+                                                                        {item.status}
+                                                                    </p>
+                                                                </div>
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
                                             ) : (
-                                                <Text>
-                                                    Community content will be
-                                                    displayed here
-                                                </Text>
+                                                <div className="profile-same-empty">
+                                                    <Text>
+                                                        Community content will be displayed here
+                                                    </Text>
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -950,8 +1020,8 @@ export default function Dashboard({
                                             }}
                                         >
                                             <Text>
-                                                You need to be a member to view
-                                                community content.
+                                                You need to be a member to view community
+                                                content.
                                             </Text>
                                         </div>
                                     )}
@@ -967,120 +1037,91 @@ export default function Dashboard({
                                     key="exhibition"
                                 >
                                     {isMember && (
-                                        <div style={{ padding: "20px" }}>
+                                        <div className="profile-card-section">
                                             {exhibitions.length > 0 ? (
-                                                <List
-                                                    dataSource={exhibitions}
-                                                    renderItem={(item) => (
-                                                        <List.Item>
-                                                            <List.Item.Meta
-                                                                avatar={
-                                                                    item.image !=
-                                                                    null ? (
+                                                <div className="profile-card-grid">
+                                                    {exhibitions.map((item) => {
+                                                        const dateParts = getCardDateParts(
+                                                            item.created_at,
+                                                        );
+
+                                                        const imageUrl =
+                                                            getExhibitionImage(item);
+
+                                                        return (
+                                                            <Link
+                                                                key={item.id}
+                                                                href={route(
+                                                                    "exhibition-detail",
+                                                                    item.id,
+                                                                )}
+                                                                className="profile-same-card"
+                                                            >
+                                                                <div className="profile-same-date">
+                                                                    <strong>
+                                                                        {dateParts.day}
+                                                                    </strong>
+                                                                    <span>
+                                                                        {dateParts.month}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="profile-same-image-wrap">
+                                                                    {imageUrl ? (
                                                                         <img
-                                                                            src={`/storage/${item.image}`}
-                                                                            alt={
-                                                                                item.title
-                                                                            }
-                                                                            style={{
-                                                                                width: 90,
-                                                                                height: 60,
-                                                                                objectFit:
-                                                                                    "cover",
-                                                                                borderRadius: 4,
-                                                                                marginTop:
-                                                                                    "8px",
-                                                                            }}
+                                                                            src={imageUrl}
+                                                                            alt={stripHtml(
+                                                                                item.title,
+                                                                            )}
+                                                                            className="profile-same-image"
                                                                         />
                                                                     ) : (
-                                                                        <div
-                                                                            style={{
-                                                                                width: 90,
-                                                                                height: 60,
-                                                                                background:
-                                                                                    "#f0f0f0",
-                                                                                borderRadius: 4,
-                                                                                display:
-                                                                                    "flex",
-                                                                                alignItems:
-                                                                                    "center",
-                                                                                justifyContent:
-                                                                                    "center",
-                                                                            }}
-                                                                        >
-                                                                            <Text type="secondary">
-                                                                                No
-                                                                                Image
-                                                                            </Text>
+                                                                        <div className="profile-same-placeholder">
+                                                                            <i className="fas fa-mosque"></i>
                                                                         </div>
-                                                                    )
-                                                                }
-                                                                title={
-                                                                    <Link
-                                                                        href={route(
-                                                                            "exhibition-detail",
-                                                                            item.id,
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="profile-same-content">
+                                                                    <h3
+                                                                        className="profile-same-title"
+                                                                        dangerouslySetInnerHTML={{
+                                                                            __html:
+                                                                                item.title ||
+                                                                                "Untitled",
+                                                                        }}
+                                                                    />
+
+                                                                    <p className="profile-same-desc">
+                                                                        {getShortText(
+                                                                            item.short_description ||
+                                                                            item.description ||
+                                                                            item.excerpt ||
+                                                                            "",
                                                                         )}
+                                                                    </p>
+
+                                                                    <p
+                                                                        className={`profile-same-status ${item.status ==
+                                                                            "published"
+                                                                            ? "published"
+                                                                            : "unpublished"
+                                                                            }`}
                                                                     >
-                                                                        {
-                                                                            item.title
-                                                                        }
-                                                                    </Link>
-                                                                }
-                                                                description={
-                                                                    <div>
-                                                                        <Text type="secondary">
-                                                                            Participated
-                                                                            on:{" "}
-                                                                            {new Date(
-                                                                                item.created_at,
-                                                                            ).toLocaleDateString(
-                                                                                "en-US",
-                                                                                {
-                                                                                    year: "numeric",
-                                                                                    month: "long",
-                                                                                    day: "numeric",
-                                                                                },
-                                                                            )}
-                                                                        </Text>
-
-                                                                        <br />
-
-                                                                        <Text>
-                                                                            Type:{" "}
-                                                                            <strong>
-                                                                                {
-                                                                                    item.type
-                                                                                }
-                                                                            </strong>{" "}
-                                                                            •
-                                                                            Status:{" "}
-                                                                            <strong
-                                                                                style={{
-                                                                                    color:
-                                                                                        item.status ==
-                                                                                        "published"
-                                                                                            ? "green"
-                                                                                            : "red",
-                                                                                }}
-                                                                            >
-                                                                                {
-                                                                                    item.status
-                                                                                }
-                                                                            </strong>
-                                                                        </Text>
-                                                                    </div>
-                                                                }
-                                                            />
-                                                        </List.Item>
-                                                    )}
-                                                />
+                                                                        {item.status}
+                                                                    </p>
+                                                                </div>
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
                                             ) : (
-                                                <Text>
-                                                    Not Available exhibition
-                                                    content will be displayed
-                                                    here
-                                                </Text>
+                                                <div className="profile-same-empty">
+                                                    <Text>
+                                                        Not Available exhibition content will be
+                                                        displayed here
+                                                    </Text>
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -1093,13 +1134,229 @@ export default function Dashboard({
                                             }}
                                         >
                                             <Text>
-                                                You need to be a member to view
-                                                exhibition content.
+                                                You need to be a member to view exhibition
+                                                content.
                                             </Text>
                                         </div>
                                     )}
                                 </TabPane>
                             </Tabs>
+
+                            <style jsx>{`
+                .profile-card-section {
+                    padding: 20px 0;
+                    width: 100%;
+                }
+
+                .profile-card-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 28px;
+                    width: 100%;
+                }
+
+                .profile-same-card {
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    min-height: 420px;
+                    background: #ffffff;
+                    border: 1.5px solid #55b86d;
+                    border-radius: 14px;
+                    overflow: hidden;
+                    text-decoration: none;
+                    color: inherit;
+                    transition:
+                        transform 0.18s ease,
+                        box-shadow 0.18s ease;
+                }
+
+                .profile-same-card:hover {
+                    color: inherit;
+                    transform: translateY(-2px);
+                    box-shadow: 0 12px 26px rgba(27, 122, 58, 0.13);
+                }
+
+                .profile-same-date {
+                    position: absolute;
+                    top: 0;
+                    left: 34px;
+                    width: 64px;
+                    min-height: 74px;
+                    background: #ffffff;
+                    border-radius: 0 0 18px 18px;
+                    z-index: 3;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+                }
+
+                .profile-same-date strong {
+                    display: block;
+                    color: #14833a;
+                    font-size: 24px;
+                    line-height: 1;
+                    font-weight: 900;
+                    letter-spacing: -0.5px;
+                }
+
+                .profile-same-date span {
+                    display: block;
+                    color: #8c8c8c;
+                    font-size: 14px;
+                    line-height: 1;
+                    font-weight: 800;
+                    margin-top: 8px;
+                }
+
+                .profile-same-image-wrap {
+                    height: 260px;
+                    width: 100%;
+                    background: #ffffff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                }
+
+                .profile-same-image {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                }
+
+                .profile-same-placeholder {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #ffffff;
+                }
+
+                .profile-same-placeholder i {
+                    font-size: 150px;
+                    line-height: 1;
+                    color: #0f842e;
+                }
+
+                .profile-same-content {
+                    flex: 1;
+                    padding: 28px 20px 22px;
+                    background: #ffffff;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                }
+
+                .profile-same-title {
+                    margin: 0 0 22px;
+                    color: #171717;
+                    font-size: 24px;
+                    line-height: 1.2;
+                    font-weight: 900;
+                    letter-spacing: -0.7px;
+                    word-break: break-word;
+                }
+
+                .profile-same-title * {
+                    margin: 0;
+                    color: inherit;
+                    font-size: inherit;
+                    line-height: inherit;
+                    font-weight: inherit;
+                    letter-spacing: inherit;
+                }
+
+                .profile-same-desc {
+                    margin: 0;
+                    color: #777777;
+                    font-size: 18px;
+                    line-height: 1.45;
+                    font-weight: 500;
+                    word-break: break-word;
+                }
+
+                .profile-same-status {
+                    margin: 12px 0 0;
+                    font-size: 14px;
+                    line-height: 1;
+                    font-weight: 800;
+                    text-transform: capitalize;
+                }
+
+                .profile-same-status.published {
+                    color: green;
+                }
+
+                .profile-same-status.unpublished {
+                    color: red;
+                }
+
+                .profile-same-empty {
+                    text-align: center;
+                    padding: 20px;
+                }
+
+                @media (max-width: 1199px) {
+                    .profile-card-grid {
+                        grid-template-columns: repeat(3, minmax(0, 1fr));
+                        gap: 24px;
+                    }
+                }
+
+                @media (max-width: 991px) {
+                    .profile-card-grid {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 22px;
+                    }
+
+                    .profile-same-card {
+                        min-height: 400px;
+                    }
+
+                    .profile-same-image-wrap {
+                        height: 245px;
+                    }
+                }
+
+                @media (max-width: 575px) {
+                    .profile-card-section {
+                        padding: 16px 0;
+                    }
+
+                    .profile-card-grid {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+
+                    .profile-same-card {
+                        min-height: 410px;
+                        border-radius: 14px;
+                    }
+
+                    .profile-same-image-wrap {
+                        height: 260px;
+                    }
+
+                    .profile-same-date {
+                        left: 32px;
+                        width: 64px;
+                        min-height: 74px;
+                    }
+
+                    .profile-same-title {
+                        font-size: 24px;
+                    }
+
+                    .profile-same-desc {
+                        font-size: 18px;
+                    }
+                }
+            `}</style>
                         </Card>
                     </Col>
                 </Row>

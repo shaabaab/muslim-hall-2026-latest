@@ -39,6 +39,8 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostCommentController;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\admin\ExhibitionBoardController as AdminExhibitionBoardController;
+use App\Http\Controllers\ExhibitionController as AdminExhibitionController;
 use Inertia\Inertia;
 
 Route::get('/local-s3-proxy/{path}', function ($path) {
@@ -81,7 +83,8 @@ Route::get('/book-detail/{id}', [FrontendController::class, 'book'])->name('book
 Route::get('/exhibition-detail/{id}', [FrontendController::class, 'exhibition'])->name('exhibition-detail');
 Route::get('/contests-details', [FrontendController::class, 'contests'])->name('contest-details');
 Route::get('/contests-details/{id}', [FrontendController::class, 'contestSingle'])->name('contest-details.single');
-
+Route::get('/exhibition-board/{id}', [FrontendController::class, 'exhibitionBoard'])
+    ->name('exhibition-board.show');
 Route::middleware(['auth'])->group(function () {
     Route::post('/upload/chunk', [ChunkUploadController::class, 'upload'])->name('upload.chunk');
     // Returns a fresh CSRF token — called after long chunk uploads so the final form POST doesn't 419
@@ -234,6 +237,27 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     ]);
 
     Route::resource('exhibitions', ExhibitionController::class);
+
+    Route::resource('exhibition-boards', AdminExhibitionBoardController::class)
+        ->only(['index', 'show', 'destroy']);
+
+    Route::post('/exhibition-boards/{board}/approve', [AdminExhibitionBoardController::class, 'approve'])
+        ->name('exhibition-boards.approve');
+
+    Route::post('/exhibition-boards/{board}/reject', [AdminExhibitionBoardController::class, 'reject'])
+        ->name('exhibition-boards.reject');
+
+    Route::post('/exhibition-board-member-requests/{memberRequest}/admin-approve', [AdminExhibitionBoardController::class, 'approveMemberRequest'])
+        ->name('exhibition-board-member-requests.admin-approve');
+
+    Route::post('/exhibition-board-member-requests/{memberRequest}/admin-reject', [AdminExhibitionBoardController::class, 'rejectMemberRequest'])
+        ->name('exhibition-board-member-requests.admin-reject');
+
+    Route::post('/exhibitions/{exhibition}/approve', [AdminExhibitionController::class, 'approve'])
+        ->name('exhibitions.approve');
+
+    Route::post('/exhibitions/{exhibition}/reject', [AdminExhibitionController::class, 'reject'])
+        ->name('exhibitions.reject');
     Route::resource('islamic-zone', IslamicZoneController::class);
     Route::get('/islamic-zone/download/{id}', [IslamicZoneController::class, 'download'])->name('islamic-zone.download');
     Route::resource('books', BookController::class);
@@ -485,7 +509,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return response()->json([
             'processing' => $remaining > 0,
-            'remaining'  => $remaining,
+            'remaining' => $remaining,
         ]);
     })->name('api.posts.media-status');
 

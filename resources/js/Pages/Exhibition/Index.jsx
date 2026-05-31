@@ -1,6 +1,5 @@
 import { Link, router } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { getS3PublicUrl } from "@/Utils/s3Helpers";
 import {
     Table,
     Button,
@@ -17,7 +16,8 @@ import {
     Col,
     Badge,
     Image,
-    Switch,
+    Modal,
+    Form,
 } from "antd";
 import {
     PlusOutlined,
@@ -25,7 +25,6 @@ import {
     DeleteOutlined,
     EyeOutlined,
     SearchOutlined,
-    FilterOutlined,
     ReloadOutlined,
     ShoppingOutlined,
     FileTextOutlined,
@@ -34,15 +33,56 @@ import {
     CameraOutlined,
     StarOutlined,
     StarFilled,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    ClockCircleOutlined,
 } from "@ant-design/icons";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { Search } = Input;
+const { TextArea } = Input;
 
-export default function Index({ exhibitions, filters, auth }) {
+export default function Index({ exhibitions, filters = {}, auth }) {
+    const [rejectModalOpen, setRejectModalOpen] = useState(false);
+    const [selectedExhibition, setSelectedExhibition] = useState(null);
+    const [rejectNote, setRejectNote] = useState("");
+
+    const getImageUrl = (record) => {
+        if (!record) {
+            return "/placeholder-image.jpg";
+        }
+
+        if (record.image_url) {
+            return record.image_url;
+        }
+
+        if (record.image) {
+            if (
+                record.image.startsWith("http://") ||
+                record.image.startsWith("https://")
+            ) {
+                return record.image;
+            }
+
+            if (record.image.startsWith("/storage/")) {
+                return record.image;
+            }
+
+            if (record.image.startsWith("storage/")) {
+                return `/${record.image}`;
+            }
+
+            return `/storage/${record.image}`;
+        }
+
+        return "/placeholder-image.jpg";
+    };
+
     const handleDelete = (id) => {
         router.delete(route("admin.exhibitions.destroy", id), {
+            preserveScroll: true,
             onSuccess: () => {
                 message.success("Exhibition item deleted successfully");
             },
@@ -60,7 +100,10 @@ export default function Index({ exhibitions, filters, auth }) {
                 search: value,
                 page: 1,
             },
-            { preserveState: true, replace: true },
+            {
+                preserveState: true,
+                replace: true,
+            }
         );
     };
 
@@ -72,7 +115,10 @@ export default function Index({ exhibitions, filters, auth }) {
                 [key]: value,
                 page: 1,
             },
-            { preserveState: true, replace: true },
+            {
+                preserveState: true,
+                replace: true,
+            }
         );
     };
 
@@ -80,7 +126,61 @@ export default function Index({ exhibitions, filters, auth }) {
         router.get(
             route("admin.exhibitions.index"),
             {},
-            { preserveState: true, replace: true },
+            {
+                preserveState: true,
+                replace: true,
+            }
+        );
+    };
+
+    const approveExhibition = (id) => {
+        router.post(
+            route("admin.exhibitions.approve", id),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    message.success("Exhibition approved successfully");
+                },
+                onError: () => {
+                    message.error("Failed to approve exhibition");
+                },
+            }
+        );
+    };
+
+    const openRejectModal = (record) => {
+        setSelectedExhibition(record);
+        setRejectNote("");
+        setRejectModalOpen(true);
+    };
+
+    const closeRejectModal = () => {
+        setSelectedExhibition(null);
+        setRejectNote("");
+        setRejectModalOpen(false);
+    };
+
+    const submitRejectExhibition = () => {
+        if (!selectedExhibition) {
+            return;
+        }
+
+        router.post(
+            route("admin.exhibitions.reject", selectedExhibition.id),
+            {
+                admin_note: rejectNote,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    message.success("Exhibition rejected successfully");
+                    closeRejectModal();
+                },
+                onError: () => {
+                    message.error("Failed to reject exhibition");
+                },
+            }
         );
     };
 
@@ -92,10 +192,13 @@ export default function Index({ exhibitions, filters, auth }) {
                 preserveScroll: true,
                 onSuccess: () => {
                     message.success(
-                        `Item ${currentStatus ? "unfeatured" : "featured"} successfully`,
+                        `Item ${currentStatus ? "unfeatured" : "featured"} successfully`
                     );
                 },
-            },
+                onError: () => {
+                    message.error("Failed to update featured status");
+                },
+            }
         );
     };
 
@@ -108,7 +211,10 @@ export default function Index({ exhibitions, filters, auth }) {
                 onSuccess: () => {
                     message.success("Item marked as sold");
                 },
-            },
+                onError: () => {
+                    message.error("Failed to mark item as sold");
+                },
+            }
         );
     };
 
@@ -161,6 +267,40 @@ export default function Index({ exhibitions, filters, auth }) {
         }
     };
 
+    const getApprovalColor = (status) => {
+        switch (status) {
+            case "approved":
+                return "green";
+            case "rejected":
+                return "red";
+            case "pending":
+                return "orange";
+            default:
+                return "default";
+        }
+    };
+
+    const getApprovalIcon = (status) => {
+        switch (status) {
+            case "approved":
+                return <CheckCircleOutlined />;
+            case "rejected":
+                return <CloseCircleOutlined />;
+            case "pending":
+                return <ClockCircleOutlined />;
+            default:
+                return <ClockCircleOutlined />;
+        }
+    };
+
+    const stripHtml = (html) => {
+        if (!html) {
+            return "";
+        }
+
+        return String(html).replace(/<[^>]*>/g, "");
+    };
+
     const columns = [
         {
             title: "ID",
@@ -176,26 +316,34 @@ export default function Index({ exhibitions, filters, auth }) {
                     <Image
                         width={50}
                         height={50}
-                        src={getS3PublicUrl(
-                            record.image
-                                ? `${record.image}`
-                                : "/placeholder-image.jpg",
-                        )}
-                        alt={record.title}
-                        style={{ borderRadius: "4px", objectFit: "cover" }}
+                        src={getImageUrl(record)}
+                        alt={stripHtml(record.title) || "Item"}
+                        style={{
+                            borderRadius: "4px",
+                            objectFit: "cover",
+                        }}
                         fallback="/placeholder-image.jpg"
                     />
+
                     <Space direction="vertical" size={2}>
-                        <Space>
-                            <Text strong>{record.title}</Text>
+                        <Space align="start">
+                            <Text strong>
+                                <span
+                                    dangerouslySetInnerHTML={{
+                                        __html: record.title || "",
+                                    }}
+                                />
+                            </Text>
+
                             {record.is_featured && (
                                 <Tooltip title="Featured">
                                     <StarFilled style={{ color: "#faad14" }} />
                                 </Tooltip>
                             )}
                         </Space>
+
                         <Text type="secondary" className="text-xs">
-                            by {record.user?.name}
+                            by {record.user?.name || "Unknown"}
                         </Text>
                     </Space>
                 </Space>
@@ -209,7 +357,9 @@ export default function Index({ exhibitions, filters, auth }) {
                 <Space>
                     {getTypeIcon(type)}
                     <Tag color={getTypeColor(type)}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                        {type
+                            ? type.charAt(0).toUpperCase() + type.slice(1)
+                            : "N/A"}
                     </Tag>
                 </Space>
             ),
@@ -231,13 +381,12 @@ export default function Index({ exhibitions, filters, auth }) {
             title: "Availability",
             key: "availability",
             render: (_, record) => (
-                <Space>
+                <Space direction="vertical" size={2}>
                     <Badge
                         status={record.is_available ? "success" : "default"}
-                        text={
-                            record.is_available ? "Available" : "Not Available"
-                        }
+                        text={record.is_available ? "Available" : "Not Available"}
                     />
+
                     {record.status === "sold" && <Tag color="red">Sold</Tag>}
                 </Space>
             ),
@@ -248,10 +397,11 @@ export default function Index({ exhibitions, filters, auth }) {
             render: (_, record) => (
                 <Space direction="vertical" size={0}>
                     <Text type="secondary" className="text-xs">
-                        👁️ {record.views} views
+                        👁️ {record.views || 0} views
                     </Text>
+
                     <Text type="secondary" className="text-xs">
-                        ❤️ {record.likes_count} likes
+                        ❤️ {record.likes_count || 0} likes
                     </Text>
                 </Space>
             ),
@@ -262,23 +412,71 @@ export default function Index({ exhibitions, filters, auth }) {
             key: "status",
             render: (status) => (
                 <Tag color={getStatusColor(status)}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    {status
+                        ? status.charAt(0).toUpperCase() + status.slice(1)
+                        : "N/A"}
+                </Tag>
+            ),
+        },
+        {
+            title: "Approval",
+            dataIndex: "approval_status",
+            key: "approval_status",
+            render: (status) => (
+                <Tag color={getApprovalColor(status)} icon={getApprovalIcon(status)}>
+                    {status ? status.toUpperCase() : "PENDING"}
                 </Tag>
             ),
         },
         {
             title: "Actions",
             key: "actions",
-            width: 200,
+            width: 150,
+            fixed: "right",
             render: (_, record) => (
-                <Space size="small">
+                <Space size="small" wrap>
+                    <Tooltip title="View">
+                        <Link href={route("admin.exhibitions.show", record.id)}>
+                            <Button icon={<EyeOutlined />} size="small" />
+                        </Link>
+                    </Tooltip>
+
                     <Tooltip title="Edit">
                         <Link href={route("admin.exhibitions.edit", record.id)}>
                             <Button icon={<EditOutlined />} size="small" />
                         </Link>
                     </Tooltip>
 
-                    <Tooltip
+                    {record.approval_status !== "approved" && (
+                        <Popconfirm
+                            title="Approve this exhibition?"
+                            description="After approval, this item will be approved."
+                            okText="Approve"
+                            cancelText="Cancel"
+                            onConfirm={() => approveExhibition(record.id)}
+                        >
+                            <Tooltip title="Approve">
+                                <Button
+                                    icon={<CheckCircleOutlined />}
+                                    size="small"
+                                    type="primary"
+                                />
+                            </Tooltip>
+                        </Popconfirm>
+                    )}
+
+                    {record.approval_status !== "rejected" && (
+                        <Tooltip title="Reject">
+                            <Button
+                                icon={<CloseCircleOutlined />}
+                                size="small"
+                                danger
+                                onClick={() => openRejectModal(record)}
+                            />
+                        </Tooltip>
+                    )}
+
+                    {/* <Tooltip
                         title={record.is_featured ? "Unfeature" : "Feature"}
                     >
                         <Button
@@ -307,7 +505,7 @@ export default function Index({ exhibitions, filters, auth }) {
                                 Sold
                             </Button>
                         </Tooltip>
-                    )}
+                    )} */}
 
                     <Popconfirm
                         title="Delete Item"
@@ -329,17 +527,25 @@ export default function Index({ exhibitions, filters, auth }) {
         },
     ];
 
-    // Calculate statistics
+    const exhibitionData = exhibitions?.data || [];
+
     const stats = {
-        total: exhibitions.total,
-        published: exhibitions.data.filter(
-            (item) => item.status === "published",
+        total: exhibitions?.total || 0,
+        published: exhibitionData.filter((item) => item.status === "published").length,
+        sold: exhibitionData.filter((item) => item.status === "sold").length,
+        featured: exhibitionData.filter((item) => item.is_featured).length,
+        pending: exhibitionData.filter(
+            (item) => !item.approval_status || item.approval_status === "pending"
         ).length,
-        sold: exhibitions.data.filter((item) => item.status === "sold").length,
-        featured: exhibitions.data.filter((item) => item.is_featured).length,
-        totalValue: exhibitions.data.reduce(
+        approved: exhibitionData.filter(
+            (item) => item.approval_status === "approved"
+        ).length,
+        rejected: exhibitionData.filter(
+            (item) => item.approval_status === "rejected"
+        ).length,
+        totalValue: exhibitionData.reduce(
             (sum, item) => sum + (parseFloat(item.price) || 0),
-            0,
+            0
         ),
     };
 
@@ -351,11 +557,12 @@ export default function Index({ exhibitions, filters, auth }) {
                         <Title level={2} className="mb-2">
                             Exhibition Gallery
                         </Title>
+
                         <Text type="secondary">
-                            Manage products, art, photography, documents and
-                            crafts
+                            Manage products, art, photography, documents and crafts
                         </Text>
                     </div>
+
                     <Link href={route("admin.exhibitions.create")}>
                         <Button
                             type="primary"
@@ -367,7 +574,6 @@ export default function Index({ exhibitions, filters, auth }) {
                     </Link>
                 </div>
 
-                {/* Statistics */}
                 <Row gutter={16} className="mb-6">
                     <Col xs={24} sm={6}>
                         <Card size="small" className="text-center">
@@ -380,54 +586,57 @@ export default function Index({ exhibitions, filters, auth }) {
                             <Text type="secondary">Total Items</Text>
                         </Card>
                     </Col>
+
                     <Col xs={24} sm={6}>
                         <Card size="small" className="text-center">
                             <Title
                                 level={3}
                                 style={{ color: "#52c41a", margin: 0 }}
                             >
-                                {stats.published}
+                                {stats.approved}
                             </Title>
-                            <Text type="secondary">Published</Text>
+                            <Text type="secondary">Approved</Text>
                         </Card>
                     </Col>
+
                     <Col xs={24} sm={6}>
                         <Card size="small" className="text-center">
                             <Title
                                 level={3}
                                 style={{ color: "#faad14", margin: 0 }}
                             >
-                                {stats.featured}
+                                {stats.pending}
                             </Title>
-                            <Text type="secondary">Featured</Text>
+                            <Text type="secondary">Pending</Text>
                         </Card>
                     </Col>
+
                     <Col xs={24} sm={6}>
                         <Card size="small" className="text-center">
                             <Title
                                 level={3}
                                 style={{ color: "#ff4d4f", margin: 0 }}
                             >
-                                {stats.sold}
+                                {stats.rejected}
                             </Title>
-                            <Text type="secondary">Sold</Text>
+                            <Text type="secondary">Rejected</Text>
                         </Card>
                     </Col>
                 </Row>
 
-                {/* Filters */}
                 <Card size="small" className="mb-4">
                     <Row gutter={[16, 16]} align="middle">
-                        <Col xs={24} sm={12} md={8}>
+                        <Col xs={24} sm={12} md={7}>
                             <Search
                                 placeholder="Search by title, description..."
                                 allowClear
                                 enterButton={<SearchOutlined />}
                                 size="large"
-                                defaultValue={filters.search}
+                                defaultValue={filters.search || ""}
                                 onSearch={handleSearch}
                             />
                         </Col>
+
                         <Col xs={12} sm={6} md={4}>
                             <Select
                                 placeholder="Type"
@@ -435,9 +644,7 @@ export default function Index({ exhibitions, filters, auth }) {
                                 size="large"
                                 style={{ width: "100%" }}
                                 value={filters.type || null}
-                                onChange={(value) =>
-                                    handleFilter("type", value)
-                                }
+                                onChange={(value) => handleFilter("type", value)}
                             >
                                 <Option value="product">Product</Option>
                                 <Option value="document">Document</Option>
@@ -446,6 +653,7 @@ export default function Index({ exhibitions, filters, auth }) {
                                 <Option value="craft">Craft</Option>
                             </Select>
                         </Col>
+
                         <Col xs={12} sm={6} md={4}>
                             <Select
                                 placeholder="Status"
@@ -453,9 +661,7 @@ export default function Index({ exhibitions, filters, auth }) {
                                 size="large"
                                 style={{ width: "100%" }}
                                 value={filters.status || null}
-                                onChange={(value) =>
-                                    handleFilter("status", value)
-                                }
+                                onChange={(value) => handleFilter("status", value)}
                             >
                                 <Option value="published">Published</Option>
                                 <Option value="draft">Draft</Option>
@@ -463,7 +669,25 @@ export default function Index({ exhibitions, filters, auth }) {
                                 <Option value="archived">Archived</Option>
                             </Select>
                         </Col>
-                        <Col xs={24} sm={12} md={4}>
+
+                        <Col xs={12} sm={6} md={4}>
+                            <Select
+                                placeholder="Approval"
+                                allowClear
+                                size="large"
+                                style={{ width: "100%" }}
+                                value={filters.approval_status || null}
+                                onChange={(value) =>
+                                    handleFilter("approval_status", value)
+                                }
+                            >
+                                <Option value="pending">Pending</Option>
+                                <Option value="approved">Approved</Option>
+                                <Option value="rejected">Rejected</Option>
+                            </Select>
+                        </Col>
+
+                        <Col xs={12} sm={6} md={3}>
                             <Button
                                 icon={<ReloadOutlined />}
                                 size="large"
@@ -476,25 +700,67 @@ export default function Index({ exhibitions, filters, auth }) {
                     </Row>
                 </Card>
 
-                {/* Table */}
                 <Table
+                    rowKey="id"
                     columns={columns}
-                    dataSource={exhibitions.data.map((item) => ({
+                    dataSource={exhibitionData.map((item) => ({
                         ...item,
                         key: item.id,
                     }))}
                     pagination={{
-                        current: exhibitions.current_page,
-                        pageSize: exhibitions.per_page,
-                        total: exhibitions.total,
+                        current: exhibitions?.current_page || 1,
+                        pageSize: exhibitions?.per_page || 12,
+                        total: exhibitions?.total || 0,
                         showSizeChanger: true,
                         showQuickJumper: true,
                         showTotal: (total, range) =>
                             `${range[0]}-${range[1]} of ${total} items`,
+                        onChange: (page, pageSize) => {
+                            router.get(
+                                route("admin.exhibitions.index"),
+                                {
+                                    ...filters,
+                                    page,
+                                    per_page: pageSize,
+                                },
+                                {
+                                    preserveState: true,
+                                    replace: true,
+                                }
+                            );
+                        },
                     }}
-                    scroll={{ x: 1000 }}
+                    scroll={{ x: 1300 }}
                 />
             </Card>
+
+            <Modal
+                title="Reject Exhibition"
+                open={rejectModalOpen}
+                onCancel={closeRejectModal}
+                onOk={submitRejectExhibition}
+                okText="Reject"
+                cancelText="Cancel"
+                okButtonProps={{ danger: true }}
+            >
+                <Form layout="vertical">
+                    <Form.Item label="Exhibition">
+                        <Input
+                            value={stripHtml(selectedExhibition?.title || "")}
+                            disabled
+                        />
+                    </Form.Item>
+
+                    <Form.Item label="Admin Note">
+                        <TextArea
+                            rows={4}
+                            value={rejectNote}
+                            onChange={(e) => setRejectNote(e.target.value)}
+                            placeholder="Write rejection reason or admin note..."
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </Authenticated>
     );
 }

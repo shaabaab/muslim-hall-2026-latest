@@ -69,10 +69,10 @@ export default function AuthenticatedLayout({ header, children }) {
     const user = auth.user;
 
     const profilePhotoUrl = auth?.user?.photo_url
-    ? auth.user.photo_url
-    : auth?.user?.photo
-        ? getS3PublicUrl(auth.user.photo)
-        : null;
+        ? auth.user.photo_url
+        : auth?.user?.photo
+            ? getS3PublicUrl(auth.user.photo)
+            : null;
 
     const can = (permission) => user?.permissions?.includes(permission);
     const handleLogout = () => router.post(route("logout"));
@@ -92,6 +92,7 @@ export default function AuthenticatedLayout({ header, children }) {
             "/admin/communities": ["communities-list", ["communities"]],
             "/admin/islamic-zone": ["islamic-zone-list", ["islamic-zone"]],
             "/admin/exhibitions": ["exhibitions-list", ["exhibitions"]],
+            "/admin/exhibition-boards": ["exhibition-boards-list", ["exhibitions"]],
             "/admin/advertisements": [
                 "advertisements-list",
                 ["advertisements"],
@@ -160,7 +161,7 @@ export default function AuthenticatedLayout({ header, children }) {
             key: "dashboard",
             icon: <DashboardOutlined />,
             label: (
-                <InertiaLink  href={route("admin.dashboard")} preserveScroll>
+                <InertiaLink href={route("admin.dashboard")} preserveScroll>
                     Dashboard
                 </InertiaLink>
             ),
@@ -344,10 +345,18 @@ export default function AuthenticatedLayout({ header, children }) {
             label: "Exhibitions",
             children: [
                 {
+                    key: "exhibition-boards-list",
+                    label: (
+                        <InertiaLink href={route("admin.exhibition-boards.index")} preserveScroll>
+                            Board List
+                        </InertiaLink>
+                    ),
+                },
+                {
                     key: "exhibitions-list",
                     label: (
-                        <InertiaLink href={route("admin.exhibitions.index")}>
-                            List
+                        <InertiaLink href={route("admin.exhibitions.index")} preserveScroll>
+                            Exhibition List
                         </InertiaLink>
                     ),
                 },
@@ -815,14 +824,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                     gap: 10,
                                 }}
                             >
-                               <Badge dot status="processing">
-    <Avatar
-        size="large"
-        src={profilePhotoUrl || undefined}
-        icon={!profilePhotoUrl ? <UserOutlined /> : null}
-        style={{ backgroundColor: "#001529" }}
-    />
-</Badge>
+                                <Badge dot status="processing">
+                                    <Avatar
+                                        size="large"
+                                        src={profilePhotoUrl || undefined}
+                                        icon={!profilePhotoUrl ? <UserOutlined /> : null}
+                                        style={{ backgroundColor: "#001529" }}
+                                    />
+                                </Badge>
                                 {!isMobile && <Text strong>{user?.name}</Text>}
                             </div>
                         </Dropdown>

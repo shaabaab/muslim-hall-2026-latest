@@ -1,5 +1,5 @@
-import { useForm } from '@inertiajs/react';
-import Authenticated from '@/Layouts/AuthenticatedLayout';
+import { useForm } from "@inertiajs/react";
+import Authenticated from "@/Layouts/AuthenticatedLayout";
 import {
     Form,
     Input,
@@ -13,8 +13,8 @@ import {
     Switch,
     Row,
     Col,
-    InputNumber
-} from 'antd';
+    InputNumber,
+} from "antd";
 import {
     ArrowLeftOutlined,
     SaveOutlined,
@@ -24,13 +24,14 @@ import {
     ShoppingOutlined,
     EditOutlined,
     PlusOutlined,
-    DeleteOutlined
-} from '@ant-design/icons';
-import { Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+    DeleteOutlined,
+} from "@ant-design/icons";
+import { Link } from "@inertiajs/react";
+import { useState, useEffect } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
 const { Option } = Select;
 
 export default function Edit({ auth, exhibition, langs }) {
@@ -39,77 +40,139 @@ export default function Edit({ auth, exhibition, langs }) {
     const [documentPreview, setDocumentPreview] = useState(null);
     const [existingGallery, setExistingGallery] = useState([]);
 
+    const quillModules = {
+        toolbar: [
+            [{ header: [1, 2, 3, 4, 5, 6, false] }],
+            [{ size: ["small", false, "large", "huge"] }],
+            ["bold", "italic", "underline", "strike"],
+            [{ color: [] }, { background: [] }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ align: [] }],
+            ["link"],
+            ["clean"],
+        ],
+    };
+
+    const quillFormats = [
+        "header",
+        "size",
+        "bold",
+        "italic",
+        "underline",
+        "strike",
+        "color",
+        "background",
+        "list",
+        "bullet",
+        "align",
+        "link",
+    ];
+
+    const getFileUrl = (url, path) => {
+        if (url) {
+            return url;
+        }
+
+        if (!path) {
+            return null;
+        }
+
+        if (typeof path === "string" && path.startsWith("http")) {
+            return path;
+        }
+
+        if (typeof path === "string" && path.startsWith("/storage/")) {
+            return path;
+        }
+
+        if (typeof path === "string" && path.startsWith("storage/")) {
+            return `/${path}`;
+        }
+
+        return `/storage/${path}`;
+    };
+
     const { data, setData, post, processing, errors } = useForm({
-        title: exhibition.title || '',
-        description: exhibition.description || '',
-        type: exhibition.type || 'product',
+        title: exhibition.title || "",
+        description: exhibition.description || "",
+        type: exhibition.type || "product",
         image: null,
         gallery: [],
         document_file: null,
         price: exhibition.price || null,
-        currency: exhibition.currency || 'USD',
+        currency: exhibition.currency || "USD",
         is_available: exhibition.is_available ?? true,
         is_featured: exhibition.is_featured ?? false,
-        dimensions: exhibition.dimensions || '',
-        material: exhibition.material || '',
-        status: exhibition.status || 'draft',
-        lang_id: exhibition.lang_id || '',
-        link: exhibition.link || '',
+        dimensions: exhibition.dimensions || "",
+        material: exhibition.material || "",
+        status: exhibition.status || "draft",
+        lang_id: exhibition.lang_id || "",
+        link: exhibition.link || "",
         remove_gallery_images: [],
         remove_document: false,
-        _method: 'PUT'
+        _method: "PUT",
     });
 
-    // Initialize previews with existing data
     useEffect(() => {
-        console.log('Exhibition data:', exhibition); // Debug log
-
-        // Set main image preview
         if (exhibition.image_url) {
             setMainImagePreview(exhibition.image_url);
         } else if (exhibition.image) {
-            // Construct URL from storage path
-            setMainImagePreview(`/storage/${exhibition.image}`);
+            setMainImagePreview(getFileUrl(null, exhibition.image));
         }
 
-        // Set existing gallery
         if (exhibition.gallery_urls && exhibition.gallery_urls.length > 0) {
-            setExistingGallery(exhibition.gallery_urls);
+            const galleryUrls = exhibition.gallery_urls.map((item) => {
+                if (typeof item === "string") {
+                    return item;
+                }
+
+                return item?.url || getFileUrl(null, item?.path);
+            });
+
+            setExistingGallery(galleryUrls.filter(Boolean));
         } else if (exhibition.gallery && exhibition.gallery.length > 0) {
-            // Construct URLs from storage paths
-            const galleryUrls = exhibition.gallery.map(img => `/storage/${img}`);
+            const galleryUrls = exhibition.gallery.map((img) =>
+                getFileUrl(null, img)
+            );
+
             setExistingGallery(galleryUrls);
         }
 
-        // Set document preview
         if (exhibition.document_file_url) {
             setDocumentPreview({
-                name: exhibition.document_file ? exhibition.document_file.split('/').pop() : 'Document',
-                url: exhibition.document_file_url
+                name: exhibition.document_file
+                    ? exhibition.document_file.split("/").pop()
+                    : "Document",
+                url: exhibition.document_file_url,
+                isOld: true,
             });
         } else if (exhibition.document_file) {
             setDocumentPreview({
-                name: exhibition.document_file.split('/').pop(),
-                url: `/storage/${exhibition.document_file}`
+                name: exhibition.document_file.split("/").pop(),
+                url: getFileUrl(null, exhibition.document_file),
+                isOld: true,
             });
         }
     }, [exhibition]);
 
     const submit = () => {
         const formData = new FormData();
-        
-        // Append all form data
-        Object.keys(data).forEach(key => {
+
+        Object.keys(data).forEach((key) => {
             if (data[key] !== null && data[key] !== undefined) {
-                if (key === 'gallery' && Array.isArray(data[key])) {
-                    // Append new gallery files
+                if (key === "gallery" && Array.isArray(data[key])) {
                     data[key].forEach((file, index) => {
                         formData.append(`gallery[${index}]`, file);
                     });
-                } else if (key === 'remove_gallery_images' && Array.isArray(data[key])) {
-                    // Append removed gallery image paths
+                } else if (
+                    key === "remove_gallery_images" &&
+                    Array.isArray(data[key])
+                ) {
                     data[key].forEach((imagePath, index) => {
-                        formData.append(`remove_gallery_images[${index}]`, imagePath);
+                        formData.append(
+                            `remove_gallery_images[${index}]`,
+                            imagePath
+                        );
                     });
                 } else {
                     formData.append(key, data[key]);
@@ -117,32 +180,33 @@ export default function Edit({ auth, exhibition, langs }) {
             }
         });
 
-        console.log('Submitting form data...');
-
-        post(route('admin.exhibitions.update', exhibition.id), {
+        post(route("admin.exhibitions.update", exhibition.id), {
             data: formData,
             forceFormData: true,
+            preserveScroll: true,
             onSuccess: () => {
-                message.success('Exhibition item updated successfully');
+                message.success("Exhibition item updated successfully");
             },
             onError: (errors) => {
-                console.error('Update errors:', errors);
-                message.error('Error updating exhibition item');
-            }
+                console.error("Update errors:", errors);
+                message.error("Error updating exhibition item");
+            },
         });
     };
 
     const handleMainImageUpload = (file) => {
-        setData('image', file);
+        setData("image", file);
         setMainImagePreview(URL.createObjectURL(file));
         return false;
     };
 
     const handleMainImageRemove = () => {
-        setData('image', null);
-        // Reset to original image
+        setData("image", null);
+
         if (exhibition.image) {
-            setMainImagePreview(exhibition.image_url || `/storage/${exhibition.image}`);
+            setMainImagePreview(
+                exhibition.image_url || getFileUrl(null, exhibition.image)
+            );
         } else {
             setMainImagePreview(null);
         }
@@ -150,67 +214,90 @@ export default function Edit({ auth, exhibition, langs }) {
 
     const handleGalleryUpload = (file) => {
         const newGallery = [...data.gallery, file];
-        setData('gallery', newGallery);
-        setNewGalleryPreviews([...newGalleryPreviews, URL.createObjectURL(file)]);
+
+        setData("gallery", newGallery);
+        setNewGalleryPreviews([
+            ...newGalleryPreviews,
+            URL.createObjectURL(file),
+        ]);
+
         return false;
     };
 
     const handleNewGalleryRemove = (index) => {
         const newGallery = data.gallery.filter((_, i) => i !== index);
         const newPreviews = newGalleryPreviews.filter((_, i) => i !== index);
-        setData('gallery', newGallery);
+
+        setData("gallery", newGallery);
         setNewGalleryPreviews(newPreviews);
     };
 
     const handleExistingGalleryRemove = (index) => {
-        // Remove from display
         const updatedExisting = [...existingGallery];
         updatedExisting.splice(index, 1);
         setExistingGallery(updatedExisting);
-        
-        // Add to removal list - use the original storage path from exhibition.gallery
-        const imageToRemove = exhibition.gallery[index];
-        const removedImages = [...(data.remove_gallery_images || []), imageToRemove];
-        setData('remove_gallery_images', removedImages);
+
+        const imageToRemove = exhibition.gallery?.[index];
+
+        if (imageToRemove) {
+            const removedImages = [
+                ...(data.remove_gallery_images || []),
+                imageToRemove,
+            ];
+
+            setData("remove_gallery_images", removedImages);
+        }
     };
 
     const handleDocumentUpload = (file) => {
-        setData('document_file', file);
-        setData('remove_document', false);
-        setDocumentPreview(file);
+        setData("document_file", file);
+        setData("remove_document", false);
+        setDocumentPreview({
+            name: file.name,
+            file,
+            isOld: false,
+        });
+
         return false;
     };
 
     const handleDocumentRemove = () => {
-        setData('document_file', null);
-        setData('remove_document', true);
+        setData("document_file", null);
+        setData("remove_document", true);
         setDocumentPreview(null);
     };
 
     const currencyOptions = [
-        { value: 'BDT', label: 'BDT (৳)' },
-        { value: 'USD', label: 'USD ($)' },
-        { value: 'EUR', label: 'EUR (€)' },
-        { value: 'GBP', label: 'GBP (£)' },
-        { value: 'SAR', label: 'SAR (﷼)' },
-        { value: 'AED', label: 'AED (د.إ)' },
+        { value: "BDT", label: "BDT (৳)" },
+        { value: "USD", label: "USD ($)" },
+        { value: "EUR", label: "EUR (€)" },
+        { value: "GBP", label: "GBP (£)" },
+        { value: "SAR", label: "SAR (﷼)" },
+        { value: "AED", label: "AED (د.إ)" },
     ];
 
     return (
         <Authenticated user={auth.user} header="Edit Exhibition Item">
             <Card>
                 <div className="mb-6">
-                    <Link href={route('admin.exhibitions.index')}>
-                        <Button icon={<ArrowLeftOutlined />} type="text" className="mb-4">
+                    <Link href={route("admin.exhibitions.index")}>
+                        <Button
+                            icon={<ArrowLeftOutlined />}
+                            type="text"
+                            className="mb-4"
+                        >
                             Back to Exhibitions
                         </Button>
                     </Link>
+
                     <Title level={3}>
                         <EditOutlined className="mr-2" />
                         Edit Exhibition Item
                     </Title>
+
                     <Text type="secondary">
-                        Update product, document, art, photography, or craft details
+                        Update product, document, art, photography, or craft
+                        details
                     </Text>
                 </div>
 
@@ -219,14 +306,16 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={24}>
                             <Form.Item
                                 label="Item Type"
-                                validateStatus={errors.type ? 'error' : ''}
+                                validateStatus={errors.type ? "error" : ""}
                                 help={errors.type}
                                 required
                             >
                                 <Select
                                     size="large"
                                     value={data.type}
-                                    onChange={(value) => setData('type', value)}
+                                    onChange={(value) =>
+                                        setData("type", value)
+                                    }
                                 >
                                     <Option value="product">
                                         <Space>
@@ -234,24 +323,28 @@ export default function Edit({ auth, exhibition, langs }) {
                                             Product
                                         </Space>
                                     </Option>
+
                                     <Option value="document">
                                         <Space>
                                             <FileTextOutlined />
                                             Document
                                         </Space>
                                     </Option>
+
                                     <Option value="art">
                                         <Space>
                                             <PictureOutlined />
                                             Art
                                         </Space>
                                     </Option>
+
                                     <Option value="photography">
                                         <Space>
                                             <PictureOutlined />
                                             Photography
                                         </Space>
                                     </Option>
+
                                     <Option value="craft">
                                         <Space>
                                             <EditOutlined />
@@ -264,33 +357,37 @@ export default function Edit({ auth, exhibition, langs }) {
 
                         <Col span={24}>
                             <Form.Item
-                                label="Title"
-                                validateStatus={errors.title ? 'error' : ''}
+                                label="Title Text Editor"
+                                validateStatus={errors.title ? "error" : ""}
                                 help={errors.title}
                                 required
                             >
-                                <Input
-                                    size="large"
-                                    placeholder="Enter item title"
+                                <ReactQuill
+                                    theme="snow"
                                     value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
+                                    onChange={(value) =>
+                                        setData("title", value)
+                                    }
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write title. You can use bold, font size, color..."
                                 />
                             </Form.Item>
                         </Col>
 
                         <Col span={24}>
                             <Form.Item
-                                label="Description"
-                                validateStatus={errors.description ? 'error' : ''}
+                                label="Description Text Editor"
+                                validateStatus={errors.description ? "error" : ""}
                                 help={errors.description}
                             >
-                                <TextArea
-                                    rows={4}
-                                    placeholder="Describe your exhibition item..."
+                                <ReactQuill
+                                    theme="snow"
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    showCount
-                                    maxLength={2000}
+                                    onChange={(value) => setData("description", value)}
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                    placeholder="Write description. You can use bold, font size, color, list, alignment and link..."
                                 />
                             </Form.Item>
                         </Col>
@@ -298,14 +395,16 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={24}>
                             <Form.Item
                                 label="Select Language"
-                                validateStatus={errors.lang_id ? 'error' : ''}
+                                validateStatus={errors.lang_id ? "error" : ""}
                                 help={errors.lang_id}
                             >
                                 <Select
                                     size="large"
                                     placeholder="Select Language"
                                     value={data.lang_id}
-                                    onChange={(value) => setData('lang_id', value)}
+                                    onChange={(value) =>
+                                        setData("lang_id", value)
+                                    }
                                     suffixIcon={<FileTextOutlined />}
                                 >
                                     {langs.map((lang) => (
@@ -320,9 +419,12 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={24}>
                             <Form.Item
                                 label="Main Image"
-                                validateStatus={errors.image ? 'error' : ''}
+                                validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
-                                extra={mainImagePreview && "New image will replace the existing one"}
+                                extra={
+                                    mainImagePreview &&
+                                    "New image will replace the existing one"
+                                }
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
@@ -331,38 +433,54 @@ export default function Edit({ auth, exhibition, langs }) {
                                     maxCount={1}
                                 >
                                     <Button icon={<UploadOutlined />}>
-                                        {mainImagePreview ? 'Change Main Image' : 'Select Main Image'}
+                                        {mainImagePreview
+                                            ? "Change Main Image"
+                                            : "Select Main Image"}
                                     </Button>
                                 </Upload>
 
                                 {mainImagePreview && (
                                     <div className="mt-4">
                                         <Text strong className="block mb-2">
-                                            {data.image ? 'New Image Preview:' : 'Current Image:'}
+                                            {data.image
+                                                ? "New Image Preview:"
+                                                : "Current Image:"}
                                         </Text>
+
                                         <div className="relative inline-block">
                                             <img
                                                 src={mainImagePreview}
                                                 alt="Main preview"
                                                 style={{
-                                                    maxWidth: '300px',
-                                                    maxHeight: '200px',
-                                                    borderRadius: '8px',
-                                                    objectFit: 'cover'
+                                                    maxWidth: "300px",
+                                                    maxHeight: "200px",
+                                                    borderRadius: "8px",
+                                                    objectFit: "cover",
                                                 }}
                                                 className="border border-dashed border-gray-300"
                                                 onError={(e) => {
-                                                    console.error('Failed to load image:', mainImagePreview);
-                                                    e.target.style.display = 'none';
+                                                    console.error(
+                                                        "Failed to load image:",
+                                                        mainImagePreview
+                                                    );
+                                                    e.target.style.display =
+                                                        "none";
                                                 }}
                                             />
+
                                             {data.image && (
                                                 <Button
                                                     type="link"
                                                     danger
                                                     size="small"
-                                                    onClick={handleMainImageRemove}
-                                                    style={{ position: 'absolute', top: -8, right: -8 }}
+                                                    onClick={
+                                                        handleMainImageRemove
+                                                    }
+                                                    style={{
+                                                        position: "absolute",
+                                                        top: -8,
+                                                        right: -8,
+                                                    }}
                                                 >
                                                     ×
                                                 </Button>
@@ -376,7 +494,7 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={24}>
                             <Form.Item
                                 label="Gallery Images"
-                                validateStatus={errors.gallery ? 'error' : ''}
+                                validateStatus={errors.gallery ? "error" : ""}
                                 help={errors.gallery}
                             >
                                 <Upload
@@ -390,78 +508,132 @@ export default function Edit({ auth, exhibition, langs }) {
                                     </Button>
                                 </Upload>
 
-                                {/* Existing Gallery Images */}
                                 {existingGallery.length > 0 && (
                                     <div className="mt-4">
-                                        <Text strong className="block mb-2">Current Gallery Images:</Text>
+                                        <Text strong className="block mb-2">
+                                            Current Gallery Images:
+                                        </Text>
+
                                         <div className="flex flex-wrap gap-4">
-                                            {existingGallery.map((imageUrl, index) => (
-                                                <div key={`existing-${index}`} className="relative">
-                                                    <img
-                                                        src={imageUrl}
-                                                        alt={`Gallery ${index + 1}`}
-                                                        style={{
-                                                            width: '100px',
-                                                            height: '100px',
-                                                            borderRadius: '8px',
-                                                            objectFit: 'cover'
-                                                        }}
-                                                        className="border border-dashed border-gray-300"
-                                                        onError={(e) => {
-                                                            console.error('Failed to load gallery image:', imageUrl);
-                                                            e.target.style.display = 'none';
-                                                        }}
-                                                    />
-                                                    <Button
-                                                        type="link"
-                                                        danger
-                                                        size="small"
-                                                        onClick={() => handleExistingGalleryRemove(index)}
-                                                        style={{ position: 'absolute', top: -8, right: -8 }}
+                                            {existingGallery.map(
+                                                (imageUrl, index) => (
+                                                    <div
+                                                        key={`existing-${index}`}
+                                                        className="relative"
                                                     >
-                                                        <DeleteOutlined />
-                                                    </Button>
-                                                </div>
-                                            ))}
+                                                        <img
+                                                            src={imageUrl}
+                                                            alt={`Gallery ${index + 1
+                                                                }`}
+                                                            style={{
+                                                                width: "100px",
+                                                                height: "100px",
+                                                                borderRadius:
+                                                                    "8px",
+                                                                objectFit:
+                                                                    "cover",
+                                                            }}
+                                                            className="border border-dashed border-gray-300"
+                                                            onError={(e) => {
+                                                                console.error(
+                                                                    "Failed to load gallery image:",
+                                                                    imageUrl
+                                                                );
+                                                                e.target.style.display =
+                                                                    "none";
+                                                            }}
+                                                        />
+
+                                                        <Button
+                                                            type="link"
+                                                            danger
+                                                            size="small"
+                                                            onClick={() =>
+                                                                handleExistingGalleryRemove(
+                                                                    index
+                                                                )
+                                                            }
+                                                            style={{
+                                                                position:
+                                                                    "absolute",
+                                                                top: -8,
+                                                                right: -8,
+                                                            }}
+                                                        >
+                                                            <DeleteOutlined />
+                                                        </Button>
+                                                    </div>
+                                                )
+                                            )}
                                         </div>
-                                        <Text type="secondary" className="block mt-2">
-                                            {existingGallery.length} existing image(s)
+
+                                        <Text
+                                            type="secondary"
+                                            className="block mt-2"
+                                        >
+                                            {existingGallery.length} existing
+                                            image(s)
                                         </Text>
                                     </div>
                                 )}
 
-                                {/* New Gallery Images Preview */}
                                 {newGalleryPreviews.length > 0 && (
                                     <div className="mt-4">
-                                        <Text strong className="block mb-2">New Gallery Images:</Text>
+                                        <Text strong className="block mb-2">
+                                            New Gallery Images:
+                                        </Text>
+
                                         <div className="flex flex-wrap gap-4">
-                                            {newGalleryPreviews.map((preview, index) => (
-                                                <div key={`new-${index}`} className="relative">
-                                                    <img
-                                                        src={preview}
-                                                        alt={`New Gallery ${index + 1}`}
-                                                        style={{
-                                                            width: '100px',
-                                                            height: '100px',
-                                                            borderRadius: '8px',
-                                                            objectFit: 'cover'
-                                                        }}
-                                                        className="border border-dashed border-blue-300"
-                                                    />
-                                                    <Button
-                                                        type="link"
-                                                        danger
-                                                        size="small"
-                                                        onClick={() => handleNewGalleryRemove(index)}
-                                                        style={{ position: 'absolute', top: -8, right: -8 }}
+                                            {newGalleryPreviews.map(
+                                                (preview, index) => (
+                                                    <div
+                                                        key={`new-${index}`}
+                                                        className="relative"
                                                     >
-                                                        ×
-                                                    </Button>
-                                                </div>
-                                            ))}
+                                                        <img
+                                                            src={preview}
+                                                            alt={`New Gallery ${index + 1
+                                                                }`}
+                                                            style={{
+                                                                width: "100px",
+                                                                height: "100px",
+                                                                borderRadius:
+                                                                    "8px",
+                                                                objectFit:
+                                                                    "cover",
+                                                            }}
+                                                            className="border border-dashed border-blue-300"
+                                                        />
+
+                                                        <Button
+                                                            type="link"
+                                                            danger
+                                                            size="small"
+                                                            onClick={() =>
+                                                                handleNewGalleryRemove(
+                                                                    index
+                                                                )
+                                                            }
+                                                            style={{
+                                                                position:
+                                                                    "absolute",
+                                                                top: -8,
+                                                                right: -8,
+                                                            }}
+                                                        >
+                                                            ×
+                                                        </Button>
+                                                    </div>
+                                                )
+                                            )}
                                         </div>
-                                        <Text type="secondary" className="block mt-2">
-                                            {newGalleryPreviews.length} new image(s) added
+
+                                        <Text
+                                            type="secondary"
+                                            className="block mt-2"
+                                        >
+                                            {newGalleryPreviews.length} new
+                                            image(s) added
                                         </Text>
                                     </div>
                                 )}
@@ -471,18 +643,27 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={12}>
                             <Form.Item
                                 label="Price"
-                                validateStatus={errors.price ? 'error' : ''}
+                                validateStatus={errors.price ? "error" : ""}
                                 help={errors.price}
                             >
                                 <InputNumber
-                                    style={{ width: '100%' }}
+                                    style={{ width: "100%" }}
                                     placeholder="0.00"
                                     value={data.price}
-                                    onChange={(value) => setData('price', value)}
+                                    onChange={(value) =>
+                                        setData("price", value)
+                                    }
                                     min={0}
                                     step={0.01}
-                                    formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                    formatter={(value) =>
+                                        `$ ${value}`.replace(
+                                            /\B(?=(\d{3})+(?!\d))/g,
+                                            ","
+                                        )
+                                    }
+                                    parser={(value) =>
+                                        value.replace(/\$\s?|(,*)/g, "")
+                                    }
                                 />
                             </Form.Item>
                         </Col>
@@ -490,16 +671,23 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={12}>
                             <Form.Item
                                 label="Currency"
-                                validateStatus={errors.currency ? 'error' : ''}
+                                validateStatus={
+                                    errors.currency ? "error" : ""
+                                }
                                 help={errors.currency}
                                 required
                             >
                                 <Select
                                     value={data.currency}
-                                    onChange={(value) => setData('currency', value)}
+                                    onChange={(value) =>
+                                        setData("currency", value)
+                                    }
                                 >
-                                    {currencyOptions.map(currency => (
-                                        <Option key={currency.value} value={currency.value}>
+                                    {currencyOptions.map((currency) => (
+                                        <Option
+                                            key={currency.value}
+                                            value={currency.value}
+                                        >
                                             {currency.label}
                                         </Option>
                                     ))}
@@ -510,43 +698,60 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={12}>
                             <Form.Item
                                 label="Link (Url)"
-                                validateStatus={errors.link ? 'error' : ''}
+                                validateStatus={errors.link ? "error" : ""}
                                 help={errors.link}
                             >
                                 <Input
                                     placeholder="https://example.com"
                                     value={data.link}
-                                    onChange={(e) => setData('link', e.target.value)}
+                                    onChange={(e) =>
+                                        setData("link", e.target.value)
+                                    }
                                     size="large"
                                 />
                             </Form.Item>
                         </Col>
 
-                        {(data.type === 'art' || data.type === 'product') && (
+                        {(data.type === "art" || data.type === "product") && (
                             <>
                                 <Col span={12}>
                                     <Form.Item
                                         label="Dimensions"
-                                        validateStatus={errors.dimensions ? 'error' : ''}
+                                        validateStatus={
+                                            errors.dimensions ? "error" : ""
+                                        }
                                         help={errors.dimensions}
                                     >
                                         <Input
                                             placeholder="e.g., 24x36 inches, 50x70 cm"
                                             value={data.dimensions}
-                                            onChange={(e) => setData('dimensions', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "dimensions",
+                                                    e.target.value
+                                                )
+                                            }
                                         />
                                     </Form.Item>
                                 </Col>
+
                                 <Col span={12}>
                                     <Form.Item
                                         label="Material"
-                                        validateStatus={errors.material ? 'error' : ''}
+                                        validateStatus={
+                                            errors.material ? "error" : ""
+                                        }
                                         help={errors.material}
                                     >
                                         <Input
                                             placeholder="e.g., Oil on canvas, Wood, Metal"
                                             value={data.material}
-                                            onChange={(e) => setData('material', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "material",
+                                                    e.target.value
+                                                )
+                                            }
                                         />
                                     </Form.Item>
                                 </Col>
@@ -562,18 +767,39 @@ export default function Edit({ auth, exhibition, langs }) {
                                     maxCount={1}
                                 >
                                     <Button icon={<FileTextOutlined />}>
-                                        {documentPreview ? 'Change Document' : 'Select Document'}
+                                        {documentPreview
+                                            ? "Change Document"
+                                            : "Select Document"}
                                     </Button>
                                 </Upload>
 
                                 {documentPreview && (
                                     <div className="mt-4">
-                                        <Text strong className="block mb-2">Document:</Text>
+                                        <Text strong className="block mb-2">
+                                            Document:
+                                        </Text>
+
                                         <div className="p-3 border rounded bg-gray-50 flex items-center justify-between">
                                             <div className="flex items-center">
                                                 <FileTextOutlined className="text-2xl text-blue-500 mr-2" />
-                                                <Text>{documentPreview.name}</Text>
+
+                                                {documentPreview.url ? (
+                                                    <a
+                                                        href={
+                                                            documentPreview.url
+                                                        }
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        {documentPreview.name}
+                                                    </a>
+                                                ) : (
+                                                    <Text>
+                                                        {documentPreview.name}
+                                                    </Text>
+                                                )}
                                             </div>
+
                                             <Button
                                                 type="link"
                                                 danger
@@ -592,10 +818,15 @@ export default function Edit({ auth, exhibition, langs }) {
                             <Form.Item label="Available for Sale">
                                 <Switch
                                     checked={data.is_available}
-                                    onChange={(checked) => setData('is_available', checked)}
+                                    onChange={(checked) =>
+                                        setData("is_available", checked)
+                                    }
                                 />
+
                                 <Text className="ml-2">
-                                    {data.is_available ? 'Available' : 'Not Available'}
+                                    {data.is_available
+                                        ? "Available"
+                                        : "Not Available"}
                                 </Text>
                             </Form.Item>
                         </Col>
@@ -604,10 +835,15 @@ export default function Edit({ auth, exhibition, langs }) {
                             <Form.Item label="Featured Item">
                                 <Switch
                                     checked={data.is_featured}
-                                    onChange={(checked) => setData('is_featured', checked)}
+                                    onChange={(checked) =>
+                                        setData("is_featured", checked)
+                                    }
                                 />
+
                                 <Text className="ml-2">
-                                    {data.is_featured ? 'Featured' : 'Regular'}
+                                    {data.is_featured
+                                        ? "Featured"
+                                        : "Regular"}
                                 </Text>
                             </Form.Item>
                         </Col>
@@ -615,13 +851,15 @@ export default function Edit({ auth, exhibition, langs }) {
                         <Col span={8}>
                             <Form.Item
                                 label="Status"
-                                validateStatus={errors.status ? 'error' : ''}
+                                validateStatus={errors.status ? "error" : ""}
                                 help={errors.status}
                                 required
                             >
                                 <Select
                                     value={data.status}
-                                    onChange={(value) => setData('status', value)}
+                                    onChange={(value) =>
+                                        setData("status", value)
+                                    }
                                 >
                                     <Option value="draft">Draft</Option>
                                     <Option value="published">Published</Option>
@@ -640,15 +878,13 @@ export default function Edit({ auth, exhibition, langs }) {
                                 loading={processing}
                                 icon={<SaveOutlined />}
                                 size="large"
-                                style={{ minWidth: '160px' }}
+                                style={{ minWidth: "160px" }}
                             >
                                 Update Exhibition Item
                             </Button>
 
-                            <Link href={route('admin.exhibitions.index')}>
-                                <Button size="large">
-                                    Cancel
-                                </Button>
+                            <Link href={route("admin.exhibitions.index")}>
+                                <Button size="large">Cancel</Button>
                             </Link>
                         </Space>
                     </Form.Item>

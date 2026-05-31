@@ -40,6 +40,25 @@ const { Option } = Select;
 const { Search } = Input;
 
 export default function Index({ exhibitions, filters, auth }) {
+    const getImageUrl = (record) => {
+        if (!record) {
+            return "/placeholder-image.jpg";
+        }
+
+        if (record.image_url) {
+            return record.image_url;
+        }
+
+        if (record.image) {
+            if (record.image.startsWith("http")) {
+                return record.image;
+            }
+
+            return `/storage/${record.image}`;
+        }
+
+        return "/placeholder-image.jpg";
+    };
     const handleDelete = (id) => {
         router.delete(route("user.exhibitions.destroy", id), {
             onSuccess: () => {
@@ -175,24 +194,36 @@ export default function Index({ exhibitions, filters, auth }) {
                     <Image
                         width={50}
                         height={50}
-                        src={
-                            record.image
-                                ? `/storage/${record.image}`
-                                : "/placeholder-image.jpg"
+                        src={getImageUrl(record)}
+                        alt={
+                            record.title
+                                ? record.title.replace(/<[^>]*>/g, "")
+                                : "Item"
                         }
-                        alt={record.title}
                         style={{ borderRadius: "4px", objectFit: "cover" }}
                         fallback="/placeholder-image.jpg"
                     />
+
                     <Space direction="vertical" size={2}>
-                        <Space>
-                            <Text strong>{record.title}</Text>
+                        <Space align="start">
+                            <div
+                                style={{
+                                    fontWeight: 600,
+                                    lineHeight: "20px",
+                                    maxWidth: "260px",
+                                }}
+                                dangerouslySetInnerHTML={{
+                                    __html: record.title || "",
+                                }}
+                            />
+
                             {record.is_featured && (
                                 <Tooltip title="Featured">
                                     <StarFilled style={{ color: "#faad14" }} />
                                 </Tooltip>
                             )}
                         </Space>
+
                         <Text type="secondary" className="text-xs">
                             by {record.user?.name}
                         </Text>
@@ -271,11 +302,11 @@ export default function Index({ exhibitions, filters, auth }) {
             width: 200,
             render: (_, record) => (
                 <Space size="small">
-                    <Tooltip title="View">
+                    {/* <Tooltip title="View">
                         <Link href={route("user.exhibitions.show", record.id)}>
                             <Button icon={<EyeOutlined />} size="small" />
                         </Link>
-                    </Tooltip>
+                    </Tooltip> */}
 
                     <Tooltip title="Edit">
                         <Link href={route("user.exhibitions.edit", record.id)}>

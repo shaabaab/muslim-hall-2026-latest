@@ -33,14 +33,13 @@ export default function Home() {
     } = usePage().props;
 
     const user = auth.user;
+
     const isMember =
         auth.user?.subscriptions?.length > 0 &&
         auth.user?.subscriptions[0]?.status == 1;
+
     const isAdmin = auth.user?.role == 2;
 
-    // console.log("Advertisements:", user);
-
-    // Filter ads by position
     const headerAds = advertisement.filter(
         (ad) =>
             (ad.type === "banner" || ad.type === "video_ad") &&
@@ -66,7 +65,6 @@ export default function Home() {
 
     const [showModal, setShowModal] = useState(false);
 
-    // Unified click handler for non-members
     const handleMemberClick = (e) => {
         if (!isMember) {
             e.preventDefault();
@@ -76,18 +74,44 @@ export default function Home() {
 
     const DEFAULT_BG = "#1b7a3a";
     const swiperRef = useRef(null);
-    // ✅ IMPORTANT: resume autoplay on tab focus / visibility
+
+    const getIsFullWidthImage = (slide) => {
+        const value =
+            slide?.is_full_width_image ??
+            slide?.isFullWidthImage ??
+            slide?.is_full_width ??
+            slide?.full_width_image ??
+            slide?.fullWidthImage ??
+            false;
+
+        return (
+            value === true ||
+            value === 1 ||
+            value === "1" ||
+            value === "true" ||
+            value === "TRUE" ||
+            value === "yes" ||
+            value === "YES" ||
+            value === "on" ||
+            value === "ON"
+        );
+    };
+
     useEffect(() => {
         const resume = () => {
             const swiper = swiperRef.current;
+
             if (!swiper) return;
+
             if (swiper?.autoplay && !swiper?.destroyed) {
                 swiper.autoplay.start();
             }
         };
 
         const onVisibility = () => {
-            if (!document.hidden) resume();
+            if (!document.hidden) {
+                resume();
+            }
         };
 
         window.addEventListener("focus", resume);
@@ -99,10 +123,10 @@ export default function Home() {
         };
     }, []);
 
-    
     return (
         <FrontAuthenticatedLayout>
             <Header header={settings} />
+
             {/* --- HERO SECTION --- */}
             <section className="container mb-5 mt-4">
                 <div className="hero-wrapper">
@@ -113,7 +137,10 @@ export default function Home() {
                             swiper.autoplay?.start?.();
                         }}
                         navigation
-                        pagination={{ clickable: true, el: ".hero-pagination" }}
+                        pagination={{
+                            clickable: true,
+                            el: ".hero-pagination",
+                        }}
                         autoplay={{
                             delay: 2500,
                             disableOnInteraction: false,
@@ -128,86 +155,105 @@ export default function Home() {
                         className="hero-swiper"
                     >
                         {sliders && sliders.length > 0 ? (
-                            sliders.map((slide) => (
-                                <SwiperSlide key={slide.id}>
-                                    <div
-                                        className="hero-slide-content"
-                                        style={{
-                                            backgroundColor:
-                                                slide.background_color ||
-                                                DEFAULT_BG,
-                                            color: "#ffffff",
-                                        }}
-                                    >
-                                        <div className="hero-text-col">
-                                            {/* <span className="hero-badge">
-                                                <i className="fas fa-star-and-crescent"></i>{" "}
-                                                Featured
-                                            </span> */}
+                            sliders.map((slide) => {
+                                const isFullWidthImage =
+                                    getIsFullWidthImage(slide);
 
-                                            <h1
-                                                className="hero-title"
-                                                style={{ color: "#fff" }}
+                                const sliderImageUrl = getS3PublicUrl(
+                                    `${slide.image_path}`,
+                                );
+
+                                return (
+                                    <SwiperSlide key={slide.id}>
+                                        <div
+                                            className={`hero-slide-content ${isFullWidthImage
+                                                ? "hero-full-image-mode"
+                                                : ""
+                                                }`}
+                                            style={{
+                                                backgroundColor:
+                                                    slide.background_color ||
+                                                    DEFAULT_BG,
+                                                color: "#ffffff",
+                                                "--hero-full-bg": `url(${sliderImageUrl})`,
+                                            }}
+                                        >
+                                            {isFullWidthImage && (
+                                                <div className="hero-full-bg-layer"></div>
+                                            )}
+
+                                            <div
+                                                className={`hero-text-col ${isFullWidthImage
+                                                    ? "hero-text-center"
+                                                    : ""
+                                                    }`}
                                             >
-                                                {slide.title}
-                                            </h1>
-
-                                            <p
-                                                className="hero-desc"
-                                                style={{ color: "#fff" }}
-                                            >
-                                                {slide.subtitle || ""}
-                                            </p>
-
-                                            <div className="hero-buttons">
-                                                {user == null ? (
-                                                    <Link
-                                                        className="hero-btn primary"
-                                                        href="/user/posts/create"
-                                                    >
-                                                        Create Post
-                                                        <i className="fas fa-pen-fancy ml-2"></i>
-                                                    </Link>
-                                                ) : (
-                                                    <Link
-                                                        className="hero-btn primary"
-                                                        href={
-                                                            isAdmin
-                                                                ? "/admin/posts/create"
-                                                                : "/user/posts/create"
-                                                        }
-                                                    >
-                                                        Create Post
-                                                        <i className="fas fa-pen-fancy ml-2"></i>
-                                                    </Link>
-                                                )}
-
-                                                <Link
-                                                    className="hero-btn secondary"
-                                                    href="/contests-details"
+                                                <h1
+                                                    className="hero-title"
+                                                    style={{ color: "#fff" }}
                                                 >
-                                                    Join Contest
-                                                </Link>
-                                            </div>
-                                        </div>
+                                                    {slide.title}
+                                                </h1>
 
-                                        <div className="hero-img-col">
-                                            <div className="img-frame">
-                                                <img
-                                                    src={getS3PublicUrl(
-                                                        `${slide.image_path}`,
+                                                <p
+                                                    className="hero-desc"
+                                                    style={{ color: "#fff" }}
+                                                >
+                                                    {slide.subtitle || ""}
+                                                </p>
+
+                                                <div className="hero-buttons">
+                                                    {user == null ? (
+                                                        <Link
+                                                            className="hero-btn primary"
+                                                            href="/user/posts/create"
+                                                        >
+                                                            Create Post
+                                                            <i className="fas fa-pen-fancy ml-2"></i>
+                                                        </Link>
+                                                    ) : (
+                                                        <Link
+                                                            className="hero-btn primary"
+                                                            href={
+                                                                isAdmin
+                                                                    ? "/admin/posts/create"
+                                                                    : "/user/posts/create"
+                                                            }
+                                                        >
+                                                            Create Post
+                                                            <i className="fas fa-pen-fancy ml-2"></i>
+                                                        </Link>
                                                     )}
-                                                    alt={slide.title}
-                                                    onError={(e) => {
-                                                        e.target.src =
-                                                            "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
-                                                    }}
-                                                />
+
+                                                    <Link
+                                                        className="hero-btn secondary"
+                                                        href="/contests-details"
+                                                    >
+                                                        Join Contest
+                                                    </Link>
+                                                </div>
                                             </div>
+
+                                            {!isFullWidthImage && (
+                                                <div className="hero-img-col">
+                                                    <div className="img-frame">
+                                                        <img
+                                                            src={
+                                                                sliderImageUrl
+                                                            }
+                                                            alt={slide.title}
+                                                            onError={(e) => {
+                                                                e.target.src =
+                                                                    "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                </SwiperSlide>
-                            ))
+                                    </SwiperSlide>
+                                );
+                            })
                         ) : (
                             <SwiperSlide>
                                 <div
@@ -221,12 +267,14 @@ export default function Home() {
                                         <span className="hero-badge">
                                             Welcome
                                         </span>
+
                                         <h1
                                             className="hero-title"
                                             style={{ color: "#fff" }}
                                         >
                                             Welcome to Our Islamic Library
                                         </h1>
+
                                         <p
                                             className="hero-desc"
                                             style={{ color: "#fff" }}
@@ -234,6 +282,7 @@ export default function Home() {
                                             Explore Qur&apos;anic studies,
                                             Hadith collections, and more.
                                         </p>
+
                                         <div className="hero-buttons">
                                             <a
                                                 className="hero-btn primary"
@@ -241,6 +290,7 @@ export default function Home() {
                                             >
                                                 Explore Content
                                             </a>
+
                                             <a
                                                 className="hero-btn secondary"
                                                 href="/community"
@@ -257,6 +307,300 @@ export default function Home() {
                     <div className="hero-pagination"></div>
                 </div>
             </section>
+
+            <style jsx>{`
+                .hero-wrapper {
+                    position: relative;
+                    width: 100%;
+                    border-radius: 24px;
+                    overflow: hidden;
+                }
+
+                .hero-swiper {
+                    width: 100%;
+                    border-radius: 24px;
+                    overflow: hidden;
+                }
+
+                .hero-slide-content {
+                    position: relative;
+                    min-height: 520px;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+                    align-items: center;
+                    gap: 40px;
+                    padding: 60px 70px;
+                    overflow: hidden;
+                    border-radius: 24px;
+                    isolation: isolate;
+                }
+
+                .hero-text-col {
+                    position: relative;
+                    z-index: 2;
+                    max-width: 620px;
+                }
+
+                .hero-title {
+                    font-size: 54px;
+                    line-height: 1.08;
+                    font-weight: 900;
+                    margin: 0 0 18px;
+                    letter-spacing: -1.8px;
+                }
+
+                .hero-desc {
+                    font-size: 19px;
+                    line-height: 1.7;
+                    margin: 0 0 28px;
+                    max-width: 560px;
+                    opacity: 0.95;
+                }
+
+                .hero-buttons {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    flex-wrap: wrap;
+                }
+
+                .hero-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 48px;
+                    padding: 13px 24px;
+                    border-radius: 999px;
+                    font-weight: 800;
+                    text-decoration: none;
+                    transition:
+                        transform 0.18s ease,
+                        box-shadow 0.18s ease,
+                        background 0.18s ease;
+                }
+
+                .hero-btn.primary {
+                    background: #ffffff;
+                    color: #1b7a3a;
+                    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+                }
+
+                .hero-btn.primary:hover {
+                    color: #1b7a3a;
+                    transform: translateY(-2px);
+                    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.24);
+                }
+
+                .hero-btn.secondary {
+                    background: rgba(255, 255, 255, 0.14);
+                    color: #ffffff;
+                    border: 1px solid rgba(255, 255, 255, 0.35);
+                    backdrop-filter: blur(10px);
+                }
+
+                .hero-btn.secondary:hover {
+                    color: #ffffff;
+                    background: rgba(255, 255, 255, 0.22);
+                    transform: translateY(-2px);
+                }
+
+                .hero-img-col {
+                    position: relative;
+                    z-index: 2;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .img-frame {
+                    width: 100%;
+                    max-width: 430px;
+                    aspect-ratio: 1 / 1;
+                    border-radius: 28px;
+                    padding: 18px;
+                    background: rgba(255, 255, 255, 0.15);
+                    border: 1px solid rgba(255, 255, 255, 0.25);
+                    box-shadow: 0 26px 60px rgba(0, 0, 0, 0.22);
+                    backdrop-filter: blur(12px);
+                }
+
+                .img-frame img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    display: block;
+                    border-radius: 22px;
+                }
+
+                .hero-full-image-mode {
+                    min-height: 560px;
+                    grid-template-columns: 1fr;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    background-image:
+                        linear-gradient(
+                            90deg,
+                            rgba(0, 0, 0, 0.34),
+                            rgba(0, 0, 0, 0.18),
+                            rgba(0, 0, 0, 0.34)
+                        ),
+                        var(--hero-full-bg);
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    box-shadow:
+                        inset 0 0 0 1000px rgba(0, 0, 0, 0.02),
+                        inset 0 -100px 130px rgba(0, 0, 0, 0.2);
+                }
+
+                .hero-full-bg-layer {
+                    position: absolute;
+                    inset: 0;
+                    z-index: 1;
+                    pointer-events: none;
+                    background:
+                        radial-gradient(
+                            circle at center,
+                            rgba(255, 255, 255, 0.2),
+                            transparent 42%
+                        ),
+                        linear-gradient(
+                            180deg,
+                            rgba(0, 0, 0, 0.1),
+                            rgba(0, 0, 0, 0.28)
+                        );
+                }
+
+                .hero-full-image-mode .hero-text-col {
+                    max-width: 760px;
+                    margin: 0 auto;
+                    padding: 38px 46px;
+                    border-radius: 28px;
+                    background: rgba(0, 0, 0, 0.16);
+                    border: 1px solid rgba(255, 255, 255, 0.22);
+                    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+                    backdrop-filter: blur(5px);
+                }
+
+                .hero-full-image-mode .hero-desc {
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+
+                .hero-full-image-mode .hero-buttons {
+                    justify-content: center;
+                }
+
+                .hero-pagination {
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 18px;
+                    z-index: 5;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                :global(.hero-pagination .swiper-pagination-bullet) {
+                    width: 10px;
+                    height: 10px;
+                    background: rgba(255, 255, 255, 0.7);
+                    opacity: 1;
+                }
+
+                :global(.hero-pagination .swiper-pagination-bullet-active) {
+                    width: 26px;
+                    border-radius: 999px;
+                    background: #ffffff;
+                }
+
+                @media (max-width: 991px) {
+                    .hero-slide-content {
+                        min-height: auto;
+                        grid-template-columns: 1fr;
+                        padding: 42px 28px;
+                        text-align: center;
+                    }
+
+                    .hero-text-col {
+                        margin: 0 auto;
+                    }
+
+                    .hero-desc {
+                        margin-left: auto;
+                        margin-right: auto;
+                    }
+
+                    .hero-buttons {
+                        justify-content: center;
+                    }
+
+                    .hero-img-col {
+                        margin-top: 12px;
+                    }
+
+                    .img-frame {
+                        max-width: 330px;
+                    }
+
+                    .hero-full-image-mode {
+                        min-height: 460px;
+                    }
+
+                    .hero-full-image-mode .hero-text-col {
+                        padding: 30px 24px;
+                    }
+
+                    .hero-title {
+                        font-size: 40px;
+                    }
+                }
+
+                @media (max-width: 575px) {
+                    .hero-wrapper,
+                    .hero-swiper,
+                    .hero-slide-content {
+                        border-radius: 18px;
+                    }
+
+                    .hero-slide-content {
+                        padding: 34px 18px;
+                    }
+
+                    .hero-title {
+                        font-size: 30px;
+                        letter-spacing: -0.8px;
+                    }
+
+                    .hero-desc {
+                        font-size: 16px;
+                        line-height: 1.55;
+                    }
+
+                    .hero-btn {
+                        width: 100%;
+                        min-height: 46px;
+                    }
+
+                    .hero-full-image-mode {
+                        min-height: 420px;
+                    }
+
+                    .hero-full-image-mode .hero-text-col {
+                        padding: 24px 18px;
+                        border-radius: 20px;
+                    }
+
+                    .img-frame {
+                        max-width: 260px;
+                        padding: 12px;
+                        border-radius: 20px;
+                    }
+                }
+            `}</style>
 
             <RunningContestMultipol />
             <LatestContestSection />
@@ -649,99 +993,95 @@ export default function Home() {
                         )}
                     </div>
 
-                    <Swiper
-                        modules={[Navigation, Autoplay]}
-                        spaceBetween={30}
-                        breakpoints={contentSwiperBreakpoints}
-                        navigation
-                        className="custom-swiper"
-                    >
-                        {exhibition && exhibition.length > 0 ? (
-                            exhibition.map((p) => (
-                                <SwiperSlide key={p.id}>
-                                    <div
-                                        className={`modern-card border-1 border-[#0f8022] shadow-md shadow-blue bg-[#ffffff] ${!isMember ? "locked-card" : ""}`}
-                                    >
-                                        <div className="card-media">
-                                            <Link
-                                                href={
-                                                    isMember
-                                                        ? `/exhibition-detail/${p.id}`
-                                                        : "#"
-                                                }
-                                                onClick={(e) =>
-                                                    handleMemberClick(e)
-                                                }
-                                            >
-                                                <img
-                                                    src={getS3PublicUrl(
-                                                        p.image,
-                                                    )}
-                                                    alt={p.title}
-                                                    onError={(e) =>
-                                                    (e.target.src =
-                                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png")
-                                                    }
-                                                />
-                                                {!isMember && (
-                                                    <div className="lock-overlay">
-                                                        <div className="lock-circle">
-                                                            <i className="fas fa-lock"></i>
-                                                        </div>
-                                                        <span>
-                                                            Member Exclusive
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </Link>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="meta-row space-between">
-                                                <span className="badge-outline">
-                                                    {p.type || "Art"}
-                                                </span>
-                                                {p.price > 0 && (
-                                                    <span className="price-tag">
-                                                        $
-                                                        {parseFloat(
-                                                            p.price,
-                                                        ).toLocaleString()}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h3 className="card-title">
-                                                <Link
-                                                    href={
-                                                        isMember
-                                                            ? `/exhibition-detail/${p.id}`
-                                                            : "#"
-                                                    }
-                                                    onClick={(e) =>
-                                                        handleMemberClick(e)
-                                                    }
-                                                >
-                                                    {p.title ||
-                                                        "Untitled Exhibition"}
-                                                </Link>
-                                            </h3>
-                                            <p className="card-text">
-                                                {p.description
-                                                    ?.replace(/<[^>]+>/g, "")
-                                                    .slice(0, 80)}
-                                                ...
-                                            </p>
-                                        </div>
+<Swiper
+    modules={[Navigation, Autoplay, Pagination]}
+    spaceBetween={30}
+    breakpoints={contentSwiperBreakpoints}
+    navigation
+    pagination={{ clickable: true }}
+    loop={exhibition && exhibition.length > 4}
+    speed={800}
+    autoplay={{
+        delay: 2500,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true,
+    }}
+    className="custom-swiper exhibition-slider"
+>
+    {exhibition && exhibition.length > 0 ? (
+        exhibition.map((p) => (
+            <SwiperSlide key={p.id}>
+                <div
+                    className={`modern-card border-1 border-[#0f8022] shadow-md shadow-blue bg-[#ffffff] ${
+                        !isMember ? "locked-card" : ""
+                    }`}
+                >
+                    <div className="card-media">
+                        <Link
+                            href={
+                                isMember
+                                    ? `/exhibition-detail/${p.id}`
+                                    : "#"
+                            }
+                            onClick={(e) => handleMemberClick(e)}
+                        >
+                            <img
+                                src={getS3PublicUrl(p.image)}
+                                alt={
+                                    p.title
+                                        ? String(p.title).replace(/<[^>]+>/g, "")
+                                        : "Untitled Exhibition"
+                                }
+                                onError={(e) =>
+                                    (e.target.src =
+                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png")
+                                }
+                            />
+
+                            {!isMember && (
+                                <div className="lock-overlay">
+                                    <div className="lock-circle">
+                                        <i className="fas fa-lock"></i>
                                     </div>
-                                </SwiperSlide>
-                            ))
-                        ) : (
-                            <SwiperSlide>
-                                <div className="empty-state">
-                                    No exhibitions found.
+                                    <span>Member Exclusive</span>
                                 </div>
-                            </SwiperSlide>
-                        )}
-                    </Swiper>
+                            )}
+                        </Link>
+                    </div>
+
+                    <div className="card-body">
+                        <div className="meta-row space-between">
+                            <span className="badge-outline">
+                                {p.type || "Art"}
+                            </span>
+
+                            {p.price > 0 && (
+                                <span className="price-tag">
+                                    ${parseFloat(p.price).toLocaleString()}
+                                </span>
+                            )}
+                        </div>
+
+                        <h3
+                            className="card-title"
+                            dangerouslySetInnerHTML={{
+                                __html: isMember
+                                    ? `<a href="/exhibition-detail/${p.id}">${
+                                          p.title || "Untitled Exhibition"
+                                      }</a>`
+                                    : `${p.title || "Untitled Exhibition"}`,
+                            }}
+                        />
+                    </div>
+                </div>
+            </SwiperSlide>
+        ))
+    ) : (
+        <SwiperSlide>
+            <div className="empty-state">No exhibitions found.</div>
+        </SwiperSlide>
+    )}
+</Swiper>
                 </div>
             </section>
             {/* --- SPONSORS --- */}

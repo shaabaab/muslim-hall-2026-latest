@@ -3,21 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Models\Contest;
 use App\Models\Entry;
 use App\Models\Exhibition;
 use App\Models\Plan;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        if (Auth::user()->role == User::ROLE_ADMIN) {
+        $authUser = Auth::user();
+
+        if ($authUser->role == User::ROLE_ADMIN) {
             return redirect()->route('admin.dashboard');
         }
+
+        $userId = Auth::id();
 
         $user = User::with([
             'roles',
@@ -25,39 +32,108 @@ class DashboardController extends Controller
                 $query->with('plan')->latest();
             },
             'reviewsGiven',
-            'posts' => function ($query) {
-                $query->withCount(['comments', 'reactions']);
-            },
-            'exhibitions',
-            'islamicZone',
-            'communities'
-        ])->findOrFail(Auth::id());
+        ])->findOrFail($userId);
 
-        $exhibitions = Exhibition::where('user_id', $user->id)
-            ->with('user')
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY LOGGED-IN USER POSTS
+        |--------------------------------------------------------------------------
+        */
+        $allUserPosts = Post::with(['images', 'audios'])
+            ->withCount(['comments', 'reactions'])
+            ->where('created_by', $userId)
+            ->where('status', 1)
             ->latest()
-            ->limit(5)
-            ->get();
-
-        $communitys = Community::where('user_id', $user->id)
-            ->with(['user'])
-            ->published()
-            ->latest()
-            ->limit(5)
             ->get();
 
         $posts = Post::with(['images', 'audios'])
-            ->where('created_by', $user->id)
             ->withCount(['allComments', 'userReaction'])
+            ->where('created_by', $userId)
+            ->where('status', 1)
             ->latest()
             ->limit(5)
             ->get();
 
-        $contests = Entry::with(['contest', 'user', 'review', 'winner'])
-            ->where('user_id', $user->id)
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY LOGGED-IN USER EXHIBITIONS
+        |--------------------------------------------------------------------------
+        | Supports both user_id and created_by, because different modules often use
+        | different owner columns.
+        |--------------------------------------------------------------------------
+        */
+        $allUserExhibitions = Exhibition::query()
+            ->with('user')
+            ->where(function ($query) use ($userId) {
+                $this->applyOwnerFilter($query, 'exhibitions', $userId);
+            })
+            ->latest()
+            ->get();
+
+        $exhibitions = Exhibition::query()
+            ->with('user')
+            ->where(function ($query) use ($userId) {
+                $this->applyOwnerFilter($query, 'exhibitions', $userId);
+            })
             ->latest()
             ->limit(5)
             ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY LOGGED-IN USER COMMUNITIES
+        |--------------------------------------------------------------------------
+        | Removed global "all user" risk. This will show only this user's own
+        | community data. If you want only published data, uncomment published().
+        |--------------------------------------------------------------------------
+        */
+        $allUserCommunities = Community::query()
+            ->with('user')
+            ->where(function ($query) use ($userId) {
+                $this->applyOwnerFilter($query, 'communities', $userId);
+            })
+            ->latest()
+            ->get();
+
+        $communitys = Community::query()
+            ->with('user')
+            ->where(function ($query) use ($userId) {
+                $this->applyOwnerFilter($query, 'communities', $userId);
+            })
+            // ->published()
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY LOGGED-IN USER CONTEST PARTICIPATIONS
+        |--------------------------------------------------------------------------
+        */
+        $contests = Entry::with(['contest', 'user', 'review', 'winner'])
+            ->where('user_id', $userId)
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | ONLY LOGGED-IN USER CREATED CONTEST COUNT
+        |--------------------------------------------------------------------------
+        */
+        $totalContests = Contest::where('created_by', $userId)->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Set relations manually for frontend dashboard counts/chart
+        |--------------------------------------------------------------------------
+        | Your JSX uses user.posts/user.communities/user.exhibitions, so we attach
+        | already-filtered collections here.
+        |--------------------------------------------------------------------------
+        */
+        $user->setRelation('posts', $allUserPosts);
+        $user->setRelation('exhibitions', $allUserExhibitions);
+        $user->setRelation('communities', $allUserCommunities);
 
         $defaultPlan = Plan::active()
             ->where('plan_type', Plan::PLAN_PAID)
@@ -70,11 +146,38 @@ class DashboardController extends Controller
             ],
             'user' => $user,
             'defaultPlan' => $defaultPlan,
-            'total_contests' => \App\Models\Contest::where('created_by', Auth::id())->count(),
+            'total_contests' => $totalContests,
             'exhibitions' => $exhibitions,
             'communitys' => $communitys,
             'posts' => $posts,
             'contests' => $contests,
         ]);
+    }
+
+    private function applyOwnerFilter(Builder $query, string $table, int $userId): void
+    {
+        $hasUserId = Schema::hasColumn($table, 'user_id');
+        $hasCreatedBy = Schema::hasColumn($table, 'created_by');
+
+        if ($hasUserId && $hasCreatedBy) {
+            $query->where('user_id', $userId)
+                ->orWhere('created_by', $userId);
+
+            return;
+        }
+
+        if ($hasUserId) {
+            $query->where('user_id', $userId);
+
+            return;
+        }
+
+        if ($hasCreatedBy) {
+            $query->where('created_by', $userId);
+
+            return;
+        }
+
+        $query->whereRaw('1 = 0');
     }
 }

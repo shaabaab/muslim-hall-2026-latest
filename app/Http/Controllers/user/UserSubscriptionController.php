@@ -52,124 +52,148 @@ class UserSubscriptionController extends Controller
 
     public function payWithSslCommerz(Request $request)
     {
-        $request->validate([
-            'plan_id' => 'required|exists:plans,id',
-        ]);
-
-        $user = Auth::user();
-
-        if (!$user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Please login first.',
-            ], 401);
-        }
-
-        $activeSubscription = Subscription::where('user_id', $user->id)
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->whereDate('end_date', '>=', now())
-            ->first();
-
-        if ($activeSubscription) {
-            throw ValidationException::withMessages([
-                'plan_id' => 'You already have an active subscription.',
-            ]);
-        }
-
-        $plan = Plan::active()->findOrFail($request->plan_id);
-
-        if ((float) $plan->price <= 0) {
-            throw ValidationException::withMessages([
-                'plan_id' => 'Invalid paid plan amount.',
-            ]);
-        }
-
-        $startDate = now();
-        $endDate = $startDate->copy()->addDays((int) $plan->validity);
-
-        $subscription = Subscription::create([
-            'user_id' => $user->id,
-            'plan_id' => $plan->id,
-            'validity' => $plan->validity,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'status' => Subscription::STATUS_PENDING,
-        ]);
-
-        $tranId = 'SUB-' . $subscription->id . '-' . strtoupper(Str::random(10));
-
-        $payment = SubscriptionPayment::create([
-            'subscription_id' => $subscription->id,
-            'amount' => $plan->price,
-            'payment_method' => 'sslcommerz',
-            'transaction_id' => $tranId,
-            'currency' => 'BDT',
-            'status' => SubscriptionPayment::STATUS_PENDING,
-        ]);
-
-        $initUrl = $this->getSslInitUrl();
-
-        $postData = [
-            'store_id' => config('sslcommerz.store_id'),
-            'store_passwd' => config('sslcommerz.store_password'),
-            'total_amount' => number_format((float) $plan->price, 2, '.', ''),
-            'currency' => 'BDT',
-            'tran_id' => $tranId,
-
-            'success_url' => route('sslcommerz.subscription.success'),
-            'fail_url' => route('sslcommerz.subscription.fail'),
-            'cancel_url' => route('sslcommerz.subscription.cancel'),
-            'ipn_url' => route('sslcommerz.subscription.ipn'),
-
-            'cus_name' => $user->name ?? 'Customer',
-            'cus_email' => $user->email ?? 'customer@example.com',
-            'cus_add1' => $user->address ?? 'Bangladesh',
-            'cus_add2' => $user->address ?? 'Bangladesh',
-            'cus_city' => 'Chattogram',
-            'cus_state' => 'Chattogram',
-            'cus_postcode' => '4000',
-            'cus_country' => 'Bangladesh',
-            'cus_phone' => $user->phone ?? '01700000000',
-            'cus_fax' => $user->phone ?? '01700000000',
-
-            'shipping_method' => 'NO',
-            'num_of_item' => 1,
-            'product_name' => $plan->name,
-            'product_category' => 'Subscription',
-            'product_profile' => 'non-physical-goods',
-
-            'value_a' => $subscription->id,
-            'value_b' => $user->id,
-            'value_c' => $plan->id,
-            'value_d' => 'subscription',
-        ];
-
         try {
-            $response = Http::asForm()->post($initUrl, $postData);
+            $request->validate([
+                'plan_id' => 'required|exists:plans,id',
+            ]);
+
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Please login first.',
+                ], 401);
+            }
+
+            $activeSubscription = Subscription::where('user_id', $user->id)
+                ->where('status', Subscription::STATUS_ACTIVE)
+                ->whereDate('end_date', '>=', now())
+                ->first();
+
+            if ($activeSubscription) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'You already have an active subscription.',
+                ], 422);
+            }
+
+            $plan = Plan::active()->find($request->plan_id);
+
+            if (!$plan) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Selected plan is not active.',
+                ], 422);
+            }
+
+            if ((float) $plan->price <= 0) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid paid plan amount.',
+                ], 422);
+            }
+
+            if (!config('sslcommerz.store_id') || !config('sslcommerz.store_password')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'SSLCommerz credential missing. Please check .env and config cache.',
+                ], 500);
+            }
+
+            $startDate = now();
+            $endDate = $startDate->copy()->addDays((int) $plan->validity);
+
+            $subscription = Subscription::create([
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'validity' => $plan->validity,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'status' => Subscription::STATUS_PENDING,
+            ]);
+
+            $tranId = 'SUB-' . $subscription->id . '-' . strtoupper(Str::random(10));
+
+            $payment = SubscriptionPayment::create([
+                'subscription_id' => $subscription->id,
+                'amount' => $plan->price,
+                'payment_method' => 'sslcommerz',
+                'transaction_id' => $tranId,
+                'currency' => 'BDT',
+                'status' => SubscriptionPayment::STATUS_PENDING,
+            ]);
+
+            $initUrl = $this->getSslInitUrl();
+
+            $postData = [
+                'store_id' => config('sslcommerz.store_id'),
+                'store_passwd' => config('sslcommerz.store_password'),
+                'total_amount' => number_format((float) $plan->price, 2, '.', ''),
+                'currency' => 'BDT',
+                'tran_id' => $tranId,
+
+                'success_url' => route('sslcommerz.subscription.success'),
+                'fail_url' => route('sslcommerz.subscription.fail'),
+                'cancel_url' => route('sslcommerz.subscription.cancel'),
+                'ipn_url' => route('sslcommerz.subscription.ipn'),
+
+                'cus_name' => $user->name ?? 'Customer',
+                'cus_email' => $user->email ?? 'customer@example.com',
+                'cus_add1' => $user->address ?? 'Bangladesh',
+                'cus_add2' => $user->address ?? 'Bangladesh',
+                'cus_city' => 'Chattogram',
+                'cus_state' => 'Chattogram',
+                'cus_postcode' => '4000',
+                'cus_country' => 'Bangladesh',
+                'cus_phone' => $user->phone ?? '01700000000',
+                'cus_fax' => $user->phone ?? '01700000000',
+
+                'shipping_method' => 'NO',
+                'num_of_item' => 1,
+                'product_name' => $plan->name,
+                'product_category' => 'Subscription',
+                'product_profile' => 'non-physical-goods',
+
+                'value_a' => $subscription->id,
+                'value_b' => $user->id,
+                'value_c' => $plan->id,
+                'value_d' => 'subscription',
+            ];
+
+            $response = Http::asForm()
+                ->timeout(60)
+                ->post($initUrl, $postData);
+
+            $body = $response->body();
             $result = $response->json();
 
             Log::info('SSLCommerz init response', [
+                'init_url' => $initUrl,
                 'response_status' => $response->status(),
-                'response_body' => $response->body(),
+                'response_body' => $body,
                 'response_json' => $result,
                 'subscription_id' => $subscription->id,
                 'payment_id' => $payment->id,
+                'tran_id' => $tranId,
             ]);
 
             if (
+                is_array($result) &&
                 isset($result['status']) &&
                 $result['status'] === 'SUCCESS' &&
                 !empty($result['GatewayPageURL'])
             ) {
                 return response()->json([
                     'status' => true,
+                    'message' => 'SSLCommerz session created successfully.',
                     'redirect_url' => $result['GatewayPageURL'],
                 ]);
             }
 
             $payment->update([
                 'status' => SubscriptionPayment::STATUS_FAILED,
-                'gateway_response' => $result,
+                'gateway_response' => is_array($result) ? $result : ['raw_response' => $body],
             ]);
 
             $subscription->update([
@@ -178,30 +202,28 @@ class UserSubscriptionController extends Controller
 
             return response()->json([
                 'status' => false,
-                'message' => $result['failedreason'] ?? 'SSLCommerz payment session failed.',
+                'message' => $result['failedreason'] ?? $result['error'] ?? 'SSLCommerz payment session failed.',
                 'ssl_response' => $result,
+                'raw_response' => $body,
+            ], 422);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Throwable $e) {
             Log::error('SSLCommerz payment init failed', [
                 'message' => $e->getMessage(),
-                'subscription_id' => $subscription->id,
-                'payment_id' => $payment->id,
-            ]);
-
-            $payment->update([
-                'status' => SubscriptionPayment::STATUS_FAILED,
-                'gateway_response' => [
-                    'error' => $e->getMessage(),
-                ],
-            ]);
-
-            $subscription->update([
-                'status' => Subscription::STATUS_CANCELLED,
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             return response()->json([
                 'status' => false,
-                'message' => 'Unable to connect with SSLCommerz.',
+                'message' => $e->getMessage(),
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine(),
             ], 500);
         }
     }
@@ -582,10 +604,12 @@ class UserSubscriptionController extends Controller
         $startDate = Carbon::parse($subscription->end_date);
         $endDate = $startDate->addDays($plan->validity);
 
-        if (Subscription::where('status', Subscription::STATUS_ACTIVE)
-            ->where('user_id', $user_id)
-            ->whereDate('end_date', '>=', now())
-            ->exists()) {
+        if (
+            Subscription::where('status', Subscription::STATUS_ACTIVE)
+                ->where('user_id', $user_id)
+                ->whereDate('end_date', '>=', now())
+                ->exists()
+        ) {
             throw ValidationException::withMessages([
                 'error' => 'You already have an active subscription.',
             ]);

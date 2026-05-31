@@ -1,2077 +1,1774 @@
-import { Link, usePage } from "@inertiajs/react";
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import FrontAuthenticatedLayout from '@/Layouts/FrontEndLayout';
-import { Head } from '@inertiajs/react';
+import { Link, usePage, router, Head } from "@inertiajs/react";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
 import Header from "./Header";
 import Footer from "./Footer";
-import axios from 'axios';
+import { message } from "antd";
+
+const SvgIcon = {
+    ArrowLeft: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+        </svg>
+    ),
+    Grid: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+    ),
+    Image: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="M21 15l-5-5L5 21" />
+        </svg>
+    ),
+    Eye: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+            <circle cx="12" cy="12" r="3" />
+        </svg>
+    ),
+    Calendar: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+        </svg>
+    ),
+    User: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+        </svg>
+    ),
+    Tag: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+            <path d="M7 7h.01" />
+        </svg>
+    ),
+    Dollar: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 1v22" />
+            <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+        </svg>
+    ),
+    Document: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <path d="M14 2v6h6" />
+            <path d="M16 13H8M16 17H8M10 9H8" />
+        </svg>
+    ),
+    External: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+            <path d="M15 3h6v6" />
+            <path d="M10 14L21 3" />
+        </svg>
+    ),
+    Like: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M14 9V5a3 3 0 00-6 0v4" />
+            <path d="M5 22h12.28a2 2 0 001.98-1.72l1.38-10A2 2 0 0018.66 8H5v14z" />
+            <path d="M5 8H2v14h3" />
+        </svg>
+    ),
+    Heart: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
+        </svg>
+    ),
+    Dislike: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10 15v4a3 3 0 006 0v-4" />
+            <path d="M19 2H6.72a2 2 0 00-1.98 1.72l-1.38 10A2 2 0 005.34 16H19V2z" />
+            <path d="M19 16h3V2h-3" />
+        </svg>
+    ),
+    Message: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4v8z" />
+        </svg>
+    ),
+    Reply: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 17l-5-5 5-5" />
+            <path d="M20 18v-2a4 4 0 00-4-4H4" />
+        </svg>
+    ),
+    Send: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 2L11 13" />
+            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+        </svg>
+    ),
+    Award: () => (
+        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="8" r="7" />
+            <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.11" />
+        </svg>
+    ),
+};
 
 export default function ExhibitionDetail() {
-    const { exhibition, auth, flash } = usePage().props;
-    const [commentText, setCommentText] = useState('');
-    const [replyText, setReplyText] = useState('');
-    const [replyingTo, setReplyingTo] = useState(null);
-    const [editingComment, setEditingComment] = useState(null);
-    const [editText, setEditText] = useState('');
-    const [reactionCounts, setReactionCounts] = useState({ like: 0, love: 0, dislike: 0 });
-    const [userReaction, setUserReaction] = useState(null);
-    const [comments, setComments] = useState([]);
-    const [loading, setLoading] = useState({
-        reactions: false,
-        comment: false,
-        reply: false,
-        update: false,
-        delete: false,
-        initial: true
+    const { exhibition, auth } = usePage().props;
+
+    const user = auth?.user || null;
+
+    const [reactionCounts, setReactionCounts] = useState({
+        like: 0,
+        love: 0,
+        dislike: 0,
     });
-    const [toast, setToast] = useState({ show: false, message: '', type: '' });
-    const [expandedComments, setExpandedComments] = useState(new Set());
 
-    // Debug exhibition data
-    useEffect(() => {
-        console.log('Exhibition data:', exhibition);
-        console.log('Auth data:', auth);
-    }, [exhibition, auth]);
+    const [userReaction, setUserReaction] = useState(null);
+    const [reactionLoading, setReactionLoading] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
-    // URL generators
-    const getImageUrl = useCallback((imagePath) => {
-        if (!imagePath) return '/default-exhibition-image.jpg';
-        return imagePath.startsWith('http') ? imagePath : `/storage/${imagePath}`;
-    }, []);
+    const [comments, setComments] = useState(exhibition?.comments || []);
+    const [commentText, setCommentText] = useState("");
+    const [commentLoading, setCommentLoading] = useState(false);
 
-    // Format date
-    const formatDate = useCallback((dateString) => {
-        if (!dateString) return 'Unknown date';
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    }, []);
+    const [replyText, setReplyText] = useState({});
+    const [replyOpen, setReplyOpen] = useState({});
+    const [replyLoading, setReplyLoading] = useState({});
 
-    // Format price with currency
-    const formatPrice = useCallback((price, currency = 'USD') => {
-        if (!price || price === 0) return 'Not for sale';
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: currency
-        }).format(price);
-    }, []);
+    const stripHtml = (html) => {
+        if (!html) return "";
+        return String(html).replace(/<[^>]*>/g, "");
+    };
 
-    // Get status badge
-    const getStatusBadge = useCallback((status) => {
-        const statusConfig = {
-            published: { class: 'bg-success', text: 'Published' },
-            draft: { class: 'bg-warning', text: 'Draft' },
-            sold: { class: 'bg-danger', text: 'Sold' },
-            archived: { class: 'bg-secondary', text: 'Archived' }
-        };
-        return statusConfig[status] || statusConfig.draft;
-    }, []);
-
-    // Get type badge
-    const getTypeBadge = useCallback((type) => {
-        const typeConfig = {
-            product: { class: 'bg-primary', text: 'Product' },
-            document: { class: 'bg-info', text: 'Document' },
-            art: { class: 'bg-purple', text: 'Art' },
-            photography: { class: 'bg-pink', text: 'Photography' },
-            craft: { class: 'bg-orange', text: 'Craft' }
-        };
-        return typeConfig[type] || { class: 'bg-secondary', text: type || 'Unknown' };
-    }, []);
-
-    // SEO data
-    const seoData = exhibition?.seo || {};
-
-    // Memoized configuration
-    const exhibitionTypeConfig = useMemo(() => ({
-        product: {
-            icon: 'fas fa-shopping-bag',
-            label: 'Product',
-            badgeColor: 'bg-primary'
-        },
-        document: {
-            icon: 'fas fa-file-alt',
-            label: 'Document',
-            badgeColor: 'bg-info'
-        },
-        art: {
-            icon: 'fas fa-palette',
-            label: 'Art',
-            badgeColor: 'bg-purple'
-        },
-        photography: {
-            icon: 'fas fa-camera',
-            label: 'Photography',
-            badgeColor: 'bg-pink'
-        },
-        craft: {
-            icon: 'fas fa-hands',
-            label: 'Craft',
-            badgeColor: 'bg-orange'
+    const getImageUrl = (path) => {
+        if (!path) {
+            return "/placeholder-image.jpg";
         }
-    }), []);
 
-    const reactionTypes = useMemo(() => ({
-        like: {
-            icon: 'fas fa-thumbs-up',
-            label: 'Like',
-            color: 'text-blue-400'
-        },
-        love: {
-            icon: 'fas fa-heart',
-            label: 'Love',
-            color: 'text-red-400'
-        },
-        dislike: {
-            icon: 'fas fa-thumbs-down',
-            label: 'Dislike',
-            color: 'text-yellow-400'
+        if (String(path).startsWith("http")) {
+            return path;
         }
-    }), []);
 
-    // Enhanced toast system
-    const showToast = useCallback((message, type = 'success') => {
-        setToast({ show: true, message, type });
-        setTimeout(() => setToast({ show: false, message: '', type: '' }), 4000);
-    }, []);
+        if (String(path).startsWith("/storage")) {
+            return path;
+        }
 
-    // Safe function to handle gallery data
-    const getGalleryImages = () => {
-        if (!exhibition?.gallery) return [];
-        
+        if (String(path).startsWith("/")) {
+            return path;
+        }
+
+        return `/storage/${path}`;
+    };
+
+    const formatDate = (date) => {
+        if (!date) return "N/A";
+
         try {
-            if (Array.isArray(exhibition.gallery)) {
-                return exhibition.gallery.filter(item => item && typeof item === 'string');
-            }
-            
-            if (typeof exhibition.gallery === 'string') {
-                // Try to parse as JSON
-                try {
-                    const parsed = JSON.parse(exhibition.gallery);
-                    if (Array.isArray(parsed)) {
-                        return parsed.filter(item => item && typeof item === 'string');
-                    }
-                } catch (e) {
-                    // If it's a string with comma separation
-                    if (exhibition.gallery.includes(',')) {
-                        return exhibition.gallery.split(',').map(item => item.trim()).filter(item => item);
-                    }
-                    // Single image string
-                    return [exhibition.gallery];
-                }
-            }
+            return new Date(date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+            });
         } catch (error) {
-            console.warn('Failed to parse gallery data:', error);
-        }
-        
-        return [];
-    };
-
-    const galleryImages = getGalleryImages();
-
-    // Handle external link visit
-    const handleVisitLink = () => {
-        if (exhibition?.link) {
-            const url = exhibition.link.startsWith('http') ? exhibition.link : `https://${exhibition.link}`;
-            window.open(url, '_blank', 'noopener,noreferrer');
+            return "N/A";
         }
     };
 
-    // Handle document download
-    const handleDownloadDocument = () => {
-        if (exhibition?.document_file) {
-            const link = document.createElement('a');
-            link.href = getImageUrl(exhibition.document_file);
-            link.download = `${exhibition.title || 'exhibition'}-document.pdf`;
-            link.target = '_blank';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    };
+    const galleryImages = useMemo(() => {
+        if (!exhibition?.gallery) return [];
 
-    // Initialize data
+        if (Array.isArray(exhibition.gallery)) {
+            return exhibition.gallery;
+        }
+
+        try {
+            const parsed = JSON.parse(exhibition.gallery);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            return [];
+        }
+    }, [exhibition?.gallery]);
+
+    const mainImage = selectedImage || exhibition?.image;
+
     useEffect(() => {
-        const initializeData = async () => {
-            try {
-                setLoading(prev => ({ ...prev, initial: true }));
+        setComments(exhibition?.comments || []);
+    }, [exhibition?.comments]);
 
-                if (exhibition?.comments) {
-                    setComments(exhibition.comments);
-                }
-
-                await fetchReactions();
-            } catch (error) {
-                console.error('Error initializing data:', error);
-                showToast('Failed to load exhibition data', 'error');
-            } finally {
-                setLoading(prev => ({ ...prev, initial: false }));
-            }
-        };
-
-        if (exhibition && exhibition.id) {
-            initializeData();
+    useEffect(() => {
+        if (exhibition?.id) {
+            fetchReactions();
         }
     }, [exhibition?.id]);
 
-    // Show flash messages
-    useEffect(() => {
-        if (flash?.success) {
-            showToast(flash.success, 'success');
-        }
-        if (flash?.error) {
-            showToast(flash.error, 'error');
-        }
-    }, [flash, showToast]);
-
-    // Fetch reactions with better error handling
-    const fetchReactions = async (retryCount = 0) => {
-        const maxRetries = 2;
-
-        if (!exhibition?.id) {
-            console.warn('No exhibition ID available for fetching reactions');
-            return;
-        }
-
-        setLoading(prev => ({ ...prev, reactions: true }));
+    const fetchReactions = async () => {
         try {
-            const response = await axios.get(`/exhibition/reactions/${exhibition.id}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                }
+            const response = await axios.get(
+                route("exhibition.reactions.get", exhibition.id)
+            );
+
+            setReactionCounts({
+                like: response.data?.reaction_counts?.like || 0,
+                love: response.data?.reaction_counts?.love || 0,
+                dislike: response.data?.reaction_counts?.dislike || 0,
             });
 
-            console.log('Reactions response:', response.data);
-
-            if (response.data) {
-                const data = response.data;
-                const normalizedCounts = {
-                    like: data.reaction_counts?.like || data.likes_count || data.like || 0,
-                    love: data.reaction_counts?.love || data.loves_count || data.love || 0,
-                    dislike: data.reaction_counts?.dislike || data.dislikes_count || data.dislike || 0
-                };
-
-                setReactionCounts(normalizedCounts);
-                setUserReaction(data.user_reaction || null);
-            }
+            setUserReaction(response.data?.user_reaction || null);
         } catch (error) {
-            console.error('Error fetching reactions:', error);
-            
-            // Fallback to exhibition data if available
-            if (exhibition.likes_count !== undefined) {
-                setReactionCounts({
-                    like: exhibition.likes_count || 0,
-                    love: exhibition.loves_count || 0,
-                    dislike: exhibition.dislikes_count || 0
-                });
-            }
-
-            if (retryCount < maxRetries) {
-                setTimeout(() => fetchReactions(retryCount + 1), 1000 * (retryCount + 1));
-            }
-        } finally {
-            setLoading(prev => ({ ...prev, reactions: false }));
+            console.error("Reaction fetch error:", error);
         }
     };
 
-    // Handle reaction with better validation
-    const handleReaction = useCallback(async (type) => {
-        if (!auth?.user) {
-            showToast('Please login to react', 'error');
+    const handleReaction = async (type) => {
+        if (!user) {
+            message.warning("Please login first.");
+            router.visit(route("login"));
             return;
         }
 
-        if (!exhibition?.id) {
-            showToast('Exhibition not found', 'error');
-            return;
-        }
+        if (reactionLoading) return;
 
-        if (loading.reactions) return;
-
-        setLoading(prev => ({ ...prev, reactions: true }));
+        setReactionLoading(true);
 
         try {
-            const response = await axios.post('/exhibition/reactions/toggle', {
+            const response = await axios.post(route("exhibition.reactions.toggle"), {
                 exhibition_id: exhibition.id,
-                type: type
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
+                type,
             });
 
-            console.log('Reaction toggle response:', response.data);
+            if (response.data?.success) {
+                setReactionCounts({
+                    like: response.data?.reaction_counts?.like || 0,
+                    love: response.data?.reaction_counts?.love || 0,
+                    dislike: response.data?.reaction_counts?.dislike || 0,
+                });
 
-            if (response.data && response.data.success) {
-                setReactionCounts(prev => ({
-                    ...prev,
-                    ...response.data.reaction_counts
-                }));
-                setUserReaction(response.data.user_reaction);
-                showToast(response.data.message || 'Reaction updated', 'success');
+                setUserReaction(response.data?.user_reaction || null);
+
+                if (response.data?.action === "removed") {
+                    message.success("Reaction removed");
+                } else if (response.data?.action === "updated") {
+                    message.success("Reaction updated");
+                } else {
+                    message.success("Reaction added");
+                }
             } else {
-                throw new Error(response.data?.message || 'Failed to update reaction');
+                message.error(response.data?.message || "Failed to update reaction");
             }
         } catch (error) {
-            console.error('Error toggling reaction:', error);
-            
-            // Handle 422 validation errors
-            if (error.response?.status === 422) {
-                const validationErrors = error.response.data.errors;
-                const errorMessage = Object.values(validationErrors).flat().join(', ');
-                showToast(`Validation error: ${errorMessage}`, 'error');
-            } else {
-                const message = error.response?.data?.message || error.message || 'Failed to update reaction';
-                showToast(message, 'error');
-            }
-            
-            // Refresh reactions to ensure consistency
-            await fetchReactions();
-        } finally {
-            setLoading(prev => ({ ...prev, reactions: false }));
-        }
-    }, [auth?.user, exhibition?.id, loading.reactions, showToast]);
+            console.error("Reaction error:", error);
 
-    // Handle comment submission with validation
+            if (error.response?.status === 401) {
+                message.warning("Please login first.");
+                router.visit(route("login"));
+            } else {
+                message.error(
+                    error.response?.data?.message || "Failed to update reaction"
+                );
+            }
+        } finally {
+            setReactionLoading(false);
+        }
+    };
+
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
-        
+
+        if (!user) {
+            message.warning("Please login first.");
+            router.visit(route("login"));
+            return;
+        }
+
         if (!commentText.trim()) {
-            showToast('Please enter a comment', 'error');
+            message.warning("Please write a comment.");
             return;
         }
 
-        if (!auth?.user) {
-            showToast('Please login to comment', 'error');
-            return;
-        }
-
-        if (!exhibition?.id) {
-            showToast('Exhibition not found', 'error');
-            return;
-        }
-
-        setLoading(prev => ({ ...prev, comment: true }));
-        const tempId = `temp-${Date.now()}`;
-        const tempComment = {
-            id: tempId,
-            comment: commentText.trim(),
-            user: auth.user,
-            user_id: auth.user.id,
-            created_at: new Date().toISOString(),
-            replies: [],
-            is_temp: true
-        };
-
-        setComments(prev => [tempComment, ...prev]);
-        setCommentText('');
+        setCommentLoading(true);
 
         try {
-            const response = await axios.post('/exhibition/comments', {
+            const response = await axios.post(route("exhibition.comments.store"), {
                 exhibition_id: exhibition.id,
-                comment: commentText.trim()
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
+                comment: commentText,
             });
 
-            console.log('Comment response:', response.data);
+            if (response.data?.success) {
+                setCommentText("");
 
-            if (response.data && response.data.success) {
-                setComments(prev => prev.map(comment =>
-                    comment.id === tempId ? response.data.comment : comment
-                ));
-                showToast(response.data.message || 'Comment added successfully', 'success');
+                if (response.data?.comment) {
+                    setComments((prev) => [response.data.comment, ...prev]);
+                } else {
+                    router.reload({ only: ["exhibition"] });
+                }
+
+                message.success("Comment added successfully.");
             } else {
-                throw new Error(response.data?.message || 'Failed to add comment');
+                message.error(response.data?.message || "Failed to add comment.");
             }
         } catch (error) {
-            console.error('Error adding comment:', error);
-            
-            // Remove temp comment on error
-            setComments(prev => prev.filter(comment => comment.id !== tempId));
-            
-            // Handle 422 validation errors
-            if (error.response?.status === 422) {
-                const validationErrors = error.response.data.errors;
-                const errorMessage = Object.values(validationErrors).flat().join(', ');
-                showToast(`Validation error: ${errorMessage}`, 'error');
-            } else {
-                const message = error.response?.data?.message || error.message || 'Failed to add comment';
-                showToast(message, 'error');
-            }
+            console.error("Comment error:", error);
+            message.error(error.response?.data?.message || "Failed to add comment.");
         } finally {
-            setLoading(prev => ({ ...prev, comment: false }));
+            setCommentLoading(false);
         }
     };
 
-    // Handle reply submission with validation
-    const handleReplySubmit = async (e, parentId) => {
+    const handleReplySubmit = async (e, commentId) => {
         e.preventDefault();
-        
-        if (!replyText.trim()) {
-            showToast('Please enter a reply', 'error');
+
+        if (!user) {
+            message.warning("Please login first.");
+            router.visit(route("login"));
             return;
         }
 
-        if (!auth?.user) {
-            showToast('Please login to reply', 'error');
+        const text = replyText[commentId] || "";
+
+        if (!text.trim()) {
+            message.warning("Please write a reply.");
             return;
         }
 
-        if (!exhibition?.id) {
-            showToast('Exhibition not found', 'error');
-            return;
-        }
-
-        setLoading(prev => ({ ...prev, reply: true }));
-        const tempId = `temp-reply-${Date.now()}`;
-        const tempReply = {
-            id: tempId,
-            comment: replyText.trim(),
-            user: auth.user,
-            user_id: auth.user.id,
-            created_at: new Date().toISOString(),
-            is_temp: true
-        };
-
-        setComments(prev => prev.map(comment => {
-            if (comment.id === parentId) {
-                return {
-                    ...comment,
-                    replies: [...(comment.replies || []), tempReply]
-                };
-            }
-            return comment;
+        setReplyLoading((prev) => ({
+            ...prev,
+            [commentId]: true,
         }));
 
-        setReplyText('');
-        setReplyingTo(null);
-
         try {
-            const response = await axios.post('/exhibition/comments', {
+            const response = await axios.post(route("exhibition.comments.reply"), {
                 exhibition_id: exhibition.id,
-                comment: replyText.trim(),
-                parent_id: parentId
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
+                parent_id: commentId,
+                comment: text,
             });
 
-            console.log('Reply response:', response.data);
-
-            if (response.data && response.data.success) {
-                setComments(prev => prev.map(comment => {
-                    if (comment.id === parentId) {
-                        return {
-                            ...comment,
-                            replies: (comment.replies || []).map(reply =>
-                                reply.id === tempId ? response.data.comment : reply
-                            )
-                        };
-                    }
-                    return comment;
+            if (response.data?.success) {
+                setReplyText((prev) => ({
+                    ...prev,
+                    [commentId]: "",
                 }));
-                showToast(response.data.message || 'Reply added successfully', 'success');
+
+                setReplyOpen((prev) => ({
+                    ...prev,
+                    [commentId]: false,
+                }));
+
+                if (response.data?.reply) {
+                    setComments((prevComments) =>
+                        prevComments.map((comment) => {
+                            if (comment.id !== commentId) {
+                                return comment;
+                            }
+
+                            return {
+                                ...comment,
+                                replies: [
+                                    ...(comment.replies || []),
+                                    response.data.reply,
+                                ],
+                            };
+                        })
+                    );
+                } else {
+                    router.reload({ only: ["exhibition"] });
+                }
+
+                message.success("Reply added successfully.");
             } else {
-                throw new Error(response.data?.message || 'Failed to add reply');
+                message.error(response.data?.message || "Failed to add reply.");
             }
         } catch (error) {
-            console.error('Error adding reply:', error);
-            
-            // Remove temp reply on error
-            setComments(prev => prev.map(comment => {
-                if (comment.id === parentId) {
-                    return {
-                        ...comment,
-                        replies: (comment.replies || []).filter(reply => reply.id !== tempId)
-                    };
-                }
-                return comment;
+            console.error("Reply error:", error);
+            message.error(error.response?.data?.message || "Failed to add reply.");
+        } finally {
+            setReplyLoading((prev) => ({
+                ...prev,
+                [commentId]: false,
             }));
-            
-            // Handle 422 validation errors
-            if (error.response?.status === 422) {
-                const validationErrors = error.response.data.errors;
-                const errorMessage = Object.values(validationErrors).flat().join(', ');
-                showToast(`Validation error: ${errorMessage}`, 'error');
-            } else {
-                const message = error.response?.data?.message || error.message || 'Failed to add reply';
-                showToast(message, 'error');
-            }
-        } finally {
-            setLoading(prev => ({ ...prev, reply: false }));
         }
     };
 
-    // Handle comment update
-    const handleCommentUpdate = async (commentId) => {
-        if (!editText.trim()) {
-            showToast('Please enter comment text', 'error');
-            return;
-        }
+    const formatPrice = () => {
+        if (!exhibition?.price) return "Free";
 
-        setLoading(prev => ({ ...prev, update: true }));
-        const updatedComments = updateCommentInTree(comments, commentId, editText.trim());
-        setComments(updatedComments);
-
-        try {
-            const response = await axios.put(`/exhibition/comments/${commentId}`, {
-                comment: editText.trim()
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (response.data && response.data.success) {
-                showToast(response.data.message || 'Comment updated successfully', 'success');
-                setEditingComment(null);
-                setEditText('');
-            } else {
-                throw new Error(response.data?.message || 'Failed to update comment');
-            }
-        } catch (error) {
-            console.error('Error updating comment:', error);
-            
-            // Revert optimistic update
-            if (exhibition.comments) {
-                setComments(exhibition.comments);
-            }
-            
-            // Handle 422 validation errors
-            if (error.response?.status === 422) {
-                const validationErrors = error.response.data.errors;
-                const errorMessage = Object.values(validationErrors).flat().join(', ');
-                showToast(`Validation error: ${errorMessage}`, 'error');
-            } else {
-                const message = error.response?.data?.message || error.message || 'Failed to update comment';
-                showToast(message, 'error');
-            }
-        } finally {
-            setLoading(prev => ({ ...prev, update: false }));
-        }
+        return `${exhibition?.currency || "USD"} ${parseFloat(
+            exhibition.price
+        ).toLocaleString()}`;
     };
 
-    // Helper function to update comment in tree
-    const updateCommentInTree = (comments, commentId, newText) => {
-        return comments.map(comment => {
-            if (comment.id === commentId) {
-                return { ...comment, comment: newText };
-            }
-            if (comment.replies) {
-                return {
-                    ...comment,
-                    replies: updateCommentInTree(comment.replies, commentId, newText)
-                };
-            }
-            return comment;
-        });
-    };
-
-    // Handle comment deletion
-    const handleCommentDelete = async (commentId) => {
-        if (!confirm('Are you sure you want to delete this comment? This action cannot be undone.')) return;
-
-        setLoading(prev => ({ ...prev, delete: true }));
-        const filteredComments = filterCommentFromTree(comments, commentId);
-        setComments(filteredComments);
-
-        try {
-            const response = await axios.delete(`/exhibition/comments/${commentId}`);
-
-            if (response.data && response.data.success) {
-                showToast(response.data.message || 'Comment deleted successfully', 'success');
-            } else {
-                throw new Error(response.data?.message || 'Failed to delete comment');
-            }
-        } catch (error) {
-            console.error('Error deleting comment:', error);
-            
-            // Revert optimistic update
-            if (exhibition.comments) {
-                setComments(exhibition.comments);
-            }
-            
-            const message = error.response?.data?.message || error.message || 'Failed to delete comment';
-            showToast(message, 'error');
-        } finally {
-            setLoading(prev => ({ ...prev, delete: false }));
-        }
-    };
-
-    // Helper function to filter comment from tree
-    const filterCommentFromTree = (comments, commentId) => {
-        return comments.filter(comment => {
-            if (comment.id === commentId) return false;
-            if (comment.replies) {
-                comment.replies = filterCommentFromTree(comment.replies, commentId);
-            }
-            return true;
-        });
-    };
-
-    // Toggle comment expansion
-    const toggleCommentExpansion = (commentId) => {
-        setExpandedComments(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(commentId)) {
-                newSet.delete(commentId);
-            } else {
-                newSet.add(commentId);
-            }
-            return newSet;
-        });
-    };
-
-    // Reaction button component
-    const ReactionButton = ({ type, label, count }) => {
-        const config = reactionTypes[type];
-        const isActive = userReaction?.type === type;
-
-        return (
-            <button
-                onClick={() => handleReaction(type)}
-                disabled={loading.reactions}
-                className={`reaction-btn ${isActive ? 'active' : ''} ${loading.reactions ? 'loading' : ''}`}
-            >
-                <i className={config.icon}></i>
-                <span className="count">{count}</span>
-                <span className="label">{label}</span>
-            </button>
-        );
-    };
-
-    // Comment component
-    const CommentItem = ({ comment, level = 0 }) => {
-        const isExpanded = expandedComments.has(comment.id);
-        const canModify = auth?.user && (auth.user.id === comment.user_id || auth.user.is_admin);
-        const hasReplies = comment.replies && comment.replies.length > 0;
-        const isTemp = comment.is_temp;
-
-        return (
-            <div className={`comment-item ${level > 0 ? 'nested' : ''} ${isTemp ? 'temp' : ''}`}>
-                <div className="comment-content">
-                    {/* Comment Header */}
-                    <div className="comment-header">
-                        <div className="user-info">
-                            <div className="user-avatar">
-                                {comment.user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                            </div>
-                            <div className="user-details">
-                                <div className="user-name">
-                                    {comment.user?.name || 'Anonymous'}
-                                    {isTemp && <span className="posting-badge">Posting...</span>}
-                                </div>
-                                <div className="comment-date">{formatDate(comment.created_at)}</div>
-                            </div>
-                        </div>
-
-                        {canModify && !isTemp && (
-                            <div className="comment-actions">
-                                <button
-                                    onClick={() => {
-                                        setEditingComment(comment.id);
-                                        setEditText(comment.comment);
-                                    }}
-                                    disabled={loading.update}
-                                    className="edit-btn"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    onClick={() => handleCommentDelete(comment.id)}
-                                    disabled={loading.delete}
-                                    className="delete-btn"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Comment Content */}
-                    {editingComment === comment.id ? (
-                        <div className="edit-form">
-                            <textarea
-                                value={editText}
-                                onChange={(e) => setEditText(e.target.value)}
-                                className="edit-textarea"
-                                rows="3"
-                            />
-                            <div className="edit-actions">
-                                <button
-                                    onClick={() => handleCommentUpdate(comment.id)}
-                                    disabled={loading.update || !editText.trim()}
-                                    className="save-btn"
-                                >
-                                    {loading.update ? 'Updating...' : 'Update'}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setEditingComment(null);
-                                        setEditText('');
-                                    }}
-                                    className="cancel-btn"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="comment-text">{comment.comment}</div>
-                    )}
-
-                    {/* Comment Actions */}
-                    {level === 0 && auth?.user && !isTemp && (
-                        <div className="comment-footer">
-                            <button
-                                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                                className="reply-btn"
-                            >
-                                {replyingTo === comment.id ? 'Cancel' : 'Reply'}
-                            </button>
-
-                            {hasReplies && (
-                                <button
-                                    onClick={() => toggleCommentExpansion(comment.id)}
-                                    className="toggle-replies-btn"
-                                >
-                                    {isExpanded ? 'Hide' : 'Show'} Replies ({comment.replies.length})
-                                </button>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Reply Form */}
-                    {replyingTo === comment.id && (
-                        <form onSubmit={(e) => handleReplySubmit(e, comment.id)} className="reply-form">
-                            <textarea
-                                value={replyText}
-                                onChange={(e) => setReplyText(e.target.value)}
-                                placeholder="Write your reply..."
-                                className="reply-textarea"
-                                rows="3"
-                                required
-                            />
-                            <div className="reply-actions">
-                                <button
-                                    type="submit"
-                                    disabled={loading.reply || !replyText.trim()}
-                                    className="submit-reply-btn"
-                                >
-                                    {loading.reply ? 'Posting...' : 'Post Reply'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setReplyingTo(null);
-                                        setReplyText('');
-                                    }}
-                                    className="cancel-reply-btn"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    )}
-                </div>
-
-                {/* Nested Replies */}
-                {hasReplies && (isExpanded || level > 0) && (
-                    <div className="replies-container">
-                        {comment.replies.map(reply => (
-                            <CommentItem key={reply.id} comment={reply} level={level + 1} />
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
+    const reactionButtonClass = (type) => {
+        return userReaction?.type === type
+            ? `reaction-button active ${type}`
+            : `reaction-button ${type}`;
     };
 
     if (!exhibition) {
         return (
             <FrontAuthenticatedLayout>
-                <div className="theme-dark-active">
-                    <Header />
-                    <div className="text-white text-center p-5">Exhibition not found</div>
-                    <Footer />
+                <Head title="Exhibition Not Found" />
+                <Header />
+
+                <div className="empty-wrapper">
+                    <h1>Exhibition not found</h1>
+                    <Link href={route("exhibition-details")} className="primary-link">
+                        Back to Exhibitions
+                    </Link>
                 </div>
+
+                <Footer />
             </FrontAuthenticatedLayout>
         );
     }
 
-    const statusBadge = getStatusBadge(exhibition.status);
-    const typeBadge = getTypeBadge(exhibition.type);
-    const typeConfig = exhibitionTypeConfig[exhibition.type] || exhibitionTypeConfig.product;
-
     return (
-        <>
-            <Head>
-                <title>{exhibition.title || 'Exhibition'}</title>
-                <meta name="description" content={exhibition.description?.substring(0, 160) || 'Explore this exhibition'} />
-            </Head>
+        <FrontAuthenticatedLayout>
+            <Head title={stripHtml(exhibition.title) || "Exhibition Detail"} />
 
-            <FrontAuthenticatedLayout>
-                <div className="theme-dark-active">
-                    <Header />
+            <div className="page-wrapper">
+                <Header />
 
-                    {/* Toast Notification */}
-                    {toast.show && (
-                        <div className={`toast-notification ${toast.type}`}>
-                            <i className={`fas ${toast.type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>
-                            <span>{toast.message}</span>
-                        </div>
-                    )}
+                <main className="exhibition-page">
+                    <section className="top-section">
+                        <div className="container mt-4">
+                            <div className="top-actions">
+                                <Link href={route("exhibition-details")} className="back-link">
+                                    <SvgIcon.ArrowLeft />
+                                    Back to Boards
+                                </Link>
 
-                    {/* Main Content Section */}
-                    <div className="content-section" id="content">
-                        <div className="container-md">
-                            <div className="content-layout">
-                                {/* Content Info Sidebar */}
-                                <div className="filter-sidebar">
-                                    <div className="filter-header">
-                                        <h3 className="filter-title">
-                                            <i className="fas fa-info-circle"></i>
-                                            Exhibition Info
-                                        </h3>
-                                    </div>
+                                {exhibition?.board && (
+                                    <Link
+                                        href={route(
+                                            "exhibition-board.show",
+                                            exhibition.board.id
+                                        )}
+                                        className="board-link"
+                                    >
+                                        <SvgIcon.Grid />
+                                        {exhibition.board.title}
+                                    </Link>
+                                )}
+                            </div>
 
-                                    {/* Exhibition Image */}
-                                    <div className="content-thumbnail-container">
+                            <div className="main-card">
+                                <div className="media-column">
+                                    <div className="main-image-box">
                                         <img
-                                            src={getImageUrl(exhibition.image)}
-                                            alt={exhibition.title}
-                                            className="content-thumbnail"
-                                            onError={(e) => {
-                                                e.target.src = '/default-exhibition-image.jpg';
-                                            }}
+                                            src={getImageUrl(mainImage)}
+                                            alt={stripHtml(exhibition.title)}
                                         />
-                                    </div>
 
-                                    {/* Exhibition Stats */}
-                                    <div className="stats-group">
-                                        <h4 className="stats-title">
-                                            <i className="fas fa-chart-bar"></i>
-                                            Exhibition Details
-                                        </h4>
-                                        <div className="stats-list">
-                                            <div className="stat-item">
-                                                <span className="stat-label">Type:</span>
-                                                <span className="stat-value">
-                                                    <i className={typeConfig.icon}></i>
-                                                    {typeConfig.label}
+                                        <div className="floating-badges">
+                                            <span className="badge type">
+                                                {exhibition.type || "Exhibition"}
+                                            </span>
+
+                                            {exhibition.is_featured && (
+                                                <span className="badge featured">
+                                                    Featured
                                                 </span>
-                                            </div>
-                                            <div className="stat-item">
-                                                <span className="stat-label">Status:</span>
-                                                <span className="stat-value">
-                                                    <span className={`badge ${statusBadge.class}`}>
-                                                        {statusBadge.text}
-                                                    </span>
-                                                </span>
-                                            </div>
-                                            <div className="stat-item">
-                                                <span className="stat-label">Price:</span>
-                                                <span className="stat-value">{formatPrice(exhibition.price, exhibition.currency)}</span>
-                                            </div>
-                                            <div className="stat-item">
-                                                <span className="stat-label">Views:</span>
-                                                <span className="stat-value">{exhibition.views || 0}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Reactions Section */}
-                                    <div className="stats-group">
-                                        <h4 className="stats-title">
-                                            <i className="fas fa-heart"></i>
-                                            Reactions
-                                        </h4>
-                                        <div className="reactions-list">
-                                            <ReactionButton
-                                                type="like"
-                                                label="Like"
-                                                count={reactionCounts.like}
-                                            />
-                                            <ReactionButton
-                                                type="love"
-                                                label="Love"
-                                                count={reactionCounts.love}
-                                            />
-                                            <ReactionButton
-                                                type="dislike"
-                                                label="Dislike"
-                                                count={reactionCounts.dislike}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Exhibition Info */}
-                                    <div className="stats-group">
-                                        <h4 className="stats-title">
-                                            <i className="fas fa-calendar"></i>
-                                            Exhibition Info
-                                        </h4>
-                                        <div className="stats-list">
-                                            <div className="stat-item">
-                                                <span className="stat-label">Created:</span>
-                                                <span className="stat-value">{formatDate(exhibition.created_at)}</span>
-                                            </div>
-                                            <div className="stat-item">
-                                                <span className="stat-label">Updated:</span>
-                                                <span className="stat-value">{formatDate(exhibition.updated_at)}</span>
-                                            </div>
-                                            {exhibition.dimensions && (
-                                                <div className="stat-item">
-                                                    <span className="stat-label">Dimensions:</span>
-                                                    <span className="stat-value">{exhibition.dimensions}</span>
-                                                </div>
                                             )}
-                                            {exhibition.material && (
-                                                <div className="stat-item">
-                                                    <span className="stat-label">Material:</span>
-                                                    <span className="stat-value">{exhibition.material}</span>
-                                                </div>
+
+                                            {exhibition.status === "sold" && (
+                                                <span className="badge sold">
+                                                    Sold
+                                                </span>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Action Options */}
-                                    <div className="download-options">
-                                        {exhibition.link && (
+                                    {galleryImages.length > 0 && (
+                                        <div className="gallery-strip">
                                             <button
-                                                onClick={handleVisitLink}
-                                                className="download-btn primary"
+                                                type="button"
+                                                className={`gallery-item ${
+                                                    selectedImage === null ? "active" : ""
+                                                }`}
+                                                onClick={() => setSelectedImage(null)}
                                             >
-                                                <i className="fas fa-external-link-alt"></i>
-                                                Visit Website
+                                                <img
+                                                    src={getImageUrl(exhibition.image)}
+                                                    alt="Main"
+                                                />
                                             </button>
-                                        )}
-                                        {exhibition.document_file && (
-                                            <button
-                                                onClick={handleDownloadDocument}
-                                                className="download-btn secondary"
-                                            >
-                                                <i className="fas fa-download"></i>
-                                                Download Document
-                                            </button>
-                                        )}
-                                    </div>
+
+                                            {galleryImages.map((image, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    className={`gallery-item ${
+                                                        selectedImage === image
+                                                            ? "active"
+                                                            : ""
+                                                    }`}
+                                                    onClick={() => setSelectedImage(image)}
+                                                >
+                                                    <img
+                                                        src={getImageUrl(image)}
+                                                        alt={`Gallery ${index + 1}`}
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Exhibition Details Main Content */}
-                                <div className="posts-grid-section">
-                                    <div className="section-header">
-                                        <h2 className="section-title">{exhibition.title || 'Untitled Exhibition'}</h2>
-                                        <div className="posts-count">
-                                            {typeConfig.label} • {exhibition.is_available ? 'Available' : 'Not Available'}
+                                <div className="info-column">
+                                    <div className="status-row">
+                                        <span className="status-chip green">
+                                            {exhibition.is_available
+                                                ? "Available"
+                                                : "Not Available"}
+                                        </span>
+
+                                        <span className="status-chip blue">
+                                            {exhibition.approval_status || "Approved"}
+                                        </span>
+                                    </div>
+
+                                    <h1
+                                        className="detail-title"
+                                        dangerouslySetInnerHTML={{
+                                            __html: exhibition.title || "Untitled",
+                                        }}
+                                    />
+
+                                    <div className="stats-grid">
+                                        <div className="stat-card">
+                                            <SvgIcon.Dollar />
+                                            <span>Price</span>
+                                            <strong>{formatPrice()}</strong>
                                         </div>
-                                    </div>
 
-                                    {/* Exhibition Meta */}
-                                    <div className="content-meta-card">
-                                        <div className="meta-grid">
-                                            <div className="meta-item">
-                                                <span className="meta-label">Type</span>
-                                                <span className="meta-value">
-                                                    <i className={typeConfig.icon}></i> {typeConfig.label}
-                                                </span>
-                                            </div>
-                                            <div className="meta-item">
-                                                <span className="meta-label">Status</span>
-                                                <span className="meta-value">
-                                                    <span className={`badge ${statusBadge.class}`}>
-                                                        {statusBadge.text}
-                                                    </span>
-                                                </span>
-                                            </div>
-                                            <div className="meta-item">
-                                                <span className="meta-label">Price</span>
-                                                <span className="meta-value">{formatPrice(exhibition.price, exhibition.currency)}</span>
-                                            </div>
-                                            <div className="meta-item">
-                                                <span className="meta-label">Availability</span>
-                                                <span className="meta-value">
-                                                    {exhibition.is_available ? (
-                                                        <span className="badge bg-success">Available</span>
-                                                    ) : (
-                                                        <span className="badge bg-danger">Not Available</span>
-                                                    )}
-                                                </span>
-                                            </div>
+                                        <div className="stat-card">
+                                            <SvgIcon.Eye />
+                                            <span>Views</span>
+                                            <strong>{exhibition.views || 0}</strong>
                                         </div>
-                                    </div>
 
-                                    {/* Exhibition Description */}
-                                    <div className="content-display-card">
-                                        <div className="article-content">
-                                            <h4 className="content-title">
-                                                <i className="fas fa-align-left"></i>
-                                                Description
-                                            </h4>
-                                            <p className="content-text">{exhibition.description || 'No description available.'}</p>
+                                        <div className="stat-card">
+                                            <SvgIcon.Calendar />
+                                            <span>Published</span>
+                                            <strong>
+                                                {formatDate(
+                                                    exhibition.published_at ||
+                                                        exhibition.created_at
+                                                )}
+                                            </strong>
                                         </div>
+
+                                        {/* <div className="stat-card">
+                                            <SvgIcon.User />
+                                            <span>Creator</span>
+                                            <strong>
+                                                {exhibition.user?.name || "Unknown"}
+                                            </strong>
+                                        </div> */}
                                     </div>
 
-                                    {/* Action Buttons */}
-                                    <div className="action-buttons-grid">
-                                        {exhibition.link && (
-                                            <button
-                                                onClick={handleVisitLink}
-                                                className="action-btn primary"
-                                            >
-                                                <i className="fas fa-external-link-alt"></i>
-                                                Visit Website
-                                            </button>
-                                        )}
-                                        {exhibition.document_file && (
-                                            <button
-                                                onClick={handleDownloadDocument}
-                                                className="action-btn secondary"
-                                            >
-                                                <i className="fas fa-download"></i>
-                                                Download Document
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={() => document.getElementById('comments-section').scrollIntoView({ behavior: 'smooth' })}
-                                            className="action-btn outline"
-                                        >
-                                            <i className="fas fa-comments"></i>
-                                            View Comments ({comments.length})
-                                        </button>
-                                    </div>
+                                    {(exhibition.dimensions || exhibition.material) && (
+                                        <div className="mini-info-grid">
+                                            {exhibition.dimensions && (
+                                                <div>
+                                                    <span>Dimensions</span>
+                                                    <strong>{exhibition.dimensions}</strong>
+                                                </div>
+                                            )}
 
-                                    {/* Gallery Section */}
-                                    {galleryImages.length > 0 && (
-                                        <div className="additional-info-card">
-                                            <h3 className="info-title">
-                                                <i className="fas fa-images"></i>
-                                                Gallery Images
-                                            </h3>
-                                            <div className="gallery-grid">
-                                                {galleryImages.map((galleryImage, index) => (
-                                                    <div key={index} className="gallery-item">
-                                                        <img
-                                                            src={getImageUrl(galleryImage)}
-                                                            alt={`Gallery ${index + 1}`}
-                                                            className="gallery-image"
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                            }}
-                                                        />
-                                                        <div className="gallery-overlay">
-                                                            <span className="gallery-count">{index + 1}/{galleryImages.length}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                            {exhibition.material && (
+                                                <div>
+                                                    <span>Material</span>
+                                                    <strong>{exhibition.material}</strong>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
-                                    {/* Additional Information */}
-                                    <div className="additional-info-card">
-                                        <h3 className="info-title">
-                                            <i className="fas fa-info-circle"></i>
-                                            Additional Information
-                                        </h3>
-                                        <div className="info-grid">
-                                            <div className="info-item">
-                                                <span className="info-label">Creation Date</span>
-                                                <span className="info-value">{formatDate(exhibition.created_at)}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <span className="info-label">Last Updated</span>
-                                                <span className="info-value">{formatDate(exhibition.updated_at)}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <span className="info-label">Total Views</span>
-                                                <span className="info-value">{exhibition.views || 0}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <span className="info-label">Exhibition Type</span>
-                                                <span className="info-value">{typeConfig.label}</span>
-                                            </div>
-                                            {exhibition.dimensions && (
-                                                <div className="info-item">
-                                                    <span className="info-label">Dimensions</span>
-                                                    <span className="info-value">{exhibition.dimensions}</span>
-                                                </div>
-                                            )}
-                                            {exhibition.material && (
-                                                <div className="info-item">
-                                                    <span className="info-label">Material</span>
-                                                    <span className="info-value">{exhibition.material}</span>
-                                                </div>
-                                            )}
+                                    <div className="reaction-box">
+                                        <div className="box-heading">
+                                            <SvgIcon.Award />
+                                            <h3>Reaction</h3>
+                                        </div>
+
+                                        <div className="reaction-list">
+                                            <button
+                                                type="button"
+                                                className={reactionButtonClass("like")}
+                                                onClick={() => handleReaction("like")}
+                                                disabled={reactionLoading}
+                                            >
+                                                <SvgIcon.Like />
+                                                <span>Like</span>
+                                                <strong>{reactionCounts.like || 0}</strong>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className={reactionButtonClass("love")}
+                                                onClick={() => handleReaction("love")}
+                                                disabled={reactionLoading}
+                                            >
+                                                <SvgIcon.Heart />
+                                                <span>Love</span>
+                                                <strong>{reactionCounts.love || 0}</strong>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className={reactionButtonClass("dislike")}
+                                                onClick={() => handleReaction("dislike")}
+                                                disabled={reactionLoading}
+                                            >
+                                                <SvgIcon.Dislike />
+                                                <span>Dislike</span>
+                                                <strong>
+                                                    {reactionCounts.dislike || 0}
+                                                </strong>
+                                            </button>
                                         </div>
                                     </div>
 
-                                    {/* Comments Section */}
-                                    <div className="comments-section-card" id="comments-section">
-                                        <div className="comments-header">
-                                            <h3 className="comments-title">
-                                                <i className="fas fa-comments"></i>
-                                                Comments ({comments.length})
-                                            </h3>
-                                        </div>
-
-                                        {/* Comment Form */}
-                                        {auth?.user ? (
-                                            <form onSubmit={handleCommentSubmit} className="comment-form">
-                                                <textarea
-                                                    value={commentText}
-                                                    onChange={(e) => setCommentText(e.target.value)}
-                                                    placeholder="Share your thoughts about this exhibition..."
-                                                    className="comment-textarea"
-                                                    rows="4"
-                                                    required
-                                                />
-                                                <div className="comment-form-footer">
-                                                    <small className="char-count">
-                                                        {commentText.length}/1000 characters
-                                                    </small>
-                                                    <button
-                                                        type="submit"
-                                                        disabled={loading.comment || !commentText.trim()}
-                                                        className="submit-comment-btn"
-                                                    >
-                                                        {loading.comment ? 'Posting...' : 'Post Comment'}
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        ) : (
-                                            <div className="login-prompt">
-                                                <p>
-                                                    Please <Link href="/login" className="login-link">login</Link> to leave a comment.
-                                                </p>
-                                            </div>
+                                    <div className="detail-actions">
+                                        {exhibition.link && (
+                                            <a
+                                                href={exhibition.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="action-btn primary"
+                                            >
+                                                <SvgIcon.External />
+                                                Visit Link
+                                            </a>
                                         )}
 
-                                        {/* Comments List */}
-                                        <div className="comments-list">
-                                            {comments.length > 0 ? (
-                                                comments.map(comment => (
-                                                    <CommentItem key={comment.id} comment={comment} />
-                                                ))
-                                            ) : (
-                                                <div className="no-comments">
-                                                    <i className="fas fa-comments"></i>
-                                                    <p>No comments yet. Be the first to share your thoughts!</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                        {exhibition.document_file && (
+                                            <a
+                                                href={getImageUrl(
+                                                    exhibition.document_file
+                                                )}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="action-btn secondary"
+                                            >
+                                                <SvgIcon.Document />
+                                                View Document
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <Footer />
-                </div>
-
-                {/* ... (keep the same CSS styles as before) ... */}
-                <style jsx>{`
-                    /* Main Content Section */
-                    .content-section {
-                        padding: 80px 0;
-                        background-color: #f9f9f9;
-                    }
-
-                    .content-layout {
-                        display: grid;
-                        grid-template-columns: 300px 1fr;
-                        gap: 40px;
-                        // max-width: 1200px;
-                        margin: 0 auto;
-                    }
-
-                    /* Content Info Sidebar */
-                    .filter-sidebar {
-                        background: #338447 !important;
-                        border-radius: 15px;
-                        padding: 30px;
-                        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-                        height: fit-content;
-                        position: sticky;
-                        top: 100px;
-                    }
-
-                    .filter-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 30px;
-                        padding-bottom: 20px;
-                        border-bottom: 2px solid #f0f0f0;
-                    }
-
-                    .filter-title {
-                        font-size: 20px;
-                        font-weight: 700;
-                        color: #ffffffff;
-                        margin: 0;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    }
-
-                    .filter-title i {
-                        color: #1b7a3a;
-                    }
-
-                    /* Content Thumbnail */
-                    .content-thumbnail-container {
-                        text-align: center;
-                        margin-bottom: 25px;
-                    }
-
-                    .content-thumbnail {
-                        width: 100%;
-                        max-width: 200px;
-                        border-radius: 12px;
-                        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-                        border: 3px solid white;
-                    }
-
-                    /* Stats Group */
-                    .stats-group {
-                        margin-top: 30px;
-                        padding-top: 20px;
-                        border-top: 2px solid #f0f0f0;
-                    }
-
-                    .stats-title {
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #ffffffff;
-                        margin-bottom: 15px;
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                    }
-
-                    .stats-list {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 8px;
-                        margin-bottom: 15px;
-                    }
-
-                    .stat-item {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        font-size: 13px;
-                    }
-
-                    .stat-label {
-                        color: #ffffffff;
-                    }
-
-                    .stat-value {
-                        color: #ffffffff;
-                        font-weight: 600;
-                        display: flex;
-                        align-items: center;
-                        gap: 5px;
-                    }
-
-                    /* Reactions */
-                    .reactions-list {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 8px;
-                    }
-
-                    .reaction-btn {
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        padding: 10px 15px;
-                        border-radius: 8px;
-                        background: rgba(255, 255, 255, 0.1);
-                        color: white;
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        transition: all 0.3s ease;
-                        width: 100%;
-                    }
-
-                    .reaction-btn:hover {
-                        background: rgba(255, 255, 255, 0.2);
-                    }
-
-                    .reaction-btn.active {
-                        background: #1b7a3a;
-                        border-color: #1b7a3a;
-                    }
-
-                    .reaction-btn.loading {
-                        opacity: 0.6;
-                        cursor: not-allowed;
-                    }
-
-                    .reaction-btn .count {
-                        font-weight: 600;
-                    }
-
-                    .reaction-btn .label {
-                        flex: 1;
-                        text-align: left;
-                    }
-
-                    /* Download Options */
-                    .download-options {
-                        margin: 25px 0;
-                        display: flex;
-                        flex-direction: column;
-                        gap: 10px;
-                    }
-
-                    .download-btn {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 10px;
-                        padding: 12px 15px;
-                        border-radius: 8px;
-                        text-decoration: none;
-                        font-weight: 600;
-                        font-size: 14px;
-                        transition: all 0.3s ease;
-                        text-align: center;
-                        width: 100%;
-                        border: none;
-                        cursor: pointer;
-                    }
-
-                    .download-btn.primary {
-                        background: linear-gradient(135deg, #1b7a3a 0%, #2e8b57 100%);
-                        color: white;
-                    }
-
-                    .download-btn.primary:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 5px 15px rgba(27, 122, 58, 0.3);
-                    }
-
-                    .download-btn.secondary {
-                        background: white;
-                        color: #1b7a3a;
-                        border: 2px solid #1b7a3a;
-                    }
-
-                    .download-btn.secondary:hover {
-                        background: #1b7a3a;
-                        color: white;
-                    }
-
-                    /* Posts Grid Section */
-                    .posts-grid-section {
-                        border-radius: 15px;
-                    }
-
-                    .section-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-bottom: 30px;
-                        padding-bottom: 20px;
-                        border-bottom: 2px solid #f0f0f0;
-                    }
-
-                    .section-title {
-                        font-size: 28px;
-                        font-weight: 700;
-                        color: #1b7a3a;
-                        margin: 0;
-                    }
-
-                    .posts-count {
-                        color: #666;
-                        font-size: 14px;
-                        font-weight: 500;
-                    }
-
-                    /* Content Meta Card */
-                    .content-meta-card {
-                        background: white;
-                        border-radius: 15px;
-                        padding: 25px;
-                        margin-bottom: 25px;
-                        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-                        border: 1px solid #f0f0f0;
-                    }
-
-                    .meta-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 20px;
-                    }
-
-                    .meta-item {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 5px;
-                    }
-
-                    .meta-label {
-                        font-size: 12px;
-                        color: #666;
-                        font-weight: 500;
-                    }
-
-                    .meta-value {
-                        font-size: 14px;
-                        color: #333;
-                        font-weight: 600;
-                        display: flex;
-                        align-items: center;
-                        gap: 5px;
-                    }
-
-                    /* Content Display Card */
-                    .content-display-card {
-                        background: white;
-                        border-radius: 15px;
-                        padding: 30px;
-                        margin-bottom: 25px;
-                        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-                        border: 1px solid #f0f0f0;
-                    }
-
-                    .content-title {
-                        font-size: 18px;
-                        font-weight: 600;
-                        color: #333;
-                        margin-bottom: 15px;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    }
-
-                    .content-text {
-                        color: #666;
-                        line-height: 1.6;
-                        margin: 0;
-                    }
-
-                    /* Action Buttons */
-                    .action-buttons-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 15px;
-                        margin-bottom: 25px;
-                    }
-
-                    .action-btn {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 10px;
-                        padding: 15px 20px;
-                        border-radius: 10px;
-                        font-weight: 600;
-                        text-decoration: none;
-                        transition: all 0.3s ease;
-                        border: none;
-                        cursor: pointer;
-                        font-size: 14px;
-                    }
-
-                    .action-btn.primary {
-                        background: linear-gradient(135deg, #1b7a3a 0%, #2e8b57 100%);
-                        color: white;
-                    }
-
-                    .action-btn.primary:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 5px 15px rgba(27, 122, 58, 0.3);
-                    }
-
-                    .action-btn.secondary {
-                        background: white;
-                        color: #1b7a3a;
-                        border: 2px solid #1b7a3a;
-                    }
-
-                    .action-btn.secondary:hover {
-                        background: #1b7a3a;
-                        color: white;
-                        transform: translateY(-2px);
-                    }
-
-                    .action-btn.outline {
-                        background: transparent;
-                        color: #666;
-                        border: 2px solid #e0e0e0;
-                    }
-
-                    .action-btn.outline:hover {
-                        background: #f8f9fa;
-                        border-color: #666;
-                        color: #333;
-                    }
-
-                    /* Gallery Section */
-                    .gallery-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-                        gap: 15px;
-                        margin-top: 15px;
-                    }
-
-                    .gallery-item {
-                        position: relative;
-                        border-radius: 8px;
-                        overflow: hidden;
-                        aspect-ratio: 1;
-                    }
-
-                    .gallery-image {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                        transition: transform 0.3s ease;
-                    }
-
-                    .gallery-item:hover .gallery-image {
-                        transform: scale(1.05);
-                    }
-
-                    .gallery-overlay {
-                        position: absolute;
-                        bottom: 0;
-                        right: 0;
-                        background: rgba(0, 0, 0, 0.7);
-                        color: white;
-                        padding: 4px 8px;
-                        border-radius: 4px 0 0 0;
-                        font-size: 12px;
-                    }
-
-                    /* Additional Info Card */
-                    .additional-info-card {
-                        background: white;
-                        border-radius: 15px;
-                        padding: 30px;
-                        margin-bottom: 25px;
-                        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-                        border: 1px solid #f0f0f0;
-                    }
-
-                    .info-title {
-                        font-size: 20px;
-                        font-weight: 600;
-                        color: #333;
-                        margin-bottom: 20px;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    }
-
-                    .info-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 20px;
-                    }
-
-                    .info-item {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 5px;
-                    }
-
-                    .info-label {
-                        font-size: 12px;
-                        color: #666;
-                        font-weight: 500;
-                    }
-
-                    .info-value {
-                        font-size: 14px;
-                        color: #333;
-                        font-weight: 600;
-                    }
-
-                    /* Comments Section */
-                    .comments-section-card {
-                        background: white;
-                        border-radius: 15px;
-                        padding: 30px;
-                        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-                        border: 1px solid #f0f0f0;
-                    }
-
-                    .comments-header {
-                        margin-bottom: 25px;
-                    }
-
-                    .comments-title {
-                        font-size: 20px;
-                        font-weight: 600;
-                        color: #333;
-                        margin: 0;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    }
-
-                    .comment-form {
-                        margin-bottom: 30px;
-                    }
-
-                    .comment-textarea {
-                        width: 100%;
-                        padding: 15px;
-                        border: 2px solid #e0e0e0;
-                        border-radius: 8px;
-                        font-size: 14px;
-                        resize: vertical;
-                        transition: border-color 0.3s ease;
-                    }
-
-                    .comment-textarea:focus {
-                        outline: none;
-                        border-color: #1b7a3a;
-                    }
-
-                    .comment-form-footer {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        margin-top: 10px;
-                    }
-
-                    .char-count {
-                        color: #666;
-                        font-size: 12px;
-                    }
-
-                    .submit-comment-btn {
-                        background: #1b7a3a;
-                        color: white;
-                        border: none;
-                        padding: 10px 20px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: background 0.3s ease;
-                    }
-
-                    .submit-comment-btn:hover:not(:disabled) {
-                        background: #15652e;
-                    }
-
-                    .submit-comment-btn:disabled {
-                        opacity: 0.6;
-                        cursor: not-allowed;
-                    }
-
-                    .login-prompt {
-                        background: #f8f9fa;
-                        border-radius: 8px;
-                        padding: 20px;
-                        text-align: center;
-                        margin-bottom: 30px;
-                    }
-
-                    .login-prompt p {
-                        margin: 0;
-                        color: #666;
-                    }
-
-                    .login-link {
-                        color: #1b7a3a;
-                        text-decoration: none;
-                        font-weight: 600;
-                    }
-
-                    .login-link:hover {
-                        text-decoration: underline;
-                    }
-
-                    .no-comments {
-                        text-align: center;
-                        padding: 40px 20px;
-                        color: #666;
-                    }
-
-                    .no-comments i {
-                        font-size: 3rem;
-                        margin-bottom: 15px;
-                        color: #ddd;
-                    }
-
-                    /* Comment Items */
-                    .comment-item {
-                        margin-bottom: 20px;
-                    }
-
-                    .comment-item.nested {
-                        margin-left: 40px;
-                        border-left: 2px solid #e9ecef;
-                        padding-left: 20px;
-                    }
-
-                    .comment-item.temp {
-                        opacity: 0.6;
-                    }
-
-                    .comment-content {
-                        background: #f8f9fa;
-                        border-radius: 8px;
-                        padding: 20px;
-                        border: 1px solid #e9ecef;
-                        transition: all 0.3s ease;
-                        position: relative;
-                        border-left: 4px solid #1b7a3a;
-                        margin-left: 0;
-                        margin-right: 0;
-                        width: 100%;
-                        box-sizing: border-box;
-                        display: block;
-                        overflow: hidden;
-                        word-wrap: break-word;
-                        max-width: 100%;
-                        min-width: 0;
-                    }
-
-                    .comment-item.temp .comment-content {
-                        border-style: dashed;
-                    }
-
-                    .comment-header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: flex-start;
-                        margin-bottom: 10px;
-                    }
-
-                    .user-info {
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                    }
-
-                    .user-avatar {
-                        width: 32px;
-                        height: 32px;
-                        border-radius: 50%;
-                        background: #1b7a3a;
-                        color: white;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: 600;
-                        font-size: 14px;
-                    }
-
-                    .user-details {
-                        display: flex;
-                        flex-direction: column;
-                    }
-
-                    .user-name {
-                        font-weight: 600;
-                        color: #333;
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                    }
-
-                    .posting-badge {
-                        background: #ffc107;
-                        color: #000;
-                        padding: 2px 6px;
-                        border-radius: 4px;
-                        font-size: 10px;
-                        font-weight: 600;
-                    }
-
-                    .comment-date {
-                        font-size: 12px;
-                        color: #666;
-                    }
-
-                    .comment-actions {
-                        display: flex;
-                        gap: 10px;
-                    }
-
-                    .edit-btn,
-                    .delete-btn {
-                        background: none;
-                        border: none;
-                        color: #666;
-                        font-size: 12px;
-                        cursor: pointer;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        transition: all 0.3s ease;
-                    }
-
-                    .edit-btn:hover {
-                        color: #1b7a3a;
-                        background: rgba(27, 122, 58, 0.1);
-                    }
-
-                    .delete-btn:hover {
-                        color: #dc3545;
-                        background: rgba(220, 53, 69, 0.1);
-                    }
-
-                    .comment-text {
-                        color: #333;
-                        line-height: 1.5;
-                        margin-bottom: 10px;
-                        word-wrap: break-word;
-                    }
-
-                    .comment-footer {
-                        display: flex;
-                        gap: 15px;
-                        padding-top: 10px;
-                        border-top: 1px solid #e9ecef;
-                    }
-
-                    .reply-btn,
-                    .toggle-replies-btn {
-                        background: none;
-                        border: none;
-                        color: #1b7a3a;
-                        font-size: 12px;
-                        cursor: pointer;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        transition: all 0.3s ease;
-                    }
-
-                    .reply-btn:hover,
-                    .toggle-replies-btn:hover {
-                        background: rgba(27, 122, 58, 0.1);
-                    }
-
-                    /* Edit and Reply Forms */
-                    .edit-form,
-                    .reply-form {
-                        margin-top: 10px;
-                    }
-
-                    .edit-textarea,
-                    .reply-textarea {
-                        width: 100%;
+                    </section>
+
+                    <section className="content-section">
+                        <div className="container-md">
+                            <div className="content-grid">
+                                <div className="left-content">
+                                    <div className="white-card">
+                                        <div className="section-title">
+                                            <SvgIcon.Document />
+                                            <h2>Description</h2>
+                                        </div>
+
+                                        <div
+                                            className="rich-content"
+                                            dangerouslySetInnerHTML={{
+                                                __html:
+                                                    exhibition.description ||
+                                                    "<p>No description available.</p>",
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="white-card comments-card">
+                                        <div className="section-title">
+                                            <SvgIcon.Message />
+                                            <h2>Comments</h2>
+                                        </div>
+
+                                        <form
+                                            onSubmit={handleCommentSubmit}
+                                            className="comment-form"
+                                        >
+                                            <textarea
+                                                value={commentText}
+                                                onChange={(e) =>
+                                                    setCommentText(e.target.value)
+                                                }
+                                                placeholder={
+                                                    user
+                                                        ? "Write your comment..."
+                                                        : "Please login to comment..."
+                                                }
+                                                disabled={!user || commentLoading}
+                                                rows={4}
+                                            />
+
+                                            <div className="form-footer">
+                                                {!user && (
+                                                    <span>
+                                                        Login required for comment.
+                                                    </span>
+                                                )}
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={
+                                                        !user ||
+                                                        commentLoading ||
+                                                        !commentText.trim()
+                                                    }
+                                                >
+                                                    <SvgIcon.Send />
+                                                    {commentLoading
+                                                        ? "Posting..."
+                                                        : "Post Comment"}
+                                                </button>
+                                            </div>
+                                        </form>
+
+                                        <div className="comments-list">
+                                            {comments.length > 0 ? (
+                                                comments.map((comment) => (
+                                                    <div
+                                                        key={comment.id}
+                                                        className="comment-item"
+                                                    >
+                                                        <div className="comment-avatar">
+                                                            {comment.user?.name
+                                                                ?.charAt(0)
+                                                                ?.toUpperCase() ||
+                                                                "U"}
+                                                        </div>
+
+                                                        <div className="comment-content">
+                                                            <div className="comment-top">
+                                                                <div>
+                                                                    <strong>
+                                                                        {comment.user
+                                                                            ?.name ||
+                                                                            "Unknown"}
+                                                                    </strong>
+                                                                    <span>
+                                                                        {formatDate(
+                                                                            comment.created_at
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="reply-toggle"
+                                                                    onClick={() =>
+                                                                        setReplyOpen(
+                                                                            (prev) => ({
+                                                                                ...prev,
+                                                                                [comment.id]:
+                                                                                    !prev[
+                                                                                        comment
+                                                                                            .id
+                                                                                    ],
+                                                                            })
+                                                                        )
+                                                                    }
+                                                                    disabled={!user}
+                                                                >
+                                                                    <SvgIcon.Reply />
+                                                                    Reply
+                                                                </button>
+                                                            </div>
+
+                                                            <p>{comment.comment}</p>
+
+                                                            {replyOpen[comment.id] && (
+                                                                <form
+                                                                    onSubmit={(e) =>
+                                                                        handleReplySubmit(
+                                                                            e,
+                                                                            comment.id
+                                                                        )
+                                                                    }
+                                                                    className="reply-form"
+                                                                >
+                                                                    <textarea
+                                                                        value={
+                                                                            replyText[
+                                                                                comment.id
+                                                                            ] || ""
+                                                                        }
+                                                                        onChange={(e) =>
+                                                                            setReplyText(
+                                                                                (
+                                                                                    prev
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    [comment.id]:
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                })
+                                                                            )
+                                                                        }
+                                                                        placeholder="Write your reply..."
+                                                                        rows={3}
+                                                                        disabled={
+                                                                            replyLoading[
+                                                                                comment.id
+                                                                            ]
+                                                                        }
+                                                                    />
+
+                                                                    <div className="reply-actions">
+                                                                        <button
+                                                                            type="button"
+                                                                            className="cancel-reply"
+                                                                            onClick={() =>
+                                                                                setReplyOpen(
+                                                                                    (
+                                                                                        prev
+                                                                                    ) => ({
+                                                                                        ...prev,
+                                                                                        [comment.id]:
+                                                                                            false,
+                                                                                    })
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Cancel
+                                                                        </button>
+
+                                                                        <button
+                                                                            type="submit"
+                                                                            disabled={
+                                                                                replyLoading[
+                                                                                    comment.id
+                                                                                ] ||
+                                                                                !(
+                                                                                    replyText[
+                                                                                        comment
+                                                                                            .id
+                                                                                    ] || ""
+                                                                                ).trim()
+                                                                            }
+                                                                        >
+                                                                            <SvgIcon.Send />
+                                                                            {replyLoading[
+                                                                                comment
+                                                                                    .id
+                                                                            ]
+                                                                                ? "Posting..."
+                                                                                : "Reply"}
+                                                                        </button>
+                                                                    </div>
+                                                                </form>
+                                                            )}
+
+                                                            {comment.replies &&
+                                                                comment.replies
+                                                                    .length > 0 && (
+                                                                    <div className="reply-list">
+                                                                        {comment.replies.map(
+                                                                            (
+                                                                                reply
+                                                                            ) => (
+                                                                                <div
+                                                                                    key={
+                                                                                        reply.id
+                                                                                    }
+                                                                                    className="reply-item"
+                                                                                >
+                                                                                    <div className="reply-avatar">
+                                                                                        {reply.user?.name
+                                                                                            ?.charAt(
+                                                                                                0
+                                                                                            )
+                                                                                            ?.toUpperCase() ||
+                                                                                            "U"}
+                                                                                    </div>
+
+                                                                                    <div>
+                                                                                        <div className="reply-top">
+                                                                                            <strong>
+                                                                                                {reply
+                                                                                                    .user
+                                                                                                    ?.name ||
+                                                                                                    "Unknown"}
+                                                                                            </strong>
+                                                                                            <span>
+                                                                                                {formatDate(
+                                                                                                    reply.created_at
+                                                                                                )}
+                                                                                            </span>
+                                                                                        </div>
+
+                                                                                        <p>
+                                                                                            {
+                                                                                                reply.comment
+                                                                                            }
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="empty-comments">
+                                                    <SvgIcon.Message />
+                                                    <h4>No comments yet</h4>
+                                                    <p>Be the first to comment.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <aside className="right-sidebar">
+                                    <div className="white-card side-info">
+                                        <div className="section-title small">
+                                            <SvgIcon.Tag />
+                                            <h3>Exhibition Info</h3>
+                                        </div>
+
+                                        <div className="info-list">
+                                            <div>
+                                                <span>Type</span>
+                                                <strong>
+                                                    {exhibition.type || "N/A"}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Status</span>
+                                                <strong>
+                                                    {exhibition.status || "N/A"}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Approval</span>
+                                                <strong>
+                                                    {exhibition.approval_status ||
+                                                        "N/A"}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Available</span>
+                                                <strong>
+                                                    {exhibition.is_available
+                                                        ? "Yes"
+                                                        : "No"}
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {exhibition.sponsor_image && (
+                                        <div className="white-card sponsor-card">
+                                            <div className="section-title small">
+                                                <SvgIcon.Award />
+                                                <h3>Sponsored By</h3>
+                                            </div>
+
+                                            <img
+                                                src={getImageUrl(
+                                                    exhibition.sponsor_image
+                                                )}
+                                                alt="Sponsor"
+                                                className="sponsor-image"
+                                            />
+                                        </div>
+                                    )}
+                                </aside>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+
+                <Footer />
+            </div>
+
+            <style>{`
+                .container-md {
+                    max-width: 1180px;
+                    margin: 0 auto;
+                    padding: 0 16px;
+                }
+
+                .svg-icon {
+                    width: 18px;
+                    height: 18px;
+                    flex: 0 0 auto;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+
+                .exhibition-page {
+                    background: #f5f7fb;
+                    min-height: 100vh;
+                }
+
+                .top-section {
+                    padding: 32px 0 42px;
+                    background:
+                        radial-gradient(circle at top left, rgba(59,130,246,.12), transparent 34%),
+                        linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%);
+                }
+
+                .top-actions {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 14px;
+                    flex-wrap: wrap;
+                    margin-bottom: 18px;
+                }
+
+                .back-link,
+                .board-link {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    text-decoration: none;
+                    font-weight: 800;
+                    border-radius: 999px;
+                    padding: 10px 14px;
+                }
+
+                .back-link {
+                    color: #1d4ed8;
+                    background: #eff6ff;
+                    border: 1px solid #dbeafe;
+                }
+
+                .board-link {
+                    color: #334155;
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    box-shadow: 0 8px 22px rgba(15,23,42,.06);
+                }
+
+                .main-card {
+                    background: #ffffff;
+                    border: 1px solid #e6eaf0;
+                    border-radius: 28px;
+                    padding: 18px;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1.05fr) minmax(380px, .95fr);
+                    gap: 24px;
+                    box-shadow: 0 24px 70px rgba(15,23,42,.09);
+                }
+
+                .media-column {
+                    min-width: 0;
+                }
+
+                .main-image-box {
+                    position: relative;
+                    overflow: hidden;
+                    border-radius: 22px;
+                    height: 520px;
+                    background: #eef2f7;
+                    border: 1px solid #e2e8f0;
+                }
+
+                .main-image-box img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                }
+
+                .floating-badges {
+                    position: absolute;
+                    top: 16px;
+                    left: 16px;
+                    right: 16px;
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+
+                .badge {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 8px 13px;
+                    border-radius: 999px;
+                    font-size: 12px;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    letter-spacing: .04em;
+                    backdrop-filter: blur(10px);
+                }
+
+                .badge.type {
+                    background: rgba(255,255,255,.92);
+                    color: #1e293b;
+                }
+
+                .badge.featured {
+                    background: #f59e0b;
+                    color: white;
+                }
+
+                .badge.sold {
+                    background: #ef4444;
+                    color: white;
+                }
+
+                .gallery-strip {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 14px;
+                    overflow-x: auto;
+                    padding-bottom: 4px;
+                }
+
+                .gallery-item {
+                    width: 88px;
+                    height: 68px;
+                    border-radius: 14px;
+                    padding: 0;
+                    overflow: hidden;
+                    border: 2px solid transparent;
+                    cursor: pointer;
+                    background: transparent;
+                    flex: 0 0 auto;
+                }
+
+                .gallery-item.active {
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+                }
+
+                .gallery-item img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                }
+
+                .info-column {
+                    padding: 12px 10px 10px;
+                    min-width: 0;
+                }
+
+                .status-row {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    margin-bottom: 14px;
+                }
+
+                .status-chip {
+                    padding: 8px 12px;
+                    border-radius: 999px;
+                    font-size: 12px;
+                    font-weight: 900;
+                    text-transform: capitalize;
+                }
+
+                .status-chip.green {
+                    background: #dcfce7;
+                    color: #166534;
+                }
+
+                .status-chip.blue {
+                    background: #dbeafe;
+                    color: #1d4ed8;
+                }
+
+                .detail-title {
+                    margin: 0 0 22px;
+                    color: #0f172a;
+                    font-size: 42px;
+                    line-height: 1.12;
+                    font-weight: 950;
+                    letter-spacing: -0.04em;
+                }
+
+                .detail-title * {
+                    color: inherit;
+                }
+
+                .stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 12px;
+                    margin-bottom: 18px;
+                }
+
+                .stat-card {
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 18px;
+                    padding: 15px;
+                    display: grid;
+                    gap: 5px;
+                }
+
+                .stat-card .svg-icon {
+                    color: #2563eb;
+                    width: 20px;
+                    height: 20px;
+                    margin-bottom: 3px;
+                }
+
+                .stat-card span {
+                    color: #64748b;
+                    font-size: 12px;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: .05em;
+                }
+
+                .stat-card strong {
+                    color: #0f172a;
+                    font-size: 15px;
+                    font-weight: 900;
+                }
+
+                .mini-info-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0,1fr));
+                    gap: 12px;
+                    margin-bottom: 18px;
+                }
+
+                .mini-info-grid div {
+                    padding: 13px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    background: #ffffff;
+                }
+
+                .mini-info-grid span {
+                    display: block;
+                    color: #64748b;
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                }
+
+                .mini-info-grid strong {
+                    color: #0f172a;
+                }
+
+                .reaction-box {
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 20px;
+                    padding: 16px;
+                    margin-bottom: 18px;
+                }
+
+                .box-heading,
+                .section-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 16px;
+                }
+
+                .box-heading .svg-icon,
+                .section-title .svg-icon {
+                    color: #2563eb;
+                    width: 22px;
+                    height: 22px;
+                }
+
+                .box-heading h3,
+                .section-title h2,
+                .section-title h3 {
+                    margin: 0;
+                    color: #0f172a;
+                    font-weight: 950;
+                }
+
+                .section-title h2 {
+                    font-size: 26px;
+                }
+
+                .section-title.small h3 {
+                    font-size: 18px;
+                }
+
+                .reaction-list {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+
+                .reaction-button {
+                    border: 1px solid #e2e8f0;
+                    background: #f8fafc;
+                    color: #334155;
+                    padding: 10px 13px;
+                    border-radius: 14px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    cursor: pointer;
+                    font-weight: 850;
+                    transition: all .2s ease;
+                }
+
+                .reaction-button .svg-icon {
+                    width: 18px;
+                    height: 18px;
+                }
+
+                .reaction-button strong {
+                    min-width: 24px;
+                    height: 24px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: white;
+                    border-radius: 999px;
+                    font-size: 12px;
+                    color: #0f172a;
+                }
+
+                .reaction-button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 20px rgba(15,23,42,.08);
+                }
+
+                .reaction-button.active.like {
+                    background: #2563eb;
+                    color: white;
+                    border-color: #2563eb;
+                }
+
+                .reaction-button.active.love {
+                    background: #e11d48;
+                    color: white;
+                    border-color: #e11d48;
+                }
+
+                .reaction-button.active.dislike {
+                    background: #475569;
+                    color: white;
+                    border-color: #475569;
+                }
+
+                .detail-actions {
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+
+                .action-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    border-radius: 14px;
+                    padding: 12px 16px;
+                    text-decoration: none;
+                    font-weight: 900;
+                    transition: all .2s ease;
+                }
+
+                .action-btn.primary {
+                    background: #2563eb;
+                    color: white;
+                }
+
+                .action-btn.secondary {
+                    background: #f8fafc;
+                    color: #0f172a;
+                    border: 1px solid #e2e8f0;
+                }
+
+                .content-section {
+                    padding: 34px 0 52px;
+                    background: #f5f7fb;
+                }
+
+                .content-grid {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) 330px;
+                    gap: 22px;
+                    align-items: start;
+                }
+
+                .left-content {
+                    display: grid;
+                    gap: 22px;
+                    min-width: 0;
+                }
+
+                .white-card {
+                    background: white;
+                    border: 1px solid #e6eaf0;
+                    border-radius: 24px;
+                    padding: 26px;
+                    box-shadow: 0 14px 34px rgba(15,23,42,.06);
+                }
+
+                .rich-content {
+                    color: #334155;
+                    font-size: 16px;
+                    line-height: 1.9;
+                }
+
+                .rich-content a {
+                    color: #2563eb;
+                    font-weight: 800;
+                    text-decoration: underline;
+                }
+
+                .rich-content img {
+                    max-width: 100%;
+                    border-radius: 16px;
+                }
+
+                .rich-content h1,
+                .rich-content h2,
+                .rich-content h3,
+                .rich-content h4 {
+                    color: #0f172a;
+                    font-weight: 950;
+                    margin-top: 22px;
+                }
+
+                .right-sidebar {
+                    position: sticky;
+                    top: 86px;
+                    display: grid;
+                    gap: 18px;
+                }
+
+                .info-list {
+                    display: grid;
+                    gap: 12px;
+                }
+
+                .info-list div {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 12px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid #edf2f7;
+                }
+
+                .info-list span {
+                    color: #64748b;
+                    font-size: 14px;
+                }
+
+                .info-list strong {
+                    color: #0f172a;
+                    text-transform: capitalize;
+                    text-align: right;
+                }
+
+                .sponsor-image {
+                    width: 100%;
+                    max-height: 130px;
+                    object-fit: contain;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 14px;
+                }
+
+                .comment-form {
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 18px;
+                    padding: 16px;
+                    margin-bottom: 22px;
+                }
+
+                .comment-form textarea,
+                .reply-form textarea {
+                    width: 100%;
+                    border: 1px solid #dbe3ef;
+                    border-radius: 14px;
+                    padding: 13px 14px;
+                    outline: none;
+                    resize: vertical;
+                    font-size: 14px;
+                    color: #0f172a;
+                    background: white;
+                    transition: all .2s ease;
+                }
+
+                .comment-form textarea:focus,
+                .reply-form textarea:focus {
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 4px rgba(37,99,235,.1);
+                }
+
+                .form-footer,
+                .reply-actions {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-top: 12px;
+                }
+
+                .form-footer span {
+                    color: #64748b;
+                    font-size: 13px;
+                }
+
+                .form-footer button,
+                .reply-actions button[type="submit"] {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: #2563eb;
+                    color: white;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 10px 15px;
+                    font-weight: 900;
+                    cursor: pointer;
+                }
+
+                .form-footer button:disabled,
+                .reply-actions button:disabled,
+                .reply-toggle:disabled {
+                    opacity: .55;
+                    cursor: not-allowed;
+                }
+
+                .comments-list {
+                    display: grid;
+                    gap: 16px;
+                }
+
+                .comment-item {
+                    display: flex;
+                    gap: 14px;
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 20px;
+                    padding: 16px;
+                }
+
+                .comment-avatar,
+                .reply-avatar {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #2563eb, #7c3aed);
+                    color: white;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 950;
+                    flex: 0 0 auto;
+                }
+
+                .reply-avatar {
+                    width: 34px;
+                    height: 34px;
+                    font-size: 13px;
+                }
+
+                .comment-content {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .comment-top,
+                .reply-top {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-bottom: 8px;
+                }
+
+                .comment-top div,
+                .reply-top {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .comment-top strong,
+                .reply-top strong {
+                    color: #0f172a;
+                    font-weight: 900;
+                }
+
+                .comment-top span,
+                .reply-top span {
+                    color: #64748b;
+                    font-size: 12px;
+                }
+
+                .comment-content p,
+                .reply-item p {
+                    margin: 0;
+                    color: #334155;
+                    line-height: 1.7;
+                }
+
+                .reply-toggle {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    border: 1px solid #e2e8f0;
+                    background: #f8fafc;
+                    color: #2563eb;
+                    padding: 8px 11px;
+                    border-radius: 999px;
+                    cursor: pointer;
+                    font-weight: 850;
+                    font-size: 13px;
+                }
+
+                .reply-form {
+                    margin-top: 14px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 12px;
+                }
+
+                .cancel-reply {
+                    border: none;
+                    background: transparent;
+                    color: #64748b;
+                    font-weight: 800;
+                    cursor: pointer;
+                }
+
+                .reply-list {
+                    margin-top: 14px;
+                    display: grid;
+                    gap: 10px;
+                    padding-left: 14px;
+                    border-left: 3px solid #dbeafe;
+                }
+
+                .reply-item {
+                    display: flex;
+                    gap: 10px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 12px;
+                }
+
+                .empty-comments {
+                    text-align: center;
+                    padding: 36px 16px;
+                    color: #64748b;
+                    background: #f8fafc;
+                    border: 1px dashed #cbd5e1;
+                    border-radius: 18px;
+                }
+
+                .empty-comments .svg-icon {
+                    width: 38px;
+                    height: 38px;
+                    color: #94a3b8;
+                    margin-bottom: 10px;
+                }
+
+                .empty-comments h4 {
+                    color: #0f172a;
+                    margin: 0 0 6px;
+                    font-weight: 950;
+                }
+
+                .empty-wrapper {
+                    min-height: 60vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 14px;
+                    background: #f5f7fb;
+                }
+
+                .primary-link {
+                    background: #2563eb;
+                    color: white;
+                    padding: 11px 16px;
+                    border-radius: 999px;
+                    text-decoration: none;
+                    font-weight: 900;
+                }
+
+                @media (max-width: 992px) {
+                    .main-card,
+                    .content-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .right-sidebar {
+                        position: static;
+                    }
+
+                    .main-image-box {
+                        height: 390px;
+                    }
+                }
+
+                @media (max-width: 640px) {
+                    .top-section {
+                        padding: 22px 0 30px;
+                    }
+
+                    .main-card {
                         padding: 12px;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 6px;
-                        font-size: 14px;
-                        resize: vertical;
-                        transition: border-color 0.3s ease;
+                        border-radius: 20px;
                     }
 
-                    .edit-textarea:focus,
-                    .reply-textarea:focus {
-                        outline: none;
-                        border-color: #1b7a3a;
+                    .main-image-box {
+                        height: 300px;
                     }
 
-                    .edit-actions,
+                    .detail-title {
+                        font-size: 30px;
+                    }
+
+                    .stats-grid,
+                    .mini-info-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .white-card {
+                        padding: 18px;
+                        border-radius: 18px;
+                    }
+
+                    .comment-item {
+                        flex-direction: column;
+                    }
+
+                    .comment-top {
+                        flex-direction: column;
+                    }
+
+                    .form-footer,
                     .reply-actions {
-                        display: flex;
-                        gap: 10px;
-                        margin-top: 10px;
+                        flex-direction: column;
+                        align-items: stretch;
                     }
 
-                    .save-btn,
-                    .submit-reply-btn {
-                        background: #1b7a3a;
-                        color: white;
-                        border: none;
-                        padding: 8px 16px;
-                        border-radius: 6px;
-                        font-size: 12px;
-                        cursor: pointer;
-                        transition: background 0.3s ease;
+                    .form-footer button,
+                    .reply-actions button[type="submit"] {
+                        justify-content: center;
                     }
-
-                    .save-btn:hover:not(:disabled),
-                    .submit-reply-btn:hover:not(:disabled) {
-                        background: #15652e;
-                    }
-
-                    .save-btn:disabled,
-                    .submit-reply-btn:disabled {
-                        opacity: 0.6;
-                        cursor: not-allowed;
-                    }
-
-                    .cancel-btn,
-                    .cancel-reply-btn {
-                        background: #6c757d;
-                        color: white;
-                        border: none;
-                        padding: 8px 16px;
-                        border-radius: 6px;
-                        font-size: 12px;
-                        cursor: pointer;
-                        transition: background 0.3s ease;
-                    }
-
-                    .cancel-btn:hover,
-                    .cancel-reply-btn:hover {
-                        background: #5a6268;
-                    }
-
-                    .replies-container {
-                        margin-top: 15px;
-                    }
-
-                    /* Toast Notification */
-                    .toast-notification {
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        padding: 15px 20px;
-                        border-radius: 8px;
-                        color: white;
-                        font-weight: 600;
-                        z-index: 1000;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                        animation: slideIn 0.3s ease;
-                    }
-
-                    .toast-notification.success {
-                        background: #28a745;
-                    }
-
-                    .toast-notification.error {
-                        background: #dc3545;
-                    }
-
-                    @keyframes slideIn {
-                        from {
-                            transform: translateX(100%);
-                            opacity: 0;
-                        }
-                        to {
-                            transform: translateX(0);
-                            opacity: 1;
-                        }
-                    }
-
-                    /* Badge Styles */
-                    .badge {
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        font-size: 11px;
-                        font-weight: 600;
-                    }
-
-                    .bg-success { background-color: #28a745 !important; }
-                    .bg-warning { background-color: #ffc107 !important; color: #000; }
-                    .bg-danger { background-color: #dc3545 !important; }
-                    .bg-secondary { background-color: #6c757d !important; }
-                    .bg-primary { background-color: #007bff !important; }
-                    .bg-info { background-color: #17a2b8 !important; }
-                    .bg-purple { background-color: #6f42c1 !important; }
-                    .bg-pink { background-color: #e83e8c !important; }
-                    .bg-orange { background-color: #fd7e14 !important; }
-
-                    /* Responsive Design */
-                    @media (max-width: 1024px) {
-                        .content-layout {
-                            grid-template-columns: 1fr;
-                            gap: 30px;
-                        }
-
-                        .filter-sidebar {
-                            position: static;
-                        }
-
-                        .meta-grid,
-                        .info-grid {
-                            grid-template-columns: 1fr;
-                        }
-                    }
-
-                    @media (max-width: 768px) {
-                        .section-header {
-                            flex-direction: column;
-                            gap: 15px;
-                            text-align: center;
-                        }
-
-                        .action-buttons-grid {
-                            grid-template-columns: 1fr;
-                        }
-
-                        .comment-header {
-                            flex-direction: column;
-                            gap: 10px;
-                            align-items: flex-start;
-                        }
-
-                        .comment-actions {
-                            align-self: flex-end;
-                        }
-
-                        .content-section {
-                            padding: 40px 0;
-                        }
-
-                        .filter-sidebar,
-                        .posts-grid-section {
-                            padding: 20px;
-                        }
-
-                        .content-meta-card,
-                        .content-display-card,
-                        .additional-info-card,
-                        .comments-section-card {
-                            padding: 20px;
-                        }
-
-                        .comment-item.nested {
-                            margin-left: 20px;
-                            padding-left: 15px;
-                        }
-
-                        .gallery-grid {
-                            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                        }
-                    }
-
-                    @media (max-width: 480px) {
-                        .edit-actions,
-                        .reply-actions {
-                            flex-direction: column;
-                        }
-
-                        .comment-footer {
-                            flex-direction: column;
-                            gap: 8px;
-                        }
-
-                        .toast-notification {
-                            left: 20px;
-                            right: 20px;
-                        }
-                    }
-                `}</style>
-            </FrontAuthenticatedLayout>
-        </>
+                }
+            `}</style>
+        </FrontAuthenticatedLayout>
     );
 }

@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -36,6 +35,14 @@ return new class extends Migration
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+
+            $table->unsignedBigInteger('exhibition_board_id')->nullable();
+            $table->string('sponsor_image')->nullable();
+            $table->enum('approval_status', ['pending', 'approved', 'rejected']) ->default('pending');
+            $table->timestamp('approved_at')->nullable();
+            $table->unsignedBigInteger('approved_by')->nullable();
+            $table->text('admin_note')->nullable();
         });
     }
 

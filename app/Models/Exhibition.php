@@ -1,32 +1,40 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\HasSeo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
-use App\Traits\HasSeo;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Exhibition extends Model
 {
     use HasFactory, SoftDeletes, HasSeo;
 
-    const TYPE_PAINTING = 'painting';
-    const TYPE_SCULPTURE = 'sculpture';
+    const TYPE_PRODUCT = 'product';
+    const TYPE_DOCUMENT = 'document';
+    const TYPE_ART = 'art';
     const TYPE_PHOTOGRAPHY = 'photography';
-    const TYPE_DIGITAL_ART = 'digital_art';
+    const TYPE_CRAFT = 'craft';
 
     const STATUS_DRAFT = 'draft';
     const STATUS_PUBLISHED = 'published';
     const STATUS_SOLD = 'sold';
+    const STATUS_ARCHIVED = 'archived';
+
+    const APPROVAL_PENDING = 'pending';
+    const APPROVAL_APPROVED = 'approved';
+    const APPROVAL_REJECTED = 'rejected';
 
     protected $fillable = [
         'user_id',
+        'exhibition_board_id',
         'title',
         'description',
         'type',
         'image',
+        'sponsor_image',
         'gallery',
         'document_file',
         'price',
@@ -38,8 +46,14 @@ class Exhibition extends Model
         'views',
         'likes_count',
         'status',
+        'approval_status',
+        'approved_at',
+        'approved_by',
+        'admin_note',
         'published_at',
         'slug',
+        'lang_id',
+        'link',
     ];
 
     protected $casts = [
@@ -47,7 +61,15 @@ class Exhibition extends Model
         'is_available' => 'boolean',
         'is_featured' => 'boolean',
         'published_at' => 'datetime',
+        'approved_at' => 'datetime',
         'price' => 'decimal:2',
+    ];
+
+    protected $appends = [
+        'image_url',
+        'sponsor_image_url',
+        'document_url',
+        'gallery_urls',
     ];
 
     protected static function booted()
@@ -56,14 +78,23 @@ class Exhibition extends Model
             if (request()->ip()) {
                 $viewerIps = json_decode($exhibition->viewer_ips ?? '[]', true);
 
+                if (!is_array($viewerIps)) {
+                    $viewerIps = [];
+                }
+
                 if (!in_array(request()->ip(), $viewerIps)) {
                     $viewerIps[] = request()->ip();
                     $exhibition->viewer_ips = json_encode($viewerIps);
                     $exhibition->increment('views');
-                    $exhibition->save(); // Important: save the changes
+                    $exhibition->save();
                 }
             }
         });
+    }
+
+    public function board()
+    {
+        return $this->belongsTo(ExhibitionBoard::class, 'exhibition_board_id');
     }
 
     public function user()
@@ -71,9 +102,19 @@ class Exhibition extends Model
         return $this->belongsTo(User::class)->with('subscriptions');
     }
 
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function getImageUrlAttribute()
     {
         return $this->image ? Storage::url($this->image) : null;
+    }
+
+    public function getSponsorImageUrlAttribute()
+    {
+        return $this->sponsor_image ? Storage::url($this->sponsor_image) : null;
     }
 
     public function getDocumentUrlAttribute()
@@ -83,17 +124,28 @@ class Exhibition extends Model
 
     public function getGalleryUrlsAttribute()
     {
-        if (!$this->gallery)
-            return collect();
+        if (!$this->gallery) {
+            return [];
+        }
 
         return collect($this->gallery)->map(function ($image) {
             return Storage::url($image);
-        });
+        })->values()->toArray();
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('approval_status', self::APPROVAL_APPROVED);
+    }
+
+    public function scopeApprovalPending($query)
+    {
+        return $query->where('approval_status', self::APPROVAL_PENDING);
     }
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'published')
+        return $query->where('status', self::STATUS_PUBLISHED)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
     }
@@ -113,62 +165,25 @@ class Exhibition extends Model
         return $query->where('type', $type);
     }
 
-    public function markAsSold()
-    {
-        $this->update([
-            'status' => 'sold',
-            'is_available' => false
-        ]);
-    }
-
-    public function publish()
-    {
-        $this->update([
-            'status' => 'published',
-            'published_at' => now()
-        ]);
-    }
-
-
-    public function comments()
-    {
-        return $this->hasMany(ExhibitionComment::class)->whereNull('parent_id')->with('user', 'replies');
-    }
-
-    public function allComments()
-    {
-        return $this->hasMany(ExhibitionComment::class)->with('user', 'replies');
-    }
-
-    public function reactions()
-    {
-        return $this->hasMany(ExhibitionReaction::class);
-    }
-
-    public function seo()
-    {
-        return $this->morphOne(Seo::class, 'seoable');
-    }
-
-
-
-    public function userReaction()
-    {
-        return $this->hasOne(ExhibitionReaction::class)->where('user_id', auth()->id());
-    }
-
-
-    //search scope
     public function scopeSearch($query, $term)
     {
         $term = "%$term%";
-        $query->where(function ($q) use ($term) {
+
+        return $query->where(function ($q) use ($term) {
             $q->where('title', 'like', $term)
                 ->orWhere('description', 'like', $term);
         });
     }
 
-    //sorted by type scope
+    public function scopeStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
 
     public function scopeSortByOption($query, $sort)
     {
@@ -198,23 +213,73 @@ class Exhibition extends Model
         }
     }
 
-
-    //status query scope
-    public function scopeStatus($query, $status)
+    public function markAsSold()
     {
-        return $query->where('status', $status);
+        return $this->update([
+            'status' => self::STATUS_SOLD,
+            'is_available' => false,
+        ]);
     }
 
-
-    //type query scope
-    public function scopeType($query, $type)
+    public function publish()
     {
-        return $query->where('type', $type);
+        return $this->update([
+            'status' => self::STATUS_PUBLISHED,
+            'published_at' => now(),
+        ]);
+    }
+
+    public function approve($adminId)
+    {
+        return $this->update([
+            'approval_status' => self::APPROVAL_APPROVED,
+            'approved_at' => now(),
+            'approved_by' => $adminId,
+            'admin_note' => null,
+            'status' => self::STATUS_PUBLISHED,
+            'published_at' => now(),
+        ]);
+    }
+
+    public function reject($adminId, $note = null)
+    {
+        return $this->update([
+            'approval_status' => self::APPROVAL_REJECTED,
+            'approved_at' => null,
+            'approved_by' => $adminId,
+            'admin_note' => $note,
+        ]);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(ExhibitionComment::class)
+            ->whereNull('parent_id')
+            ->with('user', 'replies');
+    }
+
+    public function allComments()
+    {
+        return $this->hasMany(ExhibitionComment::class)->with('user', 'replies');
+    }
+
+    public function reactions()
+    {
+        return $this->hasMany(ExhibitionReaction::class);
+    }
+
+    public function seo()
+    {
+        return $this->morphOne(Seo::class, 'seoable');
+    }
+
+    public function userReaction()
+    {
+        return $this->hasOne(ExhibitionReaction::class)->where('user_id', auth()->id());
     }
 
     public function language()
     {
         return $this->belongsTo(Language::class, 'lang_id', 'id');
     }
-
 }

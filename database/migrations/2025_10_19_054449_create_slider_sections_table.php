@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('subtitle')->nullable();
             $table->string('image_path');
             $table->string('link')->nullable();
+            $table->boolean('is_full_width_image')
+                    ->default(false);
             $table->unsignedBigInteger('lang_id')->nullable();
             $table->timestamps();
         });

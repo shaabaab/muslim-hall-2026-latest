@@ -13,9 +13,10 @@ class SliderSection extends Model
         'title',
         'subtitle',
         'image_path',
-         'background_color',
+        'background_color',
         'link',
         'lang_id',
+        'is_full_width_image',
     ];
 
     public function language()

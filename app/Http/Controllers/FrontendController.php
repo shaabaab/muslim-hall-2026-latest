@@ -10,6 +10,7 @@ use App\Models\ContactInfo;
 use App\Models\Contest;
 use App\Models\ContestCategory;
 use App\Models\Exhibition;
+use App\Models\ExhibitionBoard;
 use App\Models\IslamicZone;
 use App\Models\Post;
 use App\Models\Setting;
@@ -497,30 +498,60 @@ class FrontendController extends Controller
 
         $canAccess = $isMember || $isAdmin;
 
-        abort_if(!$canAccess, 403, 'Access denied. You must be a member to create Exhibition posts.');
+        abort_if(!$canAccess, 403, 'Access denied. You must be a member to access exhibitions.');
 
-        $exhibition = Exhibition::query()
-            ->when($request->filled('search'), function ($q) use ($request) {
-                $q->search($request->search);
+        $boards = ExhibitionBoard::with(['owner'])
+            ->withCount([
+                'approvedExhibitions as exhibitions_count',
+            ])
+            ->withSum('approvedExhibitions as views_count', 'views')
+            ->approved()
+            ->active()
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('title', 'like', '%' . $request->search . '%')
+                        ->orWhere('description', 'like', '%' . $request->search . '%');
+                });
             })
-            ->when($request->filled('status') && $request->status !== 'all', function ($q) use ($request) {
-                $q->status($request->status);
-            })
-            ->when($request->filled('type') && $request->type !== 'all', function ($q) use ($request) {
-                $q->type($request->type);
-            })
-            ->when($request->filled('sort'), function ($q) use ($request) {
-                $q->sortByOption($request->sort);
-            }, function ($q) {
-                $q->sortByOption('newest');
-            })
-            ->limit(5)
-            ->get();
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
 
-        return Inertia::render('Front/ExhibitionDetails', [
-            'exhibition' => $exhibition,
+        return Inertia::render('Front/ExhibitionBoards', [
+            'boards' => $boards,
             'member' => (bool) $isMember,
-            'filters' => $request->only(['search', 'status', 'type', 'sort']),
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function exhibitionBoard($id)
+    {
+        $user = Auth::user();
+
+        $isMember = $user && $user->subscriptions()
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->exists();
+
+        $isAdmin = $user && $user->role == User::ROLE_ADMIN;
+
+        $canAccess = $isMember || $isAdmin;
+
+        abort_if(!$canAccess, 403, 'Access denied. You must be a member to access exhibitions.');
+
+        $board = ExhibitionBoard::with([
+            'owner',
+            'approvedExhibitions' => function ($query) {
+                $query->with(['user', 'reactions'])
+                    ->latest();
+            },
+        ])
+            ->approved()
+            ->active()
+            ->where('id', $id)
+            ->firstOrFail();
+
+        return Inertia::render('Front/ExhibitionBoardShow', [
+            'board' => $board,
         ]);
     }
 
@@ -536,14 +567,19 @@ class FrontendController extends Controller
 
         $canAccess = $isMember || $isAdmin;
 
-        abort_if(!$canAccess, 403, 'Access denied. You must be a member to create Exhibition posts.');
+        abort_if(!$canAccess, 403, 'Access denied. You must be a member to access exhibitions.');
 
         $exhibition = Exhibition::with([
+            'board',
             'comments.user',
             'comments.replies.user',
             'reactions.user',
             'seo',
-        ])->findOrFail($id);
+        ])
+            ->where('approval_status', Exhibition::APPROVAL_APPROVED)
+            ->where('status', Exhibition::STATUS_PUBLISHED)
+            ->where('id', $id)
+            ->firstOrFail();
 
         return Inertia::render('Front/ExhibitionDetail', [
             'exhibition' => $exhibition,
@@ -749,42 +785,77 @@ class FrontendController extends Controller
 
     public function authorProfile($id)
     {
-        // Find author by username
-        $author = User::where('id', $id)
-            ->firstOrFail();
-        $isMember = $author->subscriptions()->where('status', Subscription::STATUS_ACTIVE)->exists();
-        // dd( $isMember);
+        $author = User::where('id', $id)->firstOrFail();
 
-        // Get author's posts
+        /*
+        |--------------------------------------------------------------------------
+        | IMPORTANT
+        |--------------------------------------------------------------------------
+        | This checks AUTHOR membership, not logged-in user membership.
+        | If the author's subscription is active, member design.
+        | Otherwise normal design.
+        */
+        $isAuthorMember = $author->subscriptions()
+            ->where('status', Subscription::STATUS_ACTIVE)
+            ->exists();
+
+
         $posts = Post::with(['category', 'author'])
             ->where('created_by', $author->id)
             ->where('status', 1)
             ->latest()
             ->paginate(12);
 
-        // Get author stats
         $stats = [
-            'total_posts' => Post::where('created_by', $author->id)->where('status', 1)->count(),
-            'total_views' => Post::where('created_by', $author->id)->sum('viewer_count'),
+            'total_posts' => Post::where('created_by', $author->id)
+                ->where('status', 1)
+                ->count(),
+
+            'total_views' => Post::where('created_by', $author->id)
+                ->where('status', 1)
+                ->sum('viewer_count'),
+
             'total_followers' => $author->followers()->count(),
-            'join_date' => $author->created_at->format('F Y'),
+
+            'join_date' => $author->created_at
+                ? $author->created_at->format('F Y')
+                : null,
         ];
 
         $isFollowing = false;
+
         if (auth()->check()) {
-            $isFollowing = $author->followers()->where('follower_id', auth()->id())->exists();
+            $isFollowing = $author->followers()
+                ->where('follower_id', auth()->id())
+                ->exists();
         }
 
         return Inertia::render('Front/AuthorProfile', [
             'author' => $author,
-            'isMember' => $isMember,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Use this in React, not isMember
+            |--------------------------------------------------------------------------
+            */
+            'author_profile_type' => $isAuthorMember ? 'member' : 'normal',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Keep old prop only if other old code needs it
+            |--------------------------------------------------------------------------
+            */
+            'isMember' => $isAuthorMember ? true : false,
+
+
+
             'posts' => $posts,
             'stats' => $stats,
             'isFollowing' => $isFollowing,
             'meta' => [
                 'title' => $author->name . ' - Author Profile',
                 'description' => 'Read all posts by ' . $author->name,
-            ]
+            ],
         ]);
     }
 }

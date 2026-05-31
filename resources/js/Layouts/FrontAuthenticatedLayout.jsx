@@ -60,6 +60,9 @@ export default function FrontAuthenticatedLayout({ children }) {
     const isMember =
         user?.subscriptions?.length > 0 && user?.subscriptions[0]?.status == 1;
 
+    const isAdmin = user?.role == 2;
+    const canAccessExhibitionMenu = isMember || isAdmin;
+
     // --- Styling Constants ---
     const customTheme = {
         sidebarBg: "#1a237e",
@@ -93,7 +96,12 @@ export default function FrontAuthenticatedLayout({ children }) {
             "/user/participate/contests": ["participate-contests-list"],
             "/user/contests": ["contests-list"],
             "/user/communities": ["communities-list"],
+
+            "/user/exhibition-boards/create": ["exhibition-boards-create"],
+            "/user/exhibition-boards": ["exhibition-boards-list"],
+            "/user/exhibitions/create": ["exhibitions-create"],
             "/user/exhibitions": ["exhibitions-list"],
+
             "/user/posts/create": ["posts-create"],
             "/user/posts": ["posts-list"],
 
@@ -123,7 +131,12 @@ export default function FrontAuthenticatedLayout({ children }) {
             "contests-list": "contests-management",
             "sponsors-list": "contests-management",
             "communities-list": "community-management",
+
+            "exhibition-boards-list": "exhibition-management",
+            "exhibition-boards-create": "exhibition-management",
             "exhibitions-list": "exhibition-management",
+            "exhibitions-create": "exhibition-management",
+
             "posts-create": "post-management",
             "posts-list": "post-management",
             "subscriptions-list": "subscription-management",
@@ -254,15 +267,39 @@ export default function FrontAuthenticatedLayout({ children }) {
         },
         {
             key: "exhibition-management",
-            icon: isMember ? <PictureOutlined /> : <LockOutlined />,
+            icon: canAccessExhibitionMenu ? <PictureOutlined /> : <LockOutlined />,
             label: "Exhibitions",
-            disabled: !isMember,
+            disabled: !canAccessExhibitionMenu,
             children: [
+                {
+                    key: "exhibition-boards-list",
+                    label: (
+                        <Link href={route("user.exhibition-boards.index")}>
+                            Board List
+                        </Link>
+                    ),
+                },
+                {
+                    key: "exhibition-boards-create",
+                    label: (
+                        <Link href={route("user.exhibition-boards.create")}>
+                            Create Board
+                        </Link>
+                    ),
+                },
                 {
                     key: "exhibitions-list",
                     label: (
                         <Link href={route("user.exhibitions.index")}>
                             Exhibition List
+                        </Link>
+                    ),
+                },
+                {
+                    key: "exhibitions-create",
+                    label: (
+                        <Link href={route("user.exhibitions.create")}>
+                            Create Exhibition
                         </Link>
                     ),
                 },
