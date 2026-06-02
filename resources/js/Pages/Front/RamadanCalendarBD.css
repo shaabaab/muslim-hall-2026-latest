@@ -1,0 +1,217 @@
+:root {
+  --green-deep: #1b5e20;
+  --green-main: #2e7d32;
+  --gold-main: #d4a017;
+  --white: #ffffff;
+  --bg-soft: #f4f7f4;
+  --shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.ramadan-app-wrapper {
+  background-color: var(--bg-soft);
+  min-height: 100vh;
+}
+.ramadan-main-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Header Gradient */
+.ramadan-header-gradient {
+  background: linear-gradient(135deg, var(--green-deep), var(--green-main));
+  color: white;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.ramadan-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-icon-box {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.8rem;
+  border-radius: 10px;
+  display: flex;
+}
+
+.ramadan-header-gradient h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.location-subtitle {
+  margin: 0.2rem 0 0;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.ramadan-clock-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Controls Bar */
+.ramadan-controls-bar {
+  padding: 1.2rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.year-stepper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.year-stepper button {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  padding: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+}
+
+.year-stepper button:hover {
+  border-color: var(--green-main);
+  color: var(--green-main);
+}
+
+.current-year-val {
+  font-weight: 800;
+  color: var(--green-main);
+  font-size: 1.2rem;
+}
+
+.location-dropdown-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-soft);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.location-dropdown-wrapper select {
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  color: var(--green-deep);
+  cursor: pointer;
+  outline: none;
+}
+
+/* Highlights Grid */
+.ramadan-highlights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.highlight-card {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.h-icon {
+  padding: 1rem;
+  border-radius: 50%;
+  display: flex;
+}
+
+.suhoor .h-icon { background: #e3f2fd; color: #1976d2; }
+.iftar .h-icon { background: #fff3e0; color: #f57c00; }
+
+.h-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #888;
+  margin-bottom: 0.2rem;
+}
+
+.h-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--green-deep);
+}
+
+/* Table */
+.ramadan-table-container {
+  padding: 0 1rem 2rem;
+  overflow-x: auto;
+}
+
+.ramadan-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ramadan-table th {
+  text-align: left;
+  padding: 1rem;
+  background: #f8f9fa;
+  font-size: 0.8rem;
+  color: #777;
+  text-transform: uppercase;
+}
+
+.ramadan-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.active-row {
+  background-color: #e8f5e9;
+  border-left: 4px solid var(--green-main);
+}
+
+.text-suhoor { color: #1976d2; }
+.text-iftar { color: #f57c00; }
+.text-gold { color: var(--gold-main); }
+.font-bold { font-weight: 700; }
+
+.ramadan-footer-note {
+  padding: 1.5rem 2rem;
+  background: #fafafa;
+  color: #999;
+  font-size: 0.85rem;
+  border-top: 1px solid #eee;
+}
+
+.ramadan-footer-note p {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .ramadan-highlights-grid { grid-template-columns: 1fr; }
+  .ramadan-header-gradient { text-align: center; justify-content: center; }
+  .h-value { font-size: 1.4rem; }
+}
