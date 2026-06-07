@@ -21,21 +21,26 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            # 1. Navigate to the app directory
+            # 1. Navigate to your live deployment directory
             cd /www/wwwroot/13.232.248.155
 
-            # 2. Pull the latest code change from GitHub
-            git pull origin main
-
-            # 3. Handle directory ownership so your user can build assets safely
+            # 2. Fix directory ownership FIRST so the ubuntu user can run git commands and builds safely
             sudo chown -R ubuntu:ubuntu /www/wwwroot/13.232.248.155
 
-            # 4. Install dependencies & build production frontend assets
+            # 3. Explicitly load NVM and enforce Node 20 environment in this SSH shell session
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 20
+
+            # 4. Pull down the fresh updates from your repository
+            git pull origin ${{ github.ref_name }}
+
+            # 5. Install npm packages and run production Vite compilation
             npm install
             npm run build
 
-            # 5. Hand control safely back to the web server
+            # 6. Hand security ownership back to aaPanel's web server worker
             sudo chown -R www:www /www/wwwroot/13.232.248.155
 
-            # 6. Flush the Laravel system cache matrices
+            # 7. Wipe out old framework cache states safely
             sudo -u www /www/server/php/83/bin/php artisan optimize:clear
