@@ -1,0 +1,41 @@
+name: Deploy to Production VPS
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # 1. Navigate to the app directory
+            cd /www/wwwroot/13.232.248.155
+
+            # 2. Pull the latest code change from GitHub
+            git pull origin main
+
+            # 3. Handle directory ownership so your user can build assets safely
+            sudo chown -R ubuntu:ubuntu /www/wwwroot/13.232.248.155
+
+            # 4. Install dependencies & build production frontend assets
+            npm install
+            npm run build
+
+            # 5. Hand control safely back to the web server
+            sudo chown -R www:www /www/wwwroot/13.232.248.155
+
+            # 6. Flush the Laravel system cache matrices
+            sudo -u www /www/server/php/83/bin/php artisan optimize:clear
