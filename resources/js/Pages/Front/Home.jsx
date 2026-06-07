@@ -690,7 +690,7 @@ export default function Home() {
                         <div>
                             <h5 className="sub-title">From the Blog</h5>
                             <Link href="/post-details">
-                                <h2 className="main-title">Latest Updates</h2>
+                                <h2 className="main-title">Latest Updatess</h2>
                             </Link>
                         </div>
                         <div className="header-actions">
