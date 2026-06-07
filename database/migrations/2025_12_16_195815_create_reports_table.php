@@ -23,6 +23,9 @@ return new class extends Migration {
 
             // User who reported
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            
+            // Handled by admin
+            $table->foreignId('handled_by')->nullable();
 
             $table->timestamps();
             $table->softDeletes();
@@ -31,8 +34,6 @@ return new class extends Migration {
             $table->index(['reportable_id', 'reportable_type']);
             $table->index('status');
             $table->index('user_id');
-
-            $table->foreignId('handled_by')->nullable()->after('user_id')->constrained('users')->nullOnDelete();
         });
     }
 

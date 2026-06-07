@@ -26,6 +26,14 @@ return new class extends Migration {
             $table->string('registration_ip')->nullable();
             $table->string('last_login_ip')->nullable();
 
+            
+            $table->timestamp('registration_date')->nullable();
+            $table->timestamp('last_login_date')->nullable();
+
+            // Add these two final missing lines:
+            $table->timestamp('last_seen_at')->nullable(); 
+            
+
             // ✅ use integers or enums with string labels (not numeric strings)
             $table->unsignedTinyInteger('status')
                 ->default(1)

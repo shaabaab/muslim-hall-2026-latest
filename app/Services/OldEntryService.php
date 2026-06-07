@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 
-class EntryService
+class OldEntryService
 {
     public function store(Contest $contest, array $data)
     {

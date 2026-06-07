@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\User;
+namespace App\Http\Controllers\user;
 
 use Inertia\Inertia;
 use Illuminate\Support\Str;
