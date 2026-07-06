@@ -14,6 +14,7 @@ use App\Models\Sponsor;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use App\Services\ServiceClass;
 
 class ContestController extends Controller
 {
@@ -88,10 +89,7 @@ class ContestController extends Controller
             foreach ($request->sponsor_ids as $sponsorId) {
                 if (isset($request->sponsor_banners[$sponsorId]['file'])) {
                     $bannerFile = $request->sponsor_banners[$sponsorId]['file'];
-                    $bannerPath = $bannerFile->store(
-                        'contest-banners/' . $contest->id,
-                        'public'
-                    );
+                    $bannerPath = ServiceClass::uploadFile($bannerFile, 'contest-banners/' . $contest->id);
 
                     $sponsorData[] = [
                         'sponsor_id' => $sponsorId,
@@ -172,10 +170,7 @@ class ContestController extends Controller
 
                 if (isset($request->sponsor_banners[$sponsorId]['file'])) {
                     $bannerFile = $request->sponsor_banners[$sponsorId]['file'];
-                    $bannerPath = $bannerFile->store(
-                        'contest-banners/' . $contest->id,
-                        'public'
-                    );
+                    $bannerPath = ServiceClass::uploadFile($bannerFile, 'contest-banners/' . $contest->id);
 
                     if ($existingSponsor) {
                         $existingSponsor->update(['banner' => $bannerPath]);

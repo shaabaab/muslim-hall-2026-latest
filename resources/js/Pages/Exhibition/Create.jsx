@@ -38,6 +38,9 @@ export default function Create({ auth, langs }) {
     const [mainImagePreview, setMainImagePreview] = useState(null);
     const [galleryPreviews, setGalleryPreviews] = useState([]);
     const [documentPreview, setDocumentPreview] = useState(null);
+    const [videoFiles, setVideoFiles] = useState([]);
+    const [audioFiles, setAudioFiles] = useState([]);
+    const [pdfFiles, setPdfFiles] = useState([]);
 
     const { data, setData, post, processing, errors } = useForm({
         title: '',
@@ -46,6 +49,12 @@ export default function Create({ auth, langs }) {
         image: null,
         gallery: [],
         document_file: null,
+            videos: [],
+            audios: [],
+            pdfs: [],
+        videos: [],
+        audios: [],
+        pdfs: [],
         price: null,
         currency: 'USD',
         is_available: true,
@@ -60,9 +69,9 @@ export default function Create({ auth, langs }) {
         const formData = new FormData();
         Object.keys(data).forEach(key => {
             if (data[key] !== null && data[key] !== undefined) {
-                if (key === 'gallery' && Array.isArray(data[key])) {
+                if (['gallery', 'videos', 'audios', 'pdfs'].includes(key) && Array.isArray(data[key])) {
                     data[key].forEach((file, index) => {
-                        formData.append(`gallery[${index}]`, file);
+                        formData.append(`${key}[${index}]`, file);
                     });
                 } else {
                     formData.append(key, data[key]);
@@ -133,6 +142,20 @@ export default function Create({ auth, langs }) {
     const handleDocumentRemove = () => {
         setData('document_file', null);
         setDocumentPreview(null);
+    };
+
+    const handleMediaUpload = (field, file, setter) => {
+        const files = [...(data[field] || []), file];
+        setData(field, files);
+        setter(files);
+        return false;
+    };
+
+    const handleMediaRemove = (field, index, setter) => {
+        const files = [...(data[field] || [])];
+        files.splice(index, 1);
+        setData(field, files);
+        setter(files);
     };
 
     const currencyOptions = [
@@ -304,7 +327,7 @@ export default function Create({ auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -340,7 +363,7 @@ export default function Create({ auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleGalleryUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     multiple
                                 >
@@ -478,7 +501,7 @@ export default function Create({ auth, langs }) {
                                 <Upload
                                     beforeUpload={handleDocumentUpload}
                                     onRemove={handleDocumentRemove}
-                                    accept=".pdf,.doc,.docx,.ppt,.pptx"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -496,6 +519,34 @@ export default function Create({ auth, langs }) {
                                         </div>
                                     </div>
                                 )}
+                            </Form.Item>
+                        </Col>
+
+
+                        <Col span={24}>
+                            <Form.Item label="Video Files (Optional)" validateStatus={errors.videos ? 'error' : ''} help={errors.videos}>
+                                <Upload beforeUpload={(file) => handleMediaUpload('videos', file, setVideoFiles)} accept=".mp4,.mov,.avi,.mkv,.webm,.m4v,.3gp,video/*" showUploadList={false} multiple>
+                                    <Button icon={<UploadOutlined />}>Add Video</Button>
+                                </Upload>
+                                {videoFiles.length > 0 && <div className="mt-2">{videoFiles.map((file, index) => <div key={index}><Text>{file.name}</Text> <Button type="link" danger onClick={() => handleMediaRemove('videos', index, setVideoFiles)}>Remove</Button></div>)}</div>}
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item label="Audio Files (Optional)" validateStatus={errors.audios ? 'error' : ''} help={errors.audios}>
+                                <Upload beforeUpload={(file) => handleMediaUpload('audios', file, setAudioFiles)} accept=".mp3,.wav,.ogg,.m4a,.aac,.flac,.webm,audio/*" showUploadList={false} multiple>
+                                    <Button icon={<UploadOutlined />}>Add Audio</Button>
+                                </Upload>
+                                {audioFiles.length > 0 && <div className="mt-2">{audioFiles.map((file, index) => <div key={index}><Text>{file.name}</Text> <Button type="link" danger onClick={() => handleMediaRemove('audios', index, setAudioFiles)}>Remove</Button></div>)}</div>}
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item label="Extra PDF / Documents (Optional)" validateStatus={errors.pdfs ? 'error' : ''} help={errors.pdfs}>
+                                <Upload beforeUpload={(file) => handleMediaUpload('pdfs', file, setPdfFiles)} accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf" showUploadList={false} multiple>
+                                    <Button icon={<FileTextOutlined />}>Add PDF / Document</Button>
+                                </Upload>
+                                {pdfFiles.length > 0 && <div className="mt-2">{pdfFiles.map((file, index) => <div key={index}><Text>{file.name}</Text> <Button type="link" danger onClick={() => handleMediaRemove('pdfs', index, setPdfFiles)}>Remove</Button></div>)}</div>}
                             </Form.Item>
                         </Col>
 

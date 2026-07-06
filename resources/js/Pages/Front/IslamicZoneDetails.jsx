@@ -4,15 +4,11 @@ import { Button, Typography } from "antd";
 const { Text } = Typography;
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useState, memo } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
+import PDFViewer from "@/Components/PDFViewer";
 import Footer from "./Footer";
 import Header from "./Header";
 import { getS3PublicUrl } from "@/Utils/s3Helpers";
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 
 
@@ -938,28 +934,10 @@ export default function IslamicZoneDetails() {
     };
 
     // PDF Preview Component
+    // Uses the same pdfjs-based PDFViewer component used by single post details.
+    // Added page number search/jump and top-bottom arrows inside the shared component.
     const PDFPreview = ({ pdfUrl, canDownloadItem }) => {
-        const [pdfLoadError, setPdfLoadError] = useState(false);
-        const [isPdfLoading, setIsPdfLoading] = useState(true);
-        const [numPages, setNumPages] = useState(null);
-        const [pageNumber, setPageNumber] = useState(1);
-
         if (!pdfUrl) return null;
-
-        function onDocumentLoadSuccess({ numPages }) {
-            setNumPages(numPages);
-            setPageNumber(1);
-            setIsPdfLoading(false);
-            setPdfLoadError(false);
-        }
-
-        function nextPage() {
-            setPageNumber((prev) => (prev < numPages ? prev + 1 : prev));
-        }
-
-        function prevPage() {
-            setPageNumber((prev) => (prev > 1 ? prev - 1 : prev));
-        }
 
         return (
             <div className="pdf-preview-section">
@@ -983,96 +961,8 @@ export default function IslamicZoneDetails() {
                 </div>
 
                 <div className="pdf-preview-container">
-                    {pdfLoadError && (
-                        <div className="pdf-error">
-                            <i className="fas fa-exclamation-triangle error-icon"></i>
-                            <h4>Unable to Load PDF</h4>
-                            <p>
-                                The PDF document could not be loaded. Please try
-                                downloading it instead.
-                            </p>
-                            <div className="error-actions">
-                                <a
-                                    href={canDownloadItem ? pdfUrl : "#"}
-                                    download={canDownloadItem}
-                                    onClick={(e) =>
-                                        !canDownloadItem && e.preventDefault()
-                                    }
-                                    className={`error-btn primary ${!canDownloadItem ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
-                                >
-                                    <i className="fas fa-download"></i>
-                                    Download PDF
-                                </a>
-                            </div>
-                        </div>
-                    )}
-
-                    {!pdfLoadError && (
-                        <div className="pdf-viewer-wrapper">
-                            <Document
-                                file={pdfUrl}
-                                onLoadSuccess={onDocumentLoadSuccess}
-                                onLoadError={(error) => {
-                                    console.error("PDF loading error:", error);
-                                    setPdfLoadError(true);
-                                    setIsPdfLoading(false);
-                                }}
-                                loading={
-                                    <div className="pdf-loading">
-                                        <div className="loading-spinner">
-                                            <i className="fas fa-spinner fa-spin"></i>
-                                        </div>
-                                        <p>Loading PDF document...</p>
-                                    </div>
-                                }
-                            >
-                                <Page
-                                    pageNumber={pageNumber}
-                                    renderAnnotationLayer={false}
-                                    renderTextLayer={false}
-                                    loading={
-                                        <div className="pdf-loading">
-                                            <p>Loading page {pageNumber}...</p>
-                                        </div>
-                                    }
-                                />
-                            </Document>
-                        </div>
-                    )}
+                    <PDFViewer pdfPath={pdfUrl} />
                 </div>
-
-                {!pdfLoadError && numPages && (
-                    <div className="pdf-navigation">
-                        <div className="pdf-info-footer">
-                            <div className="info-grid">
-                                <div className="info-item">
-                                    <Button
-                                        onClick={prevPage}
-                                        type="primary"
-                                        disabled={pageNumber <= 1}
-                                    >
-                                        &laquo; Prev
-                                    </Button>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Counter</span>
-                                    <span className="info-value">
-                                        Page {pageNumber} of {numPages}
-                                    </span>
-                                </div>
-                                <div className="info-item">
-                                    <Button
-                                        onClick={nextPage}
-                                        type="primary"
-                                        disabled={pageNumber >= numPages}
-                                    >
-                                        Next &raquo;
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };

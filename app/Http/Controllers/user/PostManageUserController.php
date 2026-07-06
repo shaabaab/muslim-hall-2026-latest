@@ -345,25 +345,25 @@ class PostManageUserController extends Controller
                     'id' => $img->id,
                     'image' => $img->image,
                     'name' => basename($img->image),
-                    'url' => Storage::url($img->image),
+                    'url' => ServiceClass::getFileUrl($img->image),
                 ]),
                 'post_videos' => $post->videos->map(fn($v) => [
                     'id' => $v->id,
                     'video' => $v->video,
                     'name' => basename($v->video),
-                    'url' => Storage::url($v->video),
+                    'url' => ServiceClass::getFileUrl($v->video),
                 ]),
                 'post_pdfs' => $post->pdfs->map(fn($p) => [
                     'id' => $p->id,
                     'pdf' => $p->pdf,
                     'name' => basename($p->pdf),
-                    'url' => Storage::url($p->pdf),
+                    'url' => ServiceClass::getFileUrl($p->pdf),
                 ]),
                 'post_audios' => $post->audios->map(fn($a) => [
                     'id' => $a->id,
                     'audio' => $a->audio,
                     'name' => basename($a->audio),
-                    'url' => Storage::url($a->audio),
+                    'url' => ServiceClass::getFileUrl($a->audio),
                 ]),
                 'created_at' => $post->created_at,
                 'updated_at' => $post->updated_at,
@@ -669,23 +669,7 @@ class PostManageUserController extends Controller
                 return null;
             }
 
-            // Create unique filename
-            $fileName = 'post_content_' . time() . '_' . Str::random(10) . '.' . $imageType;
-            $storagePath = 'public/posts/content_images';
-            $fullPath = storage_path('app/' . $storagePath . '/' . $fileName);
-
-            // Ensure directory exists
-            if (!File::exists(storage_path('app/' . $storagePath))) {
-                File::makeDirectory(storage_path('app/' . $storagePath), 0755, true);
-            }
-
-            // Save image file
-            if (File::put($fullPath, $imageBinary)) {
-                // Generate URL for the saved image
-                return Storage::url('posts/content_images/' . $fileName);
-            }
-
-            return null;
+            return ServiceClass::uploadContentUrl($imageBinary, 'posts/content_images', $imageType, 's3', 'post_content');
         } catch (\Exception $e) {
             Log::error('Error storing base64 image: ' . $e->getMessage());
             return null;
@@ -702,7 +686,7 @@ class PostManageUserController extends Controller
         }
 
         // Extract image URLs from old content
-        preg_match_all('/src="([^"]*\/storage\/posts\/content_images\/[^"]+)"/', $oldContent, $matches);
+        preg_match_all('/src="([^"]*\/posts\/content_images\/[^"]+)"/', $oldContent, $matches);
 
         if (empty($matches[1])) {
             return;
@@ -728,10 +712,8 @@ class PostManageUserController extends Controller
             $filename = basename($path);
 
             // Delete from storage
-            $filePath = 'public/posts/content_images/' . $filename;
-            if (Storage::exists($filePath)) {
-                Storage::delete($filePath);
-            }
+            $s3Path = 'posts/content_images/' . $filename;
+            ServiceClass::deleteFile($s3Path, 's3');
         } catch (\Exception $e) {
             Log::error('Error deleting content image: ' . $e->getMessage());
         }
@@ -753,9 +735,7 @@ class PostManageUserController extends Controller
             $filename = Str::random(20) . '_' . time() . '.' . $extension;
 
             // Store file
-            $filePath = $file->storeAs($path, $filename);
-
-            return $filePath;
+            return ServiceClass::uploadFile($file, $path, 's3');
         } catch (\Exception $e) {
             Log::error('File upload error: ' . $e->getMessage());
             throw $e;
@@ -768,8 +748,8 @@ class PostManageUserController extends Controller
     private function deleteFile($filePath)
     {
         try {
-            if ($filePath && Storage::exists($filePath)) {
-                Storage::delete($filePath);
+            if ($filePath) {
+                ServiceClass::deleteFile($filePath, 's3');
                 return true;
             }
             return false;
@@ -832,21 +812,10 @@ class PostManageUserController extends Controller
 
             imagedestroy($image);
 
-            // Upload directly to S3
-            $s3Path = 'editor/' . $fileName;
-            try {
-                Storage::disk('s3')->put($s3Path, $jpegData);
-                // Build the S3 public URL
-                $newSrc = 'https://muslimhall.s3.ap-south-1.amazonaws.com/' . $s3Path;
-            } catch (\Throwable $uploadErr) {
-                Log::error('Editor image S3 upload failed: ' . $uploadErr->getMessage());
-                // Fallback: save locally
-                $localDir = storage_path('app/public/editor/');
-                if (!file_exists($localDir)) {
-                    mkdir($localDir, 0755, true);
-                }
-                file_put_contents($localDir . $fileName, $jpegData);
-                $newSrc = '/storage/editor/' . $fileName;
+            $newSrc = ServiceClass::uploadContentUrl($jpegData, 'editor', 'jpg', 's3', 'editor');
+            if (!$newSrc) {
+                Log::error('Editor image S3 upload failed.');
+                continue;
             }
 
             // Replace base64 with the stored image URL

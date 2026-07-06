@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Language;
 use App\Models\Exhibition;
+use App\Models\ExhibitionBoard;
+use App\Models\ExhibitionBoardMember;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\ServiceClass;
+use App\Support\UploadRules;
 use Illuminate\Support\Facades\Auth;
 
 class ExhibitionController extends Controller
@@ -106,10 +109,22 @@ class ExhibitionController extends Controller
             'title' => 'required|string|max:5000',
             'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
-            'image' => 'required|image',
+            'image' => UploadRules::image(true),
             'gallery' => 'nullable|array',
-            'gallery.*' => 'image',
-            'document_file' => 'nullable|file',
+            'gallery.*' => UploadRules::image(),
+            'document_file' => UploadRules::document(),
+            'videos' => 'nullable|array',
+            'videos.*' => UploadRules::video(),
+            'audios' => 'nullable|array',
+            'audios.*' => UploadRules::audio(),
+            'pdfs' => 'nullable|array',
+            'pdfs.*' => UploadRules::document(),
+            'video_temp_paths' => 'nullable|array',
+            'audio_temp_paths' => 'nullable|array',
+            'pdf_temp_paths' => 'nullable|array',
+            'remove_videos' => 'nullable|array',
+            'remove_audios' => 'nullable|array',
+            'remove_pdfs' => 'nullable|array',
             'price' => 'nullable|numeric|min:0',
             'is_available' => 'nullable|boolean',
             'is_featured' => 'nullable|boolean',
@@ -191,7 +206,8 @@ class ExhibitionController extends Controller
             $validated['approval_status'] = 'pending';
         }
 
-        Exhibition::create($validated);
+        $exhibition = Exhibition::create($validated);
+        $this->syncExtraMedia($request, $exhibition);
 
         return redirect()->route('admin.exhibitions.index')
             ->with('success', 'Exhibition item created successfully.');
@@ -203,10 +219,22 @@ class ExhibitionController extends Controller
             'title' => 'required|string|max:5000',
             'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
+            'image' => UploadRules::image(true),
             'gallery' => 'nullable|array',
-            'gallery.*' => 'image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
-            'document_file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx|max:20480',
+            'gallery.*' => UploadRules::image(),
+            'document_file' => UploadRules::document(),
+            'videos' => 'nullable|array',
+            'videos.*' => UploadRules::video(),
+            'audios' => 'nullable|array',
+            'audios.*' => UploadRules::audio(),
+            'pdfs' => 'nullable|array',
+            'pdfs.*' => UploadRules::document(),
+            'video_temp_paths' => 'nullable|array',
+            'audio_temp_paths' => 'nullable|array',
+            'pdf_temp_paths' => 'nullable|array',
+            'remove_videos' => 'nullable|array',
+            'remove_audios' => 'nullable|array',
+            'remove_pdfs' => 'nullable|array',
             'price' => 'nullable|numeric|min:0',
             'is_available' => 'nullable|boolean',
             'is_featured' => 'nullable|boolean',
@@ -324,10 +352,22 @@ class ExhibitionController extends Controller
             'title' => 'required|string|max:5000',
             'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
+            'image' => UploadRules::image(),
             'gallery' => 'nullable|array',
-            'gallery.*' => 'image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
-            'document_file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx|max:20480',
+            'gallery.*' => UploadRules::image(),
+            'document_file' => UploadRules::document(),
+            'videos' => 'nullable|array',
+            'videos.*' => UploadRules::video(),
+            'audios' => 'nullable|array',
+            'audios.*' => UploadRules::audio(),
+            'pdfs' => 'nullable|array',
+            'pdfs.*' => UploadRules::document(),
+            'video_temp_paths' => 'nullable|array',
+            'audio_temp_paths' => 'nullable|array',
+            'pdf_temp_paths' => 'nullable|array',
+            'remove_videos' => 'nullable|array',
+            'remove_audios' => 'nullable|array',
+            'remove_pdfs' => 'nullable|array',
             'price' => 'nullable|numeric|min:0',
             'is_available' => 'nullable|boolean',
             'is_featured' => 'nullable|boolean',
@@ -360,6 +400,7 @@ class ExhibitionController extends Controller
         $validated['slug'] = $this->generateUniqueSlug(strip_tags($request->title), $exhibition->id);
 
         $exhibition->update($validated);
+        $this->syncExtraMedia($request, $exhibition);
 
         return redirect()->route('admin.exhibitions.index')
             ->with('success', 'Exhibition item updated successfully.');
@@ -367,6 +408,7 @@ class ExhibitionController extends Controller
 
     public function destroy(Exhibition $exhibition)
     {
+        $exhibition->loadMissing(['videos', 'audios', 'pdfs']);
         $this->deleteFiles($exhibition);
 
         $exhibition->delete();
@@ -461,10 +503,21 @@ class ExhibitionController extends Controller
         }
     }
 
+    private function syncExtraMedia(Request $request, Exhibition $exhibition): void
+    {
+        ServiceClass::syncVideos($request, 'videos', $exhibition, 'exhibitions/videos', 'exhibition_videos');
+        ServiceClass::syncPdfs($request, 'pdfs', $exhibition, 'exhibitions/documents', 'exhibition_pdfs');
+        ServiceClass::syncAudios($request, 'audios', $exhibition, 'exhibitions/audios', 'exhibition_audios');
+    }
+
     private function deleteFiles(Exhibition $exhibition)
     {
         if ($exhibition->image) {
             ServiceClass::deleteFile($exhibition->image);
+        }
+
+        if ($exhibition->sponsor_image) {
+            ServiceClass::deleteFile($exhibition->sponsor_image);
         }
 
         if ($exhibition->gallery && is_array($exhibition->gallery)) {
@@ -476,18 +529,59 @@ class ExhibitionController extends Controller
         if ($exhibition->document_file) {
             ServiceClass::deleteFile($exhibition->document_file);
         }
+
+        foreach (['videos', 'audios', 'pdfs'] as $relation) {
+            if ($exhibition->relationLoaded($relation)) {
+                foreach ($exhibition->{$relation} as $item) {
+                    ServiceClass::deleteFile($item->video ?? $item->audio ?? $item->pdf ?? $item->path ?? $item->file_path ?? null);
+                    $item->delete();
+                }
+            }
+        }
     }
 
     public function approve(Exhibition $exhibition)
     {
+        $exhibition->load(['board']);
+
+        if (!$this->canApproveExhibitionForBoard($exhibition)) {
+            return back()->with('error', 'Cannot approve yet. If this exhibition uses a new board, approve the board first. If it uses another member board, board owner approval and admin board access approval are required first.');
+        }
+
         $exhibition->update([
-            'approval_status' => 'approved',
+            'approval_status' => Exhibition::APPROVAL_APPROVED,
             'approved_at' => now(),
             'approved_by' => Auth::id(),
             'admin_note' => null,
+            'status' => Exhibition::STATUS_PUBLISHED,
+            'published_at' => now(),
         ]);
 
-        return back()->with('success', 'Exhibition approved successfully.');
+        return back()->with('success', 'Exhibition approved and published successfully.');
+    }
+
+    private function canApproveExhibitionForBoard(Exhibition $exhibition): bool
+    {
+        if (!$exhibition->exhibition_board_id) {
+            return true;
+        }
+
+        $board = $exhibition->board ?: ExhibitionBoard::find($exhibition->exhibition_board_id);
+
+        if (!$board || $board->approval_status !== ExhibitionBoard::STATUS_APPROVED || !$board->is_active) {
+            return false;
+        }
+
+        if ((int) $board->user_id === (int) $exhibition->user_id) {
+            return true;
+        }
+
+        return ExhibitionBoardMember::where('exhibition_board_id', $board->id)
+            ->where('user_id', $exhibition->user_id)
+            ->where('owner_status', ExhibitionBoardMember::STATUS_APPROVED)
+            ->where('admin_status', ExhibitionBoardMember::STATUS_APPROVED)
+            ->where('status', ExhibitionBoardMember::STATUS_APPROVED)
+            ->exists();
     }
 
     public function reject(Request $request, Exhibition $exhibition)

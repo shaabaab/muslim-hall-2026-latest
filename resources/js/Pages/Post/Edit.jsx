@@ -689,7 +689,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                         <Input
                             size="large"
                             type="file"
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                             multiple
                             onChange={handleImageUpload}
                         />
@@ -774,7 +774,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                             <Input
                                 size="large"
                                 type="file"
-                                accept="application/pdf"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf"
                                 onChange={(e) => handleFileChange('pdf', e.target.files[0])}
                             />
                             {(data.pdf instanceof File || editPost.pdf) && (

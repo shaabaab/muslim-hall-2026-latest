@@ -59,7 +59,14 @@ class FrontendController extends Controller
             })->with(['images', 'audios'])->latest()->take(10)->get();
         $category = Category::latest()->take(10)->get();
         $book = Book::latest()->take(10)->get();
-        $exhibition = Exhibition::latest()->take(10)->get();
+        $exhibition = $this->publicExhibitionBoardQuery()
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(function ($board) {
+                $board->setRelation('approved_exhibitions', $this->getPublicBoardExhibitions($board->id, 4));
+                return $board;
+            });
         $contest = Contest::running()->where('voting_enabled', Contest::CONTEST_ENABLED)->with(['entries', 'reviews', 'winners'])->latest()->take(10)->get();
         $social = Social::get();
 
@@ -488,25 +495,10 @@ class FrontendController extends Controller
 
     public function exhibitionDetails(Request $request)
     {
-        $user = Auth::user();
-
-        $isMember = $user && $user->subscriptions()
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->exists();
-
-        $isAdmin = $user && $user->role == User::ROLE_ADMIN;
-
-        $canAccess = $isMember || $isAdmin;
-
-        abort_if(!$canAccess, 403, 'Access denied. You must be a member to access exhibitions.');
-
-        $boards = ExhibitionBoard::with(['owner'])
-            ->withCount([
-                'approvedExhibitions as exhibitions_count',
-            ])
-            ->withSum('approvedExhibitions as views_count', 'views')
-            ->approved()
-            ->active()
+        // Frontend exhibition board listing is public. Only approved, active boards
+        // with approved/published exhibitions are shown. Creating exhibitions still
+        // stays inside member dashboard routes.
+        $boards = $this->publicExhibitionBoardQuery()
             ->when($request->filled('search'), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('title', 'like', '%' . $request->search . '%')
@@ -514,41 +506,41 @@ class FrontendController extends Controller
                 });
             })
             ->latest()
-            ->paginate(12)
+            ->paginate(10)
             ->withQueryString();
+
+        $boards->getCollection()->transform(function ($board) {
+            $board->setRelation('approved_exhibitions', $this->getPublicBoardExhibitions($board->id, 4));
+            return $board;
+        });
 
         return Inertia::render('Front/ExhibitionBoards', [
             'boards' => $boards,
-            'member' => (bool) $isMember,
+            'member' => (bool) Auth::check(),
             'filters' => $request->only(['search']),
         ]);
     }
 
     public function exhibitionBoard($id)
     {
-        $user = Auth::user();
-
-        $isMember = $user && $user->subscriptions()
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->exists();
-
-        $isAdmin = $user && $user->role == User::ROLE_ADMIN;
-
-        $canAccess = $isMember || $isAdmin;
-
-        abort_if(!$canAccess, 403, 'Access denied. You must be a member to access exhibitions.');
-
+        // Frontend single board page is public. Only approved/active boards and
+        // approved/published exhibitions are loaded.
         $board = ExhibitionBoard::with([
             'owner',
-            'approvedExhibitions' => function ($query) {
-                $query->with(['user', 'reactions'])
-                    ->latest();
+            'exhibitions' => function ($query) {
+                $this->applyPublicExhibitionFilters($query, false);
+                $query->with(['user', 'reactions'])->latest();
             },
         ])
-            ->approved()
-            ->active()
+            ->where('approval_status', ExhibitionBoard::STATUS_APPROVED)
+            ->where(function ($query) {
+                $query->where('is_active', true)
+                    ->orWhereNull('is_active');
+            })
             ->where('id', $id)
             ->firstOrFail();
+
+        $board->setRelation('approvedExhibitions', $board->exhibitions);
 
         return Inertia::render('Front/ExhibitionBoardShow', [
             'board' => $board,
@@ -557,27 +549,15 @@ class FrontendController extends Controller
 
     public function exhibition($id)
     {
-        $user = Auth::user();
-
-        $isMember = $user && $user->subscriptions()
-            ->where('status', Subscription::STATUS_ACTIVE)
-            ->exists();
-
-        $isAdmin = $user && $user->role == User::ROLE_ADMIN;
-
-        $canAccess = $isMember || $isAdmin;
-
-        abort_if(!$canAccess, 403, 'Access denied. You must be a member to access exhibitions.');
-
-        $exhibition = Exhibition::with([
+        // Frontend single exhibition page is public. Only approved/published
+        // exhibitions under approved/active boards are visible.
+        $exhibition = $this->publicExhibitionQuery([
             'board',
             'comments.user',
             'comments.replies.user',
             'reactions.user',
             'seo',
         ])
-            ->where('approval_status', Exhibition::APPROVAL_APPROVED)
-            ->where('status', Exhibition::STATUS_PUBLISHED)
             ->where('id', $id)
             ->firstOrFail();
 
@@ -759,8 +739,11 @@ class FrontendController extends Controller
                 });
 
             // Search in exhibitions
-            $exhibitions = Exhibition::where('title', 'like', "%{$query}%")
-                ->orWhere('description', 'like', "%{$query}%")
+            $exhibitions = $this->publicExhibitionQuery()
+                ->where(function ($exhibitionQuery) use ($query) {
+                    $exhibitionQuery->where('title', 'like', "%{$query}%")
+                        ->orWhere('description', 'like', "%{$query}%");
+                })
                 ->get()
                 ->map(function ($exhibition) {
                     return [
@@ -858,4 +841,76 @@ class FrontendController extends Controller
             ],
         ]);
     }
+
+    private function publicExhibitionBoardQuery()
+    {
+        return ExhibitionBoard::with(['owner'])
+            ->withCount([
+                'exhibitions as exhibitions_count' => function ($query) {
+                    $this->applyPublicExhibitionFilters($query, false);
+                },
+            ])
+            ->withSum(['exhibitions as views_count' => function ($query) {
+                $this->applyPublicExhibitionFilters($query, false);
+            }], 'views')
+            ->where('approval_status', ExhibitionBoard::STATUS_APPROVED)
+            ->where(function ($query) {
+                $query->where('is_active', true)
+                    ->orWhereNull('is_active');
+            })
+            ->whereHas('exhibitions', function ($query) {
+                $this->applyPublicExhibitionFilters($query, false);
+            });
+    }
+
+    private function getPublicBoardExhibitions($boardId, int $limit = 4)
+    {
+        $query = Exhibition::with(['user', 'reactions'])
+            ->where('exhibition_board_id', $boardId);
+
+        $this->applyPublicExhibitionFilters($query, false);
+
+        return $query->latest()->take($limit)->get();
+    }
+
+    private function publicExhibitionQuery(array $with = ['board', 'user'])
+    {
+        $query = Exhibition::with($with);
+
+        $this->applyPublicExhibitionFilters($query, true);
+
+        return $query;
+    }
+
+    private function applyPublicExhibitionFilters($query, bool $checkBoard = true): void
+    {
+        $query->where(function ($statusQuery) {
+            $statusQuery->where('status', Exhibition::STATUS_PUBLISHED)
+                ->orWhereNull('status');
+        });
+
+        $query->where(function ($approvalQuery) {
+            $approvalQuery->where('approval_status', Exhibition::APPROVAL_APPROVED)
+                ->orWhereNull('approval_status');
+        });
+
+        $query->where(function ($publishQuery) {
+            $publishQuery->whereNull('published_at')
+                ->orWhere('published_at', '<=', now());
+        });
+
+        if ($checkBoard) {
+            $query->where(function ($boardQuery) {
+                $boardQuery->whereNull('exhibition_board_id')
+                    ->orWhereHas('board', function ($board) {
+                        $board->where('approval_status', ExhibitionBoard::STATUS_APPROVED)
+                            ->where(function ($active) {
+                                $active->where('is_active', true)
+                                    ->orWhereNull('is_active');
+                            });
+                    });
+            });
+        }
+    }
+
 }

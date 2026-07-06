@@ -512,7 +512,7 @@ const MultipleFeaturedImages = ({
                                         type="file"
                                         id={`replace-featured-${index}`}
                                         hidden
-                                        accept="image/*"
+                                        accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                         onChange={(e) =>
                                             handleFileSelect(e, index)
                                         }
@@ -552,7 +552,7 @@ const MultipleFeaturedImages = ({
                             type="file"
                             id="add-featured-image"
                             hidden
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                             onChange={(e) => handleFileSelect(e)}
                         />
                     </div>
@@ -1580,7 +1580,7 @@ export default function Create({ auth, languages, categories, post = null }) {
                                                     type="file"
                                                     id="pdf-upload"
                                                     hidden
-                                                    accept=".pdf"
+                                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf"
                                                     onChange={(e) =>
                                                         handleFileChange(
                                                             "pdf",
@@ -1889,7 +1889,7 @@ export default function Create({ auth, languages, categories, post = null }) {
                                     <FileUploadComponent
                                         field="thumbnail"
                                         label="Thumbnail Image"
-                                        accept="image/*"
+                                        accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                         postFile={post?.thumbnail}
                                         required={true}
                                         description="Required. Max size: 5MB. Formats: JPEG, PNG, JPG, GIF, WebP"
@@ -1944,7 +1944,7 @@ export default function Create({ auth, languages, categories, post = null }) {
                                         <FileUploadComponent
                                             field="sponsor"
                                             label="Sponsor Image"
-                                            accept="image/*"
+                                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                             postFile={post?.sponsor}
                                             required={false}
                                             description="Optional. Max size: 5MB. Formats: JPEG, PNG, JPG, GIF, WebP"

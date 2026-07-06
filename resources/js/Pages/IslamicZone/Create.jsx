@@ -737,7 +737,7 @@ export default function Create({ auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -863,7 +863,7 @@ export default function Create({ auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -908,7 +908,7 @@ export default function Create({ auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleGalleryUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     multiple
                                 >
@@ -1034,7 +1034,7 @@ export default function Create({ auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -1155,7 +1155,7 @@ export default function Create({ auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleGalleryUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     multiple
                                 >

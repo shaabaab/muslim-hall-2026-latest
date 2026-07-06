@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\UploadRules;
 
 class PostUpdateRequest extends FormRequest
 {
@@ -12,30 +13,36 @@ class PostUpdateRequest extends FormRequest
     }
 
     public function rules()
-{
-    return [
-        'title' => 'required|string|max:255',
-        'lang_id' => 'nullable|exists:languages,id',
-        'category_id' => 'nullable|exists:categories,id',
-
-        'thumbnail' => 'nullable|image',
-        'sponsor' => 'nullable|image',
-
-        'remove_thumbnail' => 'nullable|boolean',
-        'remove_sponsor' => 'nullable|boolean',
-        'remove_audio' => 'nullable|boolean',
-
-        'featured_images' => 'nullable|array',
-        'featured_images.*' => 'image',
-
-        'content' => 'nullable|string',
-
-        'pdf' => 'nullable|file|mimes:pdf',
-        'video' => 'nullable|file',
-        'audio' => 'nullable|file',
-
-        'video_url' => 'nullable|url',
-        'status' => 'nullable|boolean',
-    ];
-}
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'lang_id' => 'nullable|exists:languages,id',
+            'category_id' => 'nullable|exists:categories,id',
+            'thumbnail' => UploadRules::image(),
+            'sponsor' => UploadRules::image(),
+            'remove_thumbnail' => 'nullable|boolean',
+            'remove_sponsor' => 'nullable|boolean',
+            'remove_audio' => 'nullable|boolean',
+            'featured_images' => 'nullable|array',
+            'featured_images.*' => UploadRules::image(),
+            'content' => 'nullable|string',
+            'pdf' => UploadRules::document(),
+            'video' => UploadRules::video(),
+            'audio' => UploadRules::audio(),
+            'videos' => 'nullable|array',
+            'videos.*' => UploadRules::video(),
+            'pdfs' => 'nullable|array',
+            'pdfs.*' => UploadRules::document(),
+            'audios' => 'nullable|array',
+            'audios.*' => UploadRules::audio(),
+            'video_temp_paths' => 'nullable|array',
+            'pdf_temp_paths' => 'nullable|array',
+            'audio_temp_paths' => 'nullable|array',
+            'remove_videos' => 'nullable|array',
+            'remove_pdfs' => 'nullable|array',
+            'remove_audios' => 'nullable|array',
+            'video_url' => 'nullable|url',
+            'status' => 'nullable|boolean',
+        ];
+    }
 }

@@ -31,6 +31,7 @@ use App\Http\Controllers\DashboardController as UserDashboardController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\user\CommunityController as UserCommunityController;
+use App\Http\Controllers\user\IslamicZoneController as UserIslamicZoneController;
 
 use App\Http\Controllers\user\ExhibitionBoardController as UserExhibitionBoardController;
 use App\Http\Controllers\user\ExhibitionController as UserExhibitionController;
@@ -158,6 +159,12 @@ Route::middleware(['auth', 'verified'])
 
         // 🔸 Community & Exhibition Management
         Route::resource('communities', UserCommunityController::class);
+
+        // 🔸 Islamic Zone Management
+        // User/member uploads are saved as draft first. Admin can approve by changing status to published.
+        Route::resource('islamic-zone', UserIslamicZoneController::class)
+            ->parameters(['islamic-zone' => 'religiousContent']);
+        Route::get('/islamic-zone/download/{religiousContent}', [UserIslamicZoneController::class, 'download'])->name('islamic-zone.download');
 
         // 🔸 Post Management
         Route::resource('posts', PostManageUserController::class)->names([

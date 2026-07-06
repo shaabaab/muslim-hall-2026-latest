@@ -230,7 +230,7 @@ class PostController extends Controller
                         'id' => $image->id,
                         'image' => $image->image,
                         'name' => basename($image->image),
-                        'url' => Storage::url($image->image),
+                        'url' => ServiceClass::getFileUrl($image->image),
                     ];
                 }),
                 'post_videos' => $post->videos->map(function ($video) {
@@ -238,7 +238,7 @@ class PostController extends Controller
                         'id' => $video->id,
                         'video' => $video->video,
                         'name' => basename($video->video),
-                        'url' => Storage::url($video->video),
+                        'url' => ServiceClass::getFileUrl($video->video),
                     ];
                 }),
                 'post_pdfs' => $post->pdfs->map(function ($pdf) {
@@ -246,7 +246,7 @@ class PostController extends Controller
                         'id' => $pdf->id,
                         'pdf' => $pdf->pdf,
                         'name' => basename($pdf->pdf),
-                        'url' => Storage::url($pdf->pdf),
+                        'url' => ServiceClass::getFileUrl($pdf->pdf),
                     ];
                 }),
                 'post_audios' => $post->audios->map(function ($audio) {
@@ -254,7 +254,7 @@ class PostController extends Controller
                         'id' => $audio->id,
                         'audio' => $audio->audio,
                         'name' => basename($audio->audio),
-                        'url' => Storage::url($audio->audio),
+                        'url' => ServiceClass::getFileUrl($audio->audio),
                     ];
                 }),
                 'created_at' => $post->created_at,
@@ -472,18 +472,7 @@ class PostController extends Controller
                 return null;
             }
 
-            $fileName = 'post_content_' . time() . '_' . Str::random(10) . '.' . $imageType;
-            $fullPath = public_path('uploads/editor/' . $fileName);
-
-            if (!File::exists(public_path('uploads/editor'))) {
-                File::makeDirectory(public_path('uploads/editor'), 0755, true);
-            }
-
-            if (File::put($fullPath, $imageBinary)) {
-                return '/uploads/editor/' . $fileName;
-            }
-
-            return null;
+            return ServiceClass::uploadContentUrl($imageBinary, 'editor', $imageType, 's3', 'post_content');
         } catch (\Exception $e) {
             Log::error('Error storing base64 image: ' . $e->getMessage());
             return null;
@@ -496,7 +485,7 @@ class PostController extends Controller
             return;
         }
 
-        preg_match_all('/src="([^"]*\/uploads\/editor\/[^"]+)"/', $oldContent, $matches);
+        preg_match_all('/src="([^"]*\/editor\/[^"]+)"/', $oldContent, $matches);
 
         if (empty($matches[1])) {
             return;
@@ -515,10 +504,8 @@ class PostController extends Controller
             $path = parse_url($url, PHP_URL_PATH);
             $filename = basename($path);
 
-            $filePath = public_path('uploads/editor/' . $filename);
-            if (File::exists($filePath)) {
-                File::delete($filePath);
-            }
+            $s3Path = 'editor/' . $filename;
+            ServiceClass::deleteFile($s3Path, 's3');
         } catch (\Exception $e) {
             Log::error('Error deleting content image: ' . $e->getMessage());
         }
@@ -567,20 +554,10 @@ class PostController extends Controller
 
             imagedestroy($image);
 
-            // Upload directly to S3
-            $s3Path = 'editor/' . $fileName;
-            try {
-                Storage::disk('s3')->put($s3Path, $jpegData);
-                $newSrc = 'https://muslimhall.s3.ap-south-1.amazonaws.com/' . $s3Path;
-            } catch (\Throwable $uploadErr) {
-                Log::error('Admin editor image S3 upload failed: ' . $uploadErr->getMessage());
-                // Fallback: save locally
-                $localDir = public_path('uploads/editor/');
-                if (!file_exists($localDir)) {
-                    mkdir($localDir, 0755, true);
-                }
-                file_put_contents($localDir . $fileName, $jpegData);
-                $newSrc = asset('uploads/editor/' . $fileName);
+            $newSrc = ServiceClass::uploadContentUrl($jpegData, 'editor', 'jpg', 's3', 'editor');
+            if (!$newSrc) {
+                Log::error('Admin editor image S3 upload failed.');
+                continue;
             }
 
             $content = str_replace($base64String, $newSrc, $content);

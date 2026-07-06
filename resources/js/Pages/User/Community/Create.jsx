@@ -26,11 +26,17 @@ const { Option } = Select;
 
 export default function Create({ auth }) {
     const [imagePreview, setImagePreview] = useState(null);
+    const [videoFiles, setVideoFiles] = useState([]);
+    const [audioFiles, setAudioFiles] = useState([]);
+    const [pdfFiles, setPdfFiles] = useState([]);
 
     const { data, setData, post, processing, errors } = useForm({
         title: "",
         content: "",
         image: null,
+        videos: [],
+        audios: [],
+        pdfs: [],
         status: "published", // Default to published
     });
 
@@ -38,7 +44,11 @@ export default function Create({ auth }) {
         const formData = new FormData();
         Object.keys(data).forEach((key) => {
             if (data[key] !== null && data[key] !== undefined) {
-                formData.append(key, data[key]);
+                if (['videos', 'audios', 'pdfs'].includes(key) && Array.isArray(data[key])) {
+                    data[key].forEach((file, index) => formData.append(`${key}[${index}]`, file));
+                } else {
+                    formData.append(key, data[key]);
+                }
             }
         });
 
@@ -51,6 +61,9 @@ export default function Create({ auth }) {
                     title: "",
                     content: "",
                     image: null,
+                    videos: [],
+                    audios: [],
+                    pdfs: [],
                     status: "published",
                 });
                 setImagePreview(null);
@@ -70,6 +83,20 @@ export default function Create({ auth }) {
     const handleImageRemove = () => {
         setData("image", null);
         setImagePreview(null);
+    };
+
+    const handleMediaUpload = (field, file, setter) => {
+        const files = [...(data[field] || []), file];
+        setData(field, files);
+        setter(files);
+        return false;
+    };
+
+    const handleMediaRemove = (field, index, setter) => {
+        const files = [...(data[field] || [])];
+        files.splice(index, 1);
+        setData(field, files);
+        setter(files);
     };
 
     return (
@@ -168,7 +195,7 @@ export default function Create({ auth }) {
                         <Upload
                             beforeUpload={handleImageUpload}
                             onRemove={handleImageRemove}
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                             showUploadList={false}
                             listType="picture"
                             maxCount={1}
@@ -204,9 +231,30 @@ export default function Create({ auth }) {
                         )}
 
                         <Text type="secondary" className="block mt-1">
-                            Supported formats: JPEG, PNG, JPG, GIF | Max size:
-                            2MB
+                            Supported formats: JPG, JPEG, PNG, WEBP, GIF, SVG, BMP, AVIF. Large files are allowed by backend/server config.
                         </Text>
+                    </Form.Item>
+
+
+                    <Form.Item label="Video Files (Optional)" validateStatus={errors.videos ? "error" : ""} help={errors.videos}>
+                        <Upload beforeUpload={(file) => handleMediaUpload("videos", file, setVideoFiles)} accept=".mp4,.mov,.avi,.mkv,.webm,.m4v,.3gp,video/*" showUploadList={false} multiple>
+                            <Button icon={<PictureOutlined />}>Add Video</Button>
+                        </Upload>
+                        {videoFiles.map((file, index) => <div key={index} className="mt-2"><Text>{file.name}</Text><Button type="link" danger onClick={() => handleMediaRemove("videos", index, setVideoFiles)}>Remove</Button></div>)}
+                    </Form.Item>
+
+                    <Form.Item label="Audio Files (Optional)" validateStatus={errors.audios ? "error" : ""} help={errors.audios}>
+                        <Upload beforeUpload={(file) => handleMediaUpload("audios", file, setAudioFiles)} accept=".mp3,.wav,.ogg,.m4a,.aac,.flac,.webm,audio/*" showUploadList={false} multiple>
+                            <Button icon={<PictureOutlined />}>Add Audio</Button>
+                        </Upload>
+                        {audioFiles.map((file, index) => <div key={index} className="mt-2"><Text>{file.name}</Text><Button type="link" danger onClick={() => handleMediaRemove("audios", index, setAudioFiles)}>Remove</Button></div>)}
+                    </Form.Item>
+
+                    <Form.Item label="PDF / Documents (Optional)" validateStatus={errors.pdfs ? "error" : ""} help={errors.pdfs}>
+                        <Upload beforeUpload={(file) => handleMediaUpload("pdfs", file, setPdfFiles)} accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf" showUploadList={false} multiple>
+                            <Button icon={<PictureOutlined />}>Add PDF / Document</Button>
+                        </Upload>
+                        {pdfFiles.map((file, index) => <div key={index} className="mt-2"><Text>{file.name}</Text><Button type="link" danger onClick={() => handleMediaRemove("pdfs", index, setPdfFiles)}>Remove</Button></div>)}
                     </Form.Item>
 
                     <Form.Item className="mt-8">

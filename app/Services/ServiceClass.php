@@ -8,6 +8,7 @@ use Intervention\Image\Facades\Image;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class ServiceClass
@@ -23,9 +24,177 @@ class ServiceClass
     protected static function getDisk(): string
     {
         if (self::$disk === null) {
-            self::$disk = config('filesystems.default', 'public');
+            self::$disk = config('filesystems.default') ?: env('FILESYSTEM_DISK', 's3');
+            if (self::$disk === 'public' || self::$disk === 'local') {
+                self::$disk = 's3';
+            }
         }
         return self::$disk;
+    }
+
+    /**
+     * External AWS Media API base URL from Byte Dynamo guideline.
+     * Can be overridden in .env:
+     * AWS_MEDIA_API_BASE_URL=https://server.cgmpublications.com/api/v1/aws-media-file
+     */
+    protected static function mediaApiBaseUrl(): string
+    {
+        return rtrim(env('AWS_MEDIA_API_BASE_URL', 'https://server.cgmpublications.com/api/v1/aws-media-file'), '/');
+    }
+
+    /**
+     * Keep folder name clean for the external update/direct-upload API.
+     */
+    protected static function normalizeFolder(string $folder): string
+    {
+        return trim($folder, '/');
+    }
+
+    /**
+     * Convert stored DB value into a full cloud URL when possible.
+     * The provided delete/update API accepts full existing file URL as key.
+     */
+    public static function getCloudUrl(?string $path, ?string $disk = null): ?string
+    {
+        if (!$path || $path === 'processing') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        try {
+            return Storage::disk($disk ?? self::getDisk())->url(ltrim($path, '/'));
+        } catch (\Throwable $e) {
+            $baseUrl = rtrim((string) env('AWS_URL', ''), '/');
+            return $baseUrl ? $baseUrl . '/' . ltrim($path, '/') : ltrim($path, '/');
+        }
+    }
+
+    /**
+     * Extract bucket object key from either full S3 URL or DB path.
+     */
+    public static function extractCloudKey(?string $pathOrUrl): ?string
+    {
+        if (!$pathOrUrl || $pathOrUrl === 'processing') {
+            return null;
+        }
+
+        $value = trim($pathOrUrl);
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            $parts = parse_url($value);
+            $path = $parts['path'] ?? '';
+            return $path ? ltrim(urldecode($path), '/') : null;
+        }
+
+        return ltrim($value, '/');
+    }
+
+    /**
+     * Delete one file through the AWS Media File Management API.
+     * Returns true only when the cloud API confirms success.
+     */
+    protected static function deleteViaMediaApi(string $fileUrl): bool
+    {
+        try {
+            $response = Http::timeout(60)
+                ->acceptJson()
+                ->asJson()
+                ->delete(self::mediaApiBaseUrl() . '/delete-media-file', [
+                    'key' => $fileUrl,
+                ]);
+
+            if ($response->successful() && (bool) data_get($response->json(), 'success', false)) {
+                return true;
+            }
+
+            logger()->warning('AWS media API single delete failed.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'key' => $fileUrl,
+            ]);
+        } catch (\Throwable $e) {
+            logger()->warning('AWS media API single delete exception: ' . $e->getMessage(), [
+                'key' => $fileUrl,
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
+     * Delete multiple files through the AWS Media File Management API.
+     */
+    protected static function deleteMultipleViaMediaApi(array $fileUrls): bool
+    {
+        $fileUrls = array_values(array_filter($fileUrls));
+        if (empty($fileUrls)) {
+            return true;
+        }
+
+        try {
+            $response = Http::timeout(120)
+                ->acceptJson()
+                ->asJson()
+                ->delete(self::mediaApiBaseUrl() . '/delete-multiple-media-files', [
+                    'keys' => $fileUrls,
+                ]);
+
+            if ($response->successful() && (bool) data_get($response->json(), 'success', false)) {
+                return true;
+            }
+
+            logger()->warning('AWS media API multiple delete failed.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'count' => count($fileUrls),
+            ]);
+        } catch (\Throwable $e) {
+            logger()->warning('AWS media API multiple delete exception: ' . $e->getMessage(), [
+                'count' => count($fileUrls),
+            ]);
+        }
+
+        return false;
+    }
+
+    /**
+     * Replace an existing cloud file through the AWS Media File Management API.
+     * The API deletes the previous cloud object and returns the new URL.
+     */
+    protected static function updateViaMediaApi(UploadedFile $file, string $folder, string $oldFileUrl): ?string
+    {
+        try {
+            $handle = fopen($file->getRealPath(), 'r');
+            $response = Http::timeout(300)
+                ->attach('files', $handle, $file->getClientOriginalName())
+                ->put(self::mediaApiBaseUrl() . '/update-media-file?folder=' . urlencode(self::normalizeFolder($folder)), [
+                    'key' => $oldFileUrl,
+                ]);
+
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
+
+            if ($response->successful() && (bool) data_get($response->json(), 'success', false)) {
+                return data_get($response->json(), 'data.url');
+            }
+
+            logger()->warning('AWS media API update failed.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'key' => $oldFileUrl,
+                'folder' => $folder,
+            ]);
+        } catch (\Throwable $e) {
+            logger()->warning('AWS media API update exception: ' . $e->getMessage(), [
+                'key' => $oldFileUrl,
+                'folder' => $folder,
+            ]);
+        }
+
+        return null;
     }
 
 
@@ -69,6 +238,42 @@ class ServiceClass
             ]);
             return null;
         }
+    }
+
+
+    /**
+     * Upload raw/binary content through the central S3 helper.
+     * Useful for editor/base64 images and generated/compressed files.
+     */
+    public static function uploadContent(string $content, string $folder, string $extension, ?string $disk = null, ?string $prefix = null): ?string
+    {
+        try {
+            $targetDisk = $disk ?? self::getDisk();
+            $cleanFolder = trim($folder, '/');
+            $cleanExt = ltrim($extension, '.');
+            $fileName = ($prefix ? trim($prefix, '_') . '_' : '') . Str::uuid() . '.' . $cleanExt;
+            $storedPath = $cleanFolder . '/' . $fileName;
+
+            Storage::disk($targetDisk)->put($storedPath, $content);
+
+            logger('Raw content uploaded: ' . $storedPath);
+            return $storedPath;
+        } catch (\Throwable $e) {
+            logger()->error('Raw content upload error: ' . $e->getMessage(), [
+                'folder' => $folder,
+                'extension' => $extension,
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Upload raw content and return full public/cloud URL.
+     */
+    public static function uploadContentUrl(string $content, string $folder, string $extension, ?string $disk = null, ?string $prefix = null): ?string
+    {
+        $path = self::uploadContent($content, $folder, $extension, $disk, $prefix);
+        return $path ? self::getCloudUrl($path, $disk) : null;
     }
 
 
@@ -189,7 +394,18 @@ class ServiceClass
      ===================================================== */
     public static function updateFile(UploadedFile $file, string $path, ?string $oldFilePath = null, ?string $disk = null): ?string
     {
-        if ($oldFilePath) {
+        if ($oldFilePath && $oldFilePath !== 'processing') {
+            $oldFileUrl = self::getCloudUrl($oldFilePath, $disk);
+
+            if ($oldFileUrl) {
+                $updatedUrl = self::updateViaMediaApi($file, $path, $oldFileUrl);
+                if ($updatedUrl) {
+                    // Store the returned cloud URL so future delete/update uses the exact cloud key.
+                    return $updatedUrl;
+                }
+            }
+
+            // Safe fallback: delete old cloud object first, then upload a new one.
             self::deleteFile($oldFilePath, $disk);
         }
 
@@ -293,7 +509,7 @@ class ServiceClass
 
             foreach ($images as $image) {
                 if ($image->image) {
-                    Storage::disk($disk ?? self::getDisk())->delete($image->image);
+                    self::deleteFile($image->image, $disk);
                 }
                 $image->delete();
             }
@@ -453,9 +669,38 @@ class ServiceClass
      ===================================================== */
     public static function deleteFile(?string $filePath, ?string $disk = null): void
     {
+        if (!$filePath || $filePath === 'processing') {
+            return;
+        }
+
         $targetDisk = $disk ?? self::getDisk();
-        if ($filePath && Storage::disk($targetDisk)->exists($filePath)) {
-            Storage::disk($targetDisk)->delete($filePath);
+        $fileUrl = self::getCloudUrl($filePath, $targetDisk);
+
+        // Primary delete path: Byte Dynamo / AWS Media File Management API.
+        if ($fileUrl && self::deleteViaMediaApi($fileUrl)) {
+            return;
+        }
+
+        // Fallback delete path: direct Laravel S3 disk delete, using object key.
+        $key = self::extractCloudKey($filePath);
+        if (!$key) {
+            return;
+        }
+
+        try {
+            if (Storage::disk($targetDisk)->exists($key)) {
+                Storage::disk($targetDisk)->delete($key);
+            } else {
+                // Some S3 drivers return false for exists() because of permission; delete is safe/idempotent.
+                Storage::disk($targetDisk)->delete($key);
+            }
+        } catch (\Throwable $e) {
+            logger()->error('Cloud file delete failed.', [
+                'filePath' => $filePath,
+                'key' => $key,
+                'disk' => $targetDisk,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -470,7 +715,7 @@ class ServiceClass
         }
 
         if ($oldFile) {
-            self::deleteFile($oldFile);
+            return self::updateFile($file, $folder, $oldFile);
         }
 
         return self::uploadFile($file, $folder);
@@ -486,13 +731,42 @@ class ServiceClass
             return;
         }
 
+        $paths = [];
         foreach ($model->$relationName as $item) {
             if ($item->image) {
-                Storage::disk($disk ?? self::getDisk())->delete($item->image);
+                $paths[] = $item->image;
             }
         }
 
+        self::deleteMultipleFiles($paths, $disk);
         $model->$relationName()->delete();
+    }
+
+    /**
+     * Delete many cloud files. Uses bulk API first, then direct S3 fallback per file.
+     */
+    public static function deleteMultipleFiles(array $filePaths, ?string $disk = null): void
+    {
+        $filePaths = array_values(array_filter($filePaths, fn ($path) => $path && $path !== 'processing'));
+        if (empty($filePaths)) {
+            return;
+        }
+
+        $urls = [];
+        foreach ($filePaths as $path) {
+            $url = self::getCloudUrl($path, $disk);
+            if ($url) {
+                $urls[] = $url;
+            }
+        }
+
+        if (!empty($urls) && self::deleteMultipleViaMediaApi($urls)) {
+            return;
+        }
+
+        foreach ($filePaths as $path) {
+            self::deleteFile($path, $disk);
+        }
     }
 
 
@@ -501,10 +775,10 @@ class ServiceClass
      ===================================================== */
     public static function getFileUrl(?string $path): ?string
     {
-        if (!$path) {
+        if (!$path || $path === 'processing') {
             return null;
         }
 
-        return Storage::disk(self::getDisk())->url($path);
+        return self::getCloudUrl($path);
     }
 }

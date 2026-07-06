@@ -72,7 +72,7 @@ class ContestSponsorController extends Controller
         // Handle sponsor photo upload
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('sponsors', 'public');
+            $photoPath = ServiceClass::uploadFile($request->file('photo'), 'sponsors');
         }
 
         // Start database transaction to ensure both operations succeed or fail together
@@ -157,10 +157,10 @@ class ContestSponsorController extends Controller
 
         DB::transaction(function () use ($request, $sponsor) {
             if ($request->hasFile('photo')) {
-                if ($sponsor->photo && Storage::disk('public')->exists($sponsor->photo)) {
-                    Storage::disk('public')->delete($sponsor->photo);
+                if ($sponsor->photo) {
+                    ServiceClass::deleteFile($sponsor->photo);
                 }
-                $photoPath = $request->file('photo')->store('sponsors', 'public');
+                $photoPath = ServiceClass::uploadFile($request->file('photo'), 'sponsors');
                 $sponsor->photo = $photoPath;
             }
 
@@ -202,8 +202,8 @@ class ContestSponsorController extends Controller
     {
         $sponsor = Sponsor::with('user')->findOrFail($id);
         DB::transaction(function () use ($sponsor) {
-            if ($sponsor->photo && Storage::disk('public')->exists($sponsor->photo)) {
-                Storage::disk('public')->delete($sponsor->photo);
+            if ($sponsor->photo) {
+                ServiceClass::deleteFile($sponsor->photo);
             }
 
             $sponsor->delete();

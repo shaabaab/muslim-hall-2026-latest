@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\admin\ExhibitionBoardController as AdminExhibitionBoardController;
 use App\Http\Controllers\ExhibitionController as AdminExhibitionController;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\File;
 
 Route::get('/local-s3-proxy/{path}', function ($path) {
     if (Storage::disk('public')->exists($path)) {
@@ -539,6 +540,28 @@ Route::get('/storage-link', function () {
 });
 
 Route::get('/author/{id?}', [FrontendController::class, 'authorProfile'])->name('author.profile');
+
+
+Route::get('/storage-link', function () {
+    $link = public_path('storage');
+
+    // Delete existing storage link or directory
+    if (File::exists($link)) {
+        if (is_link($link)) {
+            unlink($link);
+        } else {
+            File::deleteDirectory($link);
+        }
+    }
+
+    // Create new storage link
+    Artisan::call('storage:link');
+
+    return response()->json([
+        'success' => true,
+        'message' => Artisan::output() ?: 'Storage link recreated successfully.',
+    ]);
+});
 
 include_once __DIR__ . '/user.php';
 

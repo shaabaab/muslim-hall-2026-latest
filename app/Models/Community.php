@@ -116,4 +116,19 @@ class Community extends Model
     {
         return $this->status === 'published';
     }
+
+    public function videos()
+    {
+        return $this->hasMany(CommunityVideo::class);
+    }
+
+    public function pdfs()
+    {
+        return $this->hasMany(CommunityPdf::class);
+    }
+
+    public function audios()
+    {
+        return $this->hasMany(CommunityAudio::class);
+    }
 }

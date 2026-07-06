@@ -396,8 +396,8 @@ class EntryController extends Controller
     public function destroy(string $id)
     {
         $entry = \App\Models\Entry::findOrFail($id);
-        if ($entry->media_path && Storage::exists($entry->media_path)) {
-            Storage::delete($entry->media_path);
+        if ($entry->media_path) {
+            ServiceClass::deleteFile($entry->media_path);
         }
         $entry->delete();
         return to_route('admin.entries.index')->with('success', 'Entry deleted successfully.');
@@ -406,8 +406,8 @@ class EntryController extends Controller
     {
         $entry = \App\Models\Entry::findOrFail($id);
 
-        if ($entry->media_path && Storage::exists($entry->media_path)) {
-            Storage::delete($entry->media_path);
+        if ($entry->media_path) {
+            ServiceClass::deleteFile($entry->media_path);
         }
 
         $entry->delete();

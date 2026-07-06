@@ -6,6 +6,7 @@ use App\Models\Contest;
 use App\Models\Entry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceClass;
 use Illuminate\Http\Request;
 
 class ServiceClassOld
@@ -14,8 +15,7 @@ class ServiceClassOld
     // upload file function
     static function uploadFile($file, $path)
     {
-        $filePath = $file->store($path, 'public');
-        return $filePath;
+        return ServiceClass::uploadFile($file, $path);
     }
 
 
@@ -55,7 +55,7 @@ class ServiceClassOld
         }
 
         foreach ($files as $image) {
-            $path = $image->store($directory, 'public');
+            $path = ServiceClass::uploadFile($image, $directory);
             $model->$relation()->create([
                 'image' => $path
             ]);
@@ -82,14 +82,12 @@ class ServiceClassOld
         }
 
         foreach ($model->$relation as $oldImage) {
-            if (Storage::disk('public')->exists($oldImage->image)) {
-                Storage::disk('public')->delete($oldImage->image);
-            }
+            ServiceClass::deleteFile($oldImage->image);
         }
         $model->$relation()->delete();
 
         foreach ($images as $image) {
-            $path = $image->store($directory, 'public');
+            $path = ServiceClass::uploadFile($image, $directory);
             $model->$relation()->create(['image' => $path]);
         }
 
@@ -115,9 +113,7 @@ class ServiceClassOld
             $imagesToRemove = $model->$relation()->whereIn('id', $removeIds)->get();
 
             foreach ($imagesToRemove as $image) {
-                if (Storage::disk('public')->exists($image->image)) {
-                    Storage::disk('public')->delete($image->image);
-                }
+                ServiceClass::deleteFile($image->image);
                 $image->delete();
             }
         }
@@ -150,7 +146,7 @@ class ServiceClassOld
             }
 
             foreach ($newImages as $image) {
-                $path = $image->store($directory, 'public');
+                $path = ServiceClass::uploadFile($image, $directory);
 
                 $model->$relation()->create([
                     'image' => $path,
@@ -166,9 +162,7 @@ class ServiceClassOld
     //delete file function
     public static function deleteFile(?string $filePath, string $disk = 'public'): void
     {
-        if ($filePath && Storage::disk($disk)->exists($filePath)) {
-            Storage::disk($disk)->delete($filePath);
-        }
+        ServiceClass::deleteFile($filePath);
     }
 
     /**
@@ -186,11 +180,11 @@ class ServiceClassOld
             return $oldFile;
         }
 
-        if ($oldFile && Storage::disk('public')->exists($oldFile)) {
-            Storage::disk('public')->delete($oldFile);
+        if ($oldFile) {
+            ServiceClass::deleteFile($oldFile);
         }
 
-        return $file->store($folder, 'public');
+        return ServiceClass::uploadFile($file, $folder);
     }
 
 
@@ -203,8 +197,8 @@ class ServiceClassOld
     {
         if ($model->$relationName && $model->$relationName->count() > 0) {
             foreach ($model->$relationName as $item) {
-                if (!empty($item->image) && Storage::disk($disk)->exists($item->image)) {
-                    Storage::disk($disk)->delete($item->image);
+                if (!empty($item->image)) {
+                    ServiceClass::deleteFile($item->image);
                 }
             }
             $model->$relationName()->delete(); // Remove DB records

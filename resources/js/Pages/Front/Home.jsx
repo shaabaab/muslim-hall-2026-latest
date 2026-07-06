@@ -26,7 +26,7 @@ export default function Home() {
         social,
         islamic,
         post,
-        exhibition,
+        exhibition = [],
         advertisement,
         auth,
         contactInfo,
@@ -96,6 +96,42 @@ export default function Home() {
             value === "ON"
         );
     };
+
+    const stripHtml = (html = "") => String(html || "").replace(/<[^>]*>/g, "").trim();
+
+    const getBoardImage = (board) => {
+        return getS3PublicUrl(
+            board?.image_url ||
+                board?.image ||
+                board?.thumbnail ||
+                board?.cover_image ||
+                board?.approved_exhibitions?.[0]?.image_url ||
+                board?.approved_exhibitions?.[0]?.image ||
+                board?.exhibitions?.[0]?.image_url ||
+                board?.exhibitions?.[0]?.image,
+        );
+    };
+
+    const getExhibitionImage = (item) => {
+        return getS3PublicUrl(
+            item?.image_url ||
+                item?.image ||
+                item?.thumbnail ||
+                item?.gallery_urls?.[0] ||
+                item?.gallery?.[0],
+        );
+    };
+
+    const getBoardPosts = (board) => {
+        const posts =
+            board?.approved_exhibitions ||
+            board?.approvedExhibitions ||
+            board?.exhibitions ||
+            [];
+
+        return Array.isArray(posts) ? posts.slice(0, 4) : [];
+    };
+
 
     useEffect(() => {
         const resume = () => {
@@ -979,111 +1015,247 @@ export default function Home() {
                             <h2 className="main-title">Exhibitions</h2>
 
                             <p className="section-subtitle mt-1 text-muted">
-                                Exclusive art and cultural showcases
+                                Public art and cultural showcases
                             </p>
                         </div>
-                        {isMember && (
-                            <Link
-                                href="/exhibition-details"
-                                className="btn-view-all"
-                            >
-                                View Gallery{" "}
-                                <i className="fas fa-arrow-right"></i>
-                            </Link>
-                        )}
-                    </div>
-
-<Swiper
-    modules={[Navigation, Autoplay, Pagination]}
-    spaceBetween={30}
-    breakpoints={contentSwiperBreakpoints}
-    navigation
-    pagination={{ clickable: true }}
-    loop={exhibition && exhibition.length > 4}
-    speed={800}
-    autoplay={{
-        delay: 2500,
-        disableOnInteraction: false,
-        pauseOnMouseEnter: true,
-    }}
-    className="custom-swiper exhibition-slider"
->
-    {exhibition && exhibition.length > 0 ? (
-        exhibition.map((p) => (
-            <SwiperSlide key={p.id}>
-                <div
-                    className={`modern-card border-1 border-[#0f8022] shadow-md shadow-blue bg-[#ffffff] ${
-                        !isMember ? "locked-card" : ""
-                    }`}
-                >
-                    <div className="card-media">
                         <Link
-                            href={
-                                isMember
-                                    ? `/exhibition-detail/${p.id}`
-                                    : "#"
-                            }
-                            onClick={(e) => handleMemberClick(e)}
+                            href="/exhibition-details"
+                            className="btn-view-all"
                         >
-                            <img
-                                src={getS3PublicUrl(p.image)}
-                                alt={
-                                    p.title
-                                        ? String(p.title).replace(/<[^>]+>/g, "")
-                                        : "Untitled Exhibition"
-                                }
-                                onError={(e) =>
-                                    (e.target.src =
-                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png")
-                                }
-                            />
-
-                            {!isMember && (
-                                <div className="lock-overlay">
-                                    <div className="lock-circle">
-                                        <i className="fas fa-lock"></i>
-                                    </div>
-                                    <span>Member Exclusive</span>
-                                </div>
-                            )}
+                            View Gallery{" "}
+                            <i className="fas fa-arrow-right"></i>
                         </Link>
                     </div>
 
-                    <div className="card-body">
-                        <div className="meta-row space-between">
-                            <span className="badge-outline">
-                                {p.type || "Art"}
-                            </span>
+                    {(exhibition || []).length > 0 ? (
+                        <div className="home-exhibition-board-grid">
+                            {(exhibition || []).map((board) => {
+                                const posts = getBoardPosts(board);
 
-                            {p.price > 0 && (
-                                <span className="price-tag">
-                                    ${parseFloat(p.price).toLocaleString()}
-                                </span>
-                            )}
+                                return (
+                                    <div className="home-exhibition-board-card" key={board.id}>
+                                        <Link
+                                            href={`/exhibition-board/${board.id}`}
+                                            className="home-exhibition-board-cover"
+                                        >
+                                            <img
+                                                src={getBoardImage(board)}
+                                                alt={stripHtml(board.title) || "Exhibition Board"}
+                                                onError={(e) => {
+                                                    e.currentTarget.src =
+                                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
+                                                }}
+                                            />
+                                            <span className="home-exhibition-board-badge">
+                                                {board.exhibitions_count || posts.length || 0} Exhibitions
+                                            </span>
+                                        </Link>
+
+                                        <div className="home-exhibition-board-body">
+                                            <Link
+                                                href={`/exhibition-board/${board.id}`}
+                                                className="home-exhibition-board-title"
+                                            >
+                                                {stripHtml(board.title) || "Untitled Board"}
+                                            </Link>
+
+                                            <p className="home-exhibition-board-desc">
+                                                {stripHtml(board.description).slice(0, 95) ||
+                                                    "Explore selected exhibition posts from this board."}
+                                            </p>
+
+                                            <div className="home-exhibition-post-list">
+                                                {posts.length > 0 ? (
+                                                    posts.map((item) => (
+                                                        <Link
+                                                            href={`/exhibition-detail/${item.id}`}
+                                                            className="home-exhibition-mini-post"
+                                                            key={item.id}
+                                                        >
+                                                            <img
+                                                                src={getExhibitionImage(item)}
+                                                                alt={stripHtml(item.title) || "Exhibition"}
+                                                                onError={(e) => {
+                                                                    e.currentTarget.src =
+                                                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
+                                                                }}
+                                                            />
+                                                            <div>
+                                                                <h4>{stripHtml(item.title) || "Untitled Exhibition"}</h4>
+                                                                <p>
+                                                                    {stripHtml(item.description || item.content).slice(0, 55)}
+                                                                </p>
+                                                            </div>
+                                                        </Link>
+                                                    ))
+                                                ) : (
+                                                    <div className="home-exhibition-empty-post">
+                                                        No exhibition post found.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
-
-                        <h3
-                            className="card-title"
-                            dangerouslySetInnerHTML={{
-                                __html: isMember
-                                    ? `<a href="/exhibition-detail/${p.id}">${
-                                          p.title || "Untitled Exhibition"
-                                      }</a>`
-                                    : `${p.title || "Untitled Exhibition"}`,
-                            }}
-                        />
-                    </div>
-                </div>
-            </SwiperSlide>
-        ))
-    ) : (
-        <SwiperSlide>
-            <div className="empty-state">No exhibitions found.</div>
-        </SwiperSlide>
-    )}
-</Swiper>
+                    ) : (
+                        <div className="empty-state">No exhibitions found.</div>
+                    )}
                 </div>
             </section>
+
+
+            <style>{`
+                .home-exhibition-board-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 24px;
+                }
+
+                .home-exhibition-board-card {
+                    background: #ffffff;
+                    border: 1px solid #dbe7de;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    box-shadow: 0 14px 38px rgba(15, 23, 42, 0.08);
+                    min-height: 100%;
+                }
+
+                .home-exhibition-board-cover {
+                    position: relative;
+                    display: block;
+                    height: 210px;
+                    background: #eef5f0;
+                    overflow: hidden;
+                }
+
+                .home-exhibition-board-cover img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    transition: transform 0.3s ease;
+                }
+
+                .home-exhibition-board-card:hover .home-exhibition-board-cover img {
+                    transform: scale(1.04);
+                }
+
+                .home-exhibition-board-badge {
+                    position: absolute;
+                    left: 14px;
+                    bottom: 14px;
+                    background: rgba(15, 128, 34, 0.94);
+                    color: #fff;
+                    border-radius: 999px;
+                    padding: 7px 12px;
+                    font-size: 12px;
+                    font-weight: 800;
+                }
+
+                .home-exhibition-board-body {
+                    padding: 18px;
+                }
+
+                .home-exhibition-board-title {
+                    display: block;
+                    color: #0f172a;
+                    font-size: 20px;
+                    font-weight: 900;
+                    line-height: 1.25;
+                    text-decoration: none;
+                    margin-bottom: 8px;
+                }
+
+                .home-exhibition-board-title:hover {
+                    color: #0f8022;
+                }
+
+                .home-exhibition-board-desc {
+                    color: #64748b;
+                    font-size: 14px;
+                    line-height: 1.55;
+                    min-height: 44px;
+                    margin-bottom: 14px;
+                }
+
+                .home-exhibition-post-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+
+                .home-exhibition-mini-post {
+                    display: grid;
+                    grid-template-columns: 72px minmax(0, 1fr);
+                    gap: 10px;
+                    align-items: center;
+                    text-decoration: none;
+                    padding: 8px;
+                    border-radius: 14px;
+                    background: #f8fafc;
+                    border: 1px solid #eef2f7;
+                    transition: all 0.2s ease;
+                }
+
+                .home-exhibition-mini-post:hover {
+                    background: #eefbf1;
+                    border-color: #c7ecd1;
+                }
+
+                .home-exhibition-mini-post img {
+                    width: 72px;
+                    height: 58px;
+                    border-radius: 10px;
+                    object-fit: cover;
+                    background: #e2e8f0;
+                }
+
+                .home-exhibition-mini-post h4 {
+                    color: #0f172a;
+                    font-size: 14px;
+                    font-weight: 800;
+                    line-height: 1.25;
+                    margin: 0 0 4px;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 1;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                .home-exhibition-mini-post p {
+                    color: #64748b;
+                    font-size: 12px;
+                    line-height: 1.35;
+                    margin: 0;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                .home-exhibition-empty-post {
+                    color: #64748b;
+                    font-size: 13px;
+                    padding: 14px;
+                    border-radius: 14px;
+                    background: #f8fafc;
+                    border: 1px dashed #cbd5e1;
+                    text-align: center;
+                }
+
+                @media (max-width: 991px) {
+                    .home-exhibition-board-grid {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                }
+
+                @media (max-width: 575px) {
+                    .home-exhibition-board-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
             {/* --- SPONSORS --- */}
             {sponsors && sponsors.length > 0 && (
                 <section className="sponsor-carousel-section">
