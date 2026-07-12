@@ -27,7 +27,7 @@ class CategoryStoreRequest extends FormRequest
             'status' => 'nullable|boolean',
             'lang_id' => 'required|integer|exists:languages,id',
             'parent_id' => 'nullable|integer|exists:categories,id',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
         ];
     }
 }

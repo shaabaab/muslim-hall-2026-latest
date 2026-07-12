@@ -31,9 +31,9 @@ class StoreEntryRequest extends FormRequest
             'image'      => 'nullable|image|mimes:jpg,jpeg,png,webp',
             // Large files — processed via queue job; large files come as temp_path strings (chunked upload)
             // Small files (<5MB) are sent directly, so no max constraint needed here
-            'video' => 'nullable|file|mimes:mp4,mov,avi,wmv,mkv,webm',
-            'audio' => 'nullable|file|mimes:mp3,wav,aac,ogg,m4a',
-            'pdf'   => 'nullable|file|mimes:pdf',
+            'video' => 'nullable|file|mimes:mp4,mov,avi,mkv,webm,m4v,3gp',
+            'audio' => 'nullable|file|mimes:mp3,wav,ogg,m4a,aac,flac,webm',
+            'pdf'   => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,rtf,zip,rar',
             'images' => 'nullable|array',
             'images.*' => 'nullable|image|mimes:jpg,jpeg,png,webp',
             'video_temp_path' => 'nullable|string',

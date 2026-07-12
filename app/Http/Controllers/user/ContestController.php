@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use App\Services\ServiceClass;
 
 class ContestController extends Controller
 {
@@ -85,9 +86,7 @@ class ContestController extends Controller
                 if (isset($request->sponsor_banners[$sponsorId]['file'])) {
                     $bannerFile = $request->sponsor_banners[$sponsorId]['file'];
 
-                    $bannerPath = $bannerFile->store(
-                        'contest-banners/' . $contest->id,
-                    );
+                    $bannerPath = ServiceClass::uploadFile($bannerFile, 'contest-banners/' . $contest->id);
 
                     $sponsorData[] = [
                         'sponsor_id' => $sponsorId,
@@ -179,8 +178,7 @@ class ContestController extends Controller
                     ->first();
 
                 if (isset($request->sponsor_banners[$sponsorId]['file'])) {
-                    $bannerPath = $request->sponsor_banners[$sponsorId]['file']
-                        ->store("contest-banners/{$contest->id}");
+                    $bannerPath = ServiceClass::uploadFile($request->sponsor_banners[$sponsorId]['file'], "contest-banners/{$contest->id}");
                 }
 
                 if ($existing) {

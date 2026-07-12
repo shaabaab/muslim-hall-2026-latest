@@ -204,7 +204,7 @@ export default function Create({ auth ,categories, langs , sections}) {
                             size="large"
                             prefix={<UploadOutlined />}
                             type="file"
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                             multiple               
                             onChange={(e) => {
                                 const files = Array.from(e.target.files);
@@ -241,7 +241,7 @@ export default function Create({ auth ,categories, langs , sections}) {
                     >
                         <Upload
                             beforeUpload={(file) => handleFileChange('pdf', file)}
-                            accept="application/pdf"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf"
                             showUploadList={false}
                             maxCount={1}
                         >

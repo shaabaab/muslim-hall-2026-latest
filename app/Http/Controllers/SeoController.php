@@ -132,11 +132,11 @@ class SeoController extends Controller
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
 
-            'fav_icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,ico|max:2048',
-            'header_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'footer_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'og_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'twitter_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'fav_icon' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif,ico|max:51200',
+            'header_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
+            'footer_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
+            'og_image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
+            'twitter_image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
 
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
@@ -272,11 +272,11 @@ class SeoController extends Controller
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
 
-            'fav_icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,ico|max:2048',
-            'header_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'footer_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'og_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'twitter_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'fav_icon' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif,ico|max:51200',
+            'header_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
+            'footer_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
+            'og_image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
+            'twitter_image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
 
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',

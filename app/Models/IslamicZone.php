@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use App\Traits\HasSeo;
+use App\Services\ServiceClass;
 
 
 class IslamicZone extends Model
@@ -53,6 +54,10 @@ class IslamicZone extends Model
     const TYPE_HADITH = 'hadith';
     const TYPE_CALENDAR = 'calendar';
 
+    const STATUS_DRAFT = 'draft';
+    const STATUS_PUBLISHED = 'published';
+    const STATUS_ARCHIVED = 'archived';
+
 
     protected static function booted()
     {
@@ -82,18 +87,23 @@ class IslamicZone extends Model
 
     public function getFileUrlAttribute()
     {
-        $file = $this->{$this->type . '_file'};
-        return $file ? Storage::url($file) : null;
+        $file = $this->document_file ?: $this->audio_file ?: $this->video_file ?: $this->image;
+        return $file ? ServiceClass::getFileUrl($file) : null;
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? ServiceClass::getFileUrl($this->image) : null;
     }
 
     public function getThumbnailUrlAttribute()
     {
-        return $this->thumbnail ? Storage::url($this->thumbnail) : null;
+        return $this->image ? ServiceClass::getFileUrl($this->image) : null;
     }
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'published');
+        return $query->where('status', self::STATUS_PUBLISHED);
     }
 
     public function scopeFeatured($query)

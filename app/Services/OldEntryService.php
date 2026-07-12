@@ -7,8 +7,9 @@ use App\Models\ContestFee;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ServiceClass;
 
-class OldEntryService
+class EntryService
 {
     public function store(Contest $contest, array $data)
     {
@@ -42,28 +43,28 @@ class OldEntryService
 
         // ── Store single files (thumbnail, image, pdf, audio, video) ─────
         $thumbnail = ($data['thumbnail'] ?? null) instanceof UploadedFile
-            ? $data['thumbnail']->store('Contest/thumbnails', 'public')
+            ? ServiceClass::uploadFile($data['thumbnail'], 'Contest/thumbnails')
             : null;
 
         $image = ($data['image'] ?? null) instanceof UploadedFile
-            ? $data['image']->store('Contest/images', 'public')
+            ? ServiceClass::uploadFile($data['image'], 'Contest/images')
             : null;
 
         $video = ($data['video'] ?? null) instanceof UploadedFile
-            ? $data['video']->store('Contest/videos', 'public')
+            ? ServiceClass::uploadFile($data['video'], 'Contest/videos')
             : null;
 
         $audio = ($data['audio'] ?? null) instanceof UploadedFile
-            ? $data['audio']->store('Contest/audio', 'public')
+            ? ServiceClass::uploadFile($data['audio'], 'Contest/audio')
             : null;
 
         $pdf = ($data['pdf'] ?? null) instanceof UploadedFile
-            ? $data['pdf']->store('Contest/pdfs', 'public')
+            ? ServiceClass::uploadFile($data['pdf'], 'Contest/pdfs')
             : null;
 
         // ── Optional existing media_path ─────────────────────────
         $mediaPath = isset($data['media_path']) && $data['media_path'] instanceof UploadedFile
-            ? $data['media_path']->store('Contest/entries', 'public')
+            ? ServiceClass::uploadFile($data['media_path'], 'Contest/entries')
             : null;
 
         // ── Create entry ─────────────────────────────────────────
@@ -85,7 +86,7 @@ class OldEntryService
         if (!empty($data['images']) && is_array($data['images'])) {
             foreach ($data['images'] as $galleryImage) {
                 if ($galleryImage instanceof UploadedFile) {
-                    $galleryPath = $galleryImage->store('Contest/gallery', 'public');
+                    $galleryPath = ServiceClass::uploadFile($galleryImage, 'Contest/gallery');
                     \App\Models\EntryImage::create([
                         'entries_id' => $entry->id,
                         'image'      => $galleryPath,

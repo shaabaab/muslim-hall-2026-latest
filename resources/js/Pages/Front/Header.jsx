@@ -43,7 +43,7 @@ export default function Header() {
                 href: "/exhibition-details",
                 label: "Exhibition",
                 icon: "fa-images",
-                restricted: true,
+                restricted: false,
             },
             {
                 href: "/contests-details",

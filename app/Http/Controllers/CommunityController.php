@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceClass;
 
 class CommunityController extends Controller
 {
@@ -43,14 +44,14 @@ class CommunityController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|image',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
             'status' => 'required|in:draft,published',
             'mood'     => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('community', 'public');
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), 'community');
         }
 
         $validated['user_id'] = Auth::id();
@@ -66,14 +67,14 @@ class CommunityController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|image',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
             'status' => 'required|in:draft,published',
             'mood'     => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('community', 'public');
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), 'community');
         }
 
         $validated['user_id'] = Auth::id();
@@ -123,7 +124,7 @@ class CommunityController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|image',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
             'status' => 'required|in:draft,published,archived',
             'remove_image' => 'nullable|boolean',
             'mood'     => 'nullable|string|max:255',
@@ -133,7 +134,7 @@ class CommunityController extends Controller
         // Handle image removal
         if ($request->has('remove_image') && $request->remove_image) {
             if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+                ServiceClass::deleteFile($post->image);
                 $validated['image'] = null;
             }
         }
@@ -142,9 +143,9 @@ class CommunityController extends Controller
         if ($request->hasFile('image')) {
             // Delete old image if exists
             if ($post->image) {
-                Storage::disk('public')->delete($post->image);
+                ServiceClass::deleteFile($post->image);
             }
-            $validated['image'] = $request->file('image')->store('community', 'public');
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), 'community');
         }
 
         // Generate new slug if title changed
@@ -161,7 +162,7 @@ class CommunityController extends Controller
     public function destroy(Community $community)
     {
         if ($community->image) {
-            Storage::disk('public')->delete($community->image);
+            ServiceClass::deleteFile($community->image);
         }
 
         $community->delete();

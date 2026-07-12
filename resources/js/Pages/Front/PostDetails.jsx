@@ -1,5 +1,5 @@
 import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
-import { getS3PublicUrl } from "@/Utils/s3Helpers";
+import { buildS3UrlAlways, getS3PublicUrl } from "@/Utils/s3Helpers";
 import { message } from "antd";
 import {
     CalendarOutlined,
@@ -15,6 +15,32 @@ import PDFViewer from "../../Components/PDFViewer";
 import Footer from "./Footer";
 import Header from "./Header";
 import ImageContent from "./ImageContent";
+
+
+const getInitials = (name = "") => {
+    const parts = String(name || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (!parts.length) return "A";
+    return parts
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join("");
+};
+
+const getUserProfileImage = (user = null) => {
+    const photo =
+        user?.photo ||
+        user?.avatar ||
+        user?.profile_photo ||
+        user?.profile_image ||
+        user?.image;
+
+    if (!photo) return null;
+    return buildS3UrlAlways(photo);
+};
 
 /** ✅ Custom small info dropdown (no Ant Design) */
 const PostInfoMini = ({ title = "Info", items = [] }) => {
@@ -92,7 +118,10 @@ const CommentItem = ({
 }) => {
     const isExpanded = expandedComments.has(comment.id);
     const [replyText, setReplyText] = useState("");
+    const [commentImageError, setCommentImageError] = useState(false);
     const hasReplies = comment.replies && comment.replies.length > 0;
+    const commentUserName = comment.user?.name || "User";
+    const commentUserImage = getUserProfileImage(comment.user);
 
     const addReplyToTree = (list, parentId, reply) => {
         return list.map((c) => {
@@ -375,6 +404,12 @@ export default function Home() {
         initial: true,
     });
     const [expandedComments, setExpandedComments] = useState(new Set());
+    const [authorImageError, setAuthorImageError] = useState(false);
+
+    const author = post?.author || post?.created_by || null;
+    const authorName = author?.name || "Author";
+    const authorBio = author?.bio;
+    const authorImage = getUserProfileImage(author);
 
     useEffect(() => {
         if (editingCommentId && editTextareaRef.current) {
@@ -1172,28 +1207,28 @@ export default function Home() {
                             >
                                 <div className="author-bio-box text-muted">
                                     <div className="bio-avatar">
-                                        <span>
-                                            {post.author?.name?.charAt(0) ||
-                                                post.created_by?.name?.charAt(
-                                                    0,
-                                                ) ||
-                                                "A"}
-                                        </span>
+                                        {authorImage && !authorImageError ? (
+                                            <img
+                                                src={authorImage}
+                                                alt={authorName}
+                                                onError={() =>
+                                                    setAuthorImageError(true)
+                                                }
+                                            />
+                                        ) : (
+                                            <span>{getInitials(authorName)}</span>
+                                        )}
                                     </div>
                                     <div className="bio-info">
-                                        <h5>
-                                            {post.author?.name ||
-                                                post.created_by?.name ||
-                                                "Author"}
-                                        </h5>
+                                        <h5>{authorName}</h5>
                                         <p>
                                             Contributor at Muslim Hall.
                                             Passionate about sharing knowledge
                                             and insights.
                                         </p>
-                                        {post.author?.bio && (
+                                        {authorBio && (
                                             <p className="author-bio">
-                                                {post.author.bio}
+                                                {authorBio}
                                             </p>
                                         )}
                                     </div>
@@ -1883,6 +1918,15 @@ export default function Home() {
                         font-size: 24px;
                         font-weight: bold;
                         color: white;
+                        overflow: hidden;
+                        flex-shrink: 0;
+                    }
+                    .bio-avatar img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        border-radius: 50%;
+                        display: block;
                     }
                     .bio-info h5 {
                         margin: 0 0 5px 0;
@@ -1919,10 +1963,28 @@ export default function Home() {
                         display: flex;
                         gap: 15px;
                     }
-                    .comment-avatar img {
+                    .comment-avatar {
                         width: 45px;
                         height: 45px;
                         border-radius: 50%;
+                        overflow: hidden;
+                        flex-shrink: 0;
+                        background: linear-gradient(135deg, #1b7a3a, #34a853);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .comment-avatar img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        border-radius: 50%;
+                        display: block;
+                    }
+                    .avatar-fallback {
+                        color: #fff;
+                        font-size: 14px;
+                        font-weight: 700;
                     }
 
                     .comment-details {

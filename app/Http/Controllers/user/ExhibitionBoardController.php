@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\user;
+namespace App\Http\Controllers\User;
 
 use Inertia\Inertia;
 use Illuminate\Support\Str;
@@ -8,6 +8,7 @@ use App\Models\Subscription;
 use Illuminate\Http\Request;
 use App\Models\ExhibitionBoard;
 use App\Services\ServiceClass;
+use App\Support\UploadRules;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ExhibitionBoardMember;
@@ -141,7 +142,7 @@ class ExhibitionBoardController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|image',
+            'image' => UploadRules::image(),
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -240,7 +241,7 @@ class ExhibitionBoardController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|image',
+            'image' => UploadRules::image(),
             'is_active' => 'nullable|boolean',
         ]);
 

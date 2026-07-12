@@ -31,6 +31,7 @@ import {
     NotificationOutlined,
     CheckCircleOutlined,
     ClockCircleOutlined,
+    ReadOutlined,
 } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import NotificationDropdown from "../Components/NotificationDropdown";
@@ -105,6 +106,9 @@ export default function FrontAuthenticatedLayout({ children }) {
             "/user/posts/create": ["posts-create"],
             "/user/posts": ["posts-list"],
 
+            "/user/islamic-zone/create": ["islamic-zone-create"],
+            "/user/islamic-zone": ["islamic-zone-list"],
+
             "/user/subscriptions": ["subscriptions-list"],
             "/profile": ["profile"],
             "/user/entries": ["own-entry"],
@@ -139,6 +143,8 @@ export default function FrontAuthenticatedLayout({ children }) {
 
             "posts-create": "post-management",
             "posts-list": "post-management",
+            "islamic-zone-create": "islamic-zone-management",
+            "islamic-zone-list": "islamic-zone-management",
             "subscriptions-list": "subscription-management",
         };
 
@@ -229,6 +235,30 @@ export default function FrontAuthenticatedLayout({ children }) {
                     key: "posts-list",
                     label: (
                         <Link href={route("user.posts.index")}>All Posts</Link>
+                    ),
+                },
+            ],
+        },
+
+        {
+            key: "islamic-zone-management",
+            icon: <ReadOutlined />,
+            label: "Islamic Zone",
+            children: [
+                {
+                    key: "islamic-zone-create",
+                    label: (
+                        <Link href={route("user.islamic-zone.create")}>
+                            Create Islamic Zone
+                        </Link>
+                    ),
+                },
+                {
+                    key: "islamic-zone-list",
+                    label: (
+                        <Link href={route("user.islamic-zone.index")}>
+                            All Islamic Zone
+                        </Link>
                     ),
                 },
             ],

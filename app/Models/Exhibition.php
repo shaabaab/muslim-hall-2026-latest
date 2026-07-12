@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Traits\HasSeo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceClass;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Exhibition extends Model
@@ -109,17 +109,17 @@ class Exhibition extends Model
 
     public function getImageUrlAttribute()
     {
-        return $this->image ? Storage::url($this->image) : null;
+        return $this->image ? ServiceClass::getFileUrl($this->image) : null;
     }
 
     public function getSponsorImageUrlAttribute()
     {
-        return $this->sponsor_image ? Storage::url($this->sponsor_image) : null;
+        return $this->sponsor_image ? ServiceClass::getFileUrl($this->sponsor_image) : null;
     }
 
     public function getDocumentUrlAttribute()
     {
-        return $this->document_file ? Storage::url($this->document_file) : null;
+        return $this->document_file ? ServiceClass::getFileUrl($this->document_file) : null;
     }
 
     public function getGalleryUrlsAttribute()
@@ -129,7 +129,7 @@ class Exhibition extends Model
         }
 
         return collect($this->gallery)->map(function ($image) {
-            return Storage::url($image);
+            return ServiceClass::getFileUrl($image);
         })->values()->toArray();
     }
 
@@ -281,5 +281,20 @@ class Exhibition extends Model
     public function language()
     {
         return $this->belongsTo(Language::class, 'lang_id', 'id');
+    }
+
+    public function videos()
+    {
+        return $this->hasMany(ExhibitionVideo::class);
+    }
+
+    public function pdfs()
+    {
+        return $this->hasMany(ExhibitionPdf::class);
+    }
+
+    public function audios()
+    {
+        return $this->hasMany(ExhibitionAudio::class);
     }
 }

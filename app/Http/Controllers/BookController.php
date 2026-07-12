@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceClass;
 
 class BookController extends Controller
 {
@@ -96,7 +97,7 @@ class BookController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'photo' => 'required|image',
+            'photo' => 'required|image|mimes:jpg,jpeg,png,webp,gif,svg',
             'pdf_file' => 'required|file|mimes:pdf',
         ]);
 
@@ -105,7 +106,7 @@ class BookController extends Controller
             $photoPath = $this->processPhoto($request->file('photo'));
 
             // Process PDF
-            $originalPath = $request->file('pdf_file')->store('pdfs/original', 'public');
+            $originalPath = ServiceClass::uploadFile($request->file('pdf_file'), 'pdfs/original');
             $compressedPath = $this->compressPdf($request->file('pdf_file'));
             $pageCount = $this->getPdfPageCount($request->file('pdf_file'));
 
@@ -139,12 +140,6 @@ class BookController extends Controller
                 throw new \Exception('Invalid photo file');
             }
 
-            $filename = 'book_photo_' . time() . '.webp';
-            $path = 'books/photos/' . $filename;
-
-            // Create directory if it doesn't exist
-            Storage::disk('public')->makeDirectory('books/photos');
-
             // Process image
             $image = Image::make($photo->getRealPath());
 
@@ -157,12 +152,9 @@ class BookController extends Controller
                 $constraint->upsize();
             });
 
-            // Save to storage
-            Storage::disk('public')->put($path, (string) $image);
-
-            // Verify file was saved
-            if (!Storage::disk('public')->exists($path)) {
-                throw new \Exception('Failed to save photo to storage');
+            $path = ServiceClass::uploadContent((string) $image, 'books/photos', 'webp', null, 'book_photo');
+            if (!$path) {
+                throw new \Exception('Failed to save photo to cloud storage');
             }
 
             return $path;
@@ -181,19 +173,10 @@ class BookController extends Controller
                 throw new \Exception('Invalid PDF file');
             }
 
-            $filename = 'compressed_' . time() . '.pdf';
-            $path = 'pdfs/compressed/' . $filename;
-
-            // Create directory if it doesn't exist
-            Storage::disk('public')->makeDirectory('pdfs/compressed');
-
-            // Store the file
             $fileContent = file_get_contents($pdfFile->getRealPath());
-            Storage::disk('public')->put($path, $fileContent);
-
-            // Verify file was saved
-            if (!Storage::disk('public')->exists($path)) {
-                throw new \Exception('Failed to save compressed PDF to storage');
+            $path = ServiceClass::uploadContent($fileContent, 'pdfs/compressed', 'pdf', null, 'compressed');
+            if (!$path) {
+                throw new \Exception('Failed to save compressed PDF to cloud storage');
             }
 
             return $path;
@@ -242,11 +225,11 @@ class BookController extends Controller
                 'title' => $book->title,
                 'description' => $book->description,
                 'photo' => $book->photo,
-                'photo_url' => $book->photo ? Storage::disk('public')->url($book->photo) : null,
+                'photo_url' => $book->photo ? ServiceClass::getFileUrl($book->photo) : null,
                 'original_pdf' => $book->original_pdf,
-                'original_pdf_url' => $book->original_pdf ? Storage::disk('public')->url($book->original_pdf) : null,
+                'original_pdf_url' => $book->original_pdf ? ServiceClass::getFileUrl($book->original_pdf) : null,
                 'compressed_pdf' => $book->compressed_pdf,
-                'compressed_pdf_url' => $book->compressed_pdf ? Storage::disk('public')->url($book->compressed_pdf) : null,
+                'compressed_pdf_url' => $book->compressed_pdf ? ServiceClass::getFileUrl($book->compressed_pdf) : null,
                 'page_count' => $book->page_count,
                 'created_at' => $book->created_at->format('Y-m-d H:i:s'),
             ],
@@ -262,7 +245,7 @@ class BookController extends Controller
             'title' => $book->title,
             'description' => $book->description,
             'photo' => $book->photo,
-            'photo_url' => Storage::disk('public')->url($book->photo),
+            'photo_url' => ServiceClass::getFileUrl($book->photo),
             'original_pdf' => $book->original_pdf,
             'compressed_pdf' => $book->compressed_pdf,
             'current_pdf_name' => basename($book->original_pdf),
@@ -282,14 +265,14 @@ class BookController extends Controller
                 'og_title' => $book->seo->og_title,
                 'og_description' => $book->seo->og_description,
                 'og_image' => $book->seo->og_image,
-                'og_image_url' => $book->seo->og_image ? Storage::disk('public')->url($book->seo->og_image) : null,
+                'og_image_url' => $book->seo->og_image ? ServiceClass::getFileUrl($book->seo->og_image) : null,
                 'og_type' => $book->seo->og_type,
                 'og_url' => $book->seo->og_url,
                 'og_site_name' => $book->seo->og_site_name,
                 'twitter_title' => $book->seo->twitter_title,
                 'twitter_description' => $book->seo->twitter_description,
                 'twitter_image' => $book->seo->twitter_image,
-                'twitter_image_url' => $book->seo->twitter_image ? Storage::disk('public')->url($book->seo->twitter_image) : null,
+                'twitter_image_url' => $book->seo->twitter_image ? ServiceClass::getFileUrl($book->seo->twitter_image) : null,
                 'twitter_card' => $book->seo->twitter_card,
                 'twitter_site' => $book->seo->twitter_site,
                 'twitter_creator' => $book->seo->twitter_creator,
@@ -344,8 +327,8 @@ class BookController extends Controller
             // Update photo
             if ($request->hasFile('photo')) {
                 // Delete old photo
-                if ($book->photo && Storage::disk('public')->exists($book->photo)) {
-                    Storage::disk('public')->delete($book->photo);
+                if ($book->photo) {
+                    ServiceClass::deleteFile($book->photo);
                 }
                 $book->photo = $this->processPhoto($request->file('photo'));
             }
@@ -353,10 +336,10 @@ class BookController extends Controller
             // Update original PDF
             if ($request->hasFile('original_pdf')) {
                 // Delete old PDFs
-                if ($book->original_pdf && Storage::disk('public')->exists($book->original_pdf)) {
-                    Storage::disk('public')->delete($book->original_pdf);
+                if ($book->original_pdf) {
+                    ServiceClass::deleteFile($book->original_pdf);
                 }
-                $book->original_pdf = $request->file('original_pdf')->store('pdfs/original', 'public');
+                $book->original_pdf = ServiceClass::uploadFile($request->file('original_pdf'), 'pdfs/original');
 
                 // Update page count when PDF changes
                 $book->page_count = $this->getPdfPageCount($request->file('original_pdf'));
@@ -364,10 +347,10 @@ class BookController extends Controller
 
             // Update compressed PDF
             if ($request->hasFile('compressed_pdf')) {
-                if ($book->compressed_pdf && Storage::disk('public')->exists($book->compressed_pdf)) {
-                    Storage::disk('public')->delete($book->compressed_pdf);
+                if ($book->compressed_pdf) {
+                    ServiceClass::deleteFile($book->compressed_pdf);
                 }
-                $book->compressed_pdf = $request->file('compressed_pdf')->store('pdfs/compressed', 'public');
+                $book->compressed_pdf = ServiceClass::uploadFile($request->file('compressed_pdf'), 'pdfs/compressed');
             }
 
             // Update book basic info
@@ -407,16 +390,16 @@ class BookController extends Controller
             // Handle SEO image uploads
             if ($request->hasFile('og_image')) {
                 // Delete old OG image
-                if ($book->seo && $book->seo->og_image && Storage::disk('public')->exists($book->seo->og_image)) {
-                    Storage::disk('public')->delete($book->seo->og_image);
+                if ($book->seo && $book->seo->og_image) {
+                    ServiceClass::deleteFile($book->seo->og_image);
                 }
                 $seoData['og_image'] = $this->processSeoImage($request->file('og_image'), 'og_images');
             }
 
             if ($request->hasFile('twitter_image')) {
                 // Delete old Twitter image
-                if ($book->seo && $book->seo->twitter_image && Storage::disk('public')->exists($book->seo->twitter_image)) {
-                    Storage::disk('public')->delete($book->seo->twitter_image);
+                if ($book->seo && $book->seo->twitter_image) {
+                    ServiceClass::deleteFile($book->seo->twitter_image);
                 }
                 $seoData['twitter_image'] = $this->processSeoImage($request->file('twitter_image'), 'twitter_images');
             }
@@ -439,6 +422,16 @@ class BookController extends Controller
         }
     }
 
+
+    private function processSeoImage($image, string $folder): ?string
+    {
+        if (!$image || !$image->isValid()) {
+            return null;
+        }
+
+        return ServiceClass::uploadFile($image, 'books/seo/' . $folder);
+    }
+
     public function destroy($id)
     {
         $book = Book::findOrFail($id);
@@ -451,8 +444,8 @@ class BookController extends Controller
             ];
 
             foreach ($filesToDelete as $file) {
-                if ($file && Storage::disk('public')->exists($file)) {
-                    Storage::disk('public')->delete($file);
+                if ($file) {
+                    ServiceClass::deleteFile($file);
                 }
             }
 

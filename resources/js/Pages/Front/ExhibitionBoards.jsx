@@ -1,11 +1,12 @@
 import { Link, router, usePage } from "@inertiajs/react";
 import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
+import { getS3PublicUrl } from "@/Utils/s3Helpers";
 import Header from "./Header";
 import Footer from "./Footer";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function ExhibitionBoards() {
-    const { boards, filters: initialFilters, auth } = usePage().props;
+    const { boards, filters: initialFilters } = usePage().props;
 
     const [filters, setFilters] = useState({
         search: initialFilters?.search || "",
@@ -23,19 +24,47 @@ export default function ExhibitionBoards() {
         return () => clearTimeout(timeoutId);
     }, [filters]);
 
-    const getImageUrl = (imagePath) => {
-        if (!imagePath) {
-            return "https://via.placeholder.com/600x400?text=Exhibition+Board";
-        }
+    const fallbackImage =
+        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
 
-        return imagePath.startsWith("http")
-            ? imagePath
-            : `${window.location.origin}/storage/${imagePath}`;
+    const stripHtml = (html = "") =>
+        String(html || "")
+            .replace(/<[^>]*>/g, "")
+            .trim();
+
+    const getBoardPosts = (board) => {
+        const posts =
+            board?.approved_exhibitions ||
+            board?.approvedExhibitions ||
+            board?.exhibitions ||
+            [];
+
+        return Array.isArray(posts) ? posts.slice(0, 4) : [];
     };
 
-    const stripHtml = (html) => {
-        if (!html) return "";
-        return html.replace(/<[^>]+>/g, "");
+    const getBoardImageUrl = (board) => {
+        const firstPost = getBoardPosts(board)?.[0];
+
+        return getS3PublicUrl(
+            board?.image_url ||
+                board?.image ||
+                board?.thumbnail ||
+                board?.cover_image ||
+                firstPost?.image_url ||
+                firstPost?.image ||
+                firstPost?.gallery_urls?.[0] ||
+                firstPost?.gallery?.[0],
+        );
+    };
+
+    const getPostImageUrl = (post) => {
+        return getS3PublicUrl(
+            post?.image_url ||
+                post?.image ||
+                post?.thumbnail ||
+                post?.gallery_urls?.[0] ||
+                post?.gallery?.[0],
+        );
     };
 
     return (
@@ -46,7 +75,7 @@ export default function ExhibitionBoards() {
                 <section className="board-hero">
                     <div className="container">
                         <h1>Exhibition Boards</h1>
-                        <p>Select a board to view exhibitions under it.</p>
+                        <p>Browse public boards and their latest exhibition posts.</p>
 
                         <div className="search-box">
                             <i className="fas fa-search"></i>
@@ -67,43 +96,140 @@ export default function ExhibitionBoards() {
 
                 <section className="boards-section">
                     <div className="container-md">
-                        {boards.data.length > 0 ? (
-                            <div className="boards-grid">
-                                {boards.data.map((board) => (
-                                    <Link
-                                        key={board.id}
-                                        href={route("exhibition-board.show", board.id)}
-                                        className="board-card"
-                                    >
-                                        <div className="board-image-wrap">
-                                            <img
-                                                src={getImageUrl(board.image)}
-                                                alt={board.title}
-                                            />
-                                            <span className="board-count">
-                                                {board.exhibitions_count || 0} Exhibitions
-                                            </span>
-                                        </div>
+                        {boards?.data?.length > 0 ? (
+                            <div className="boards-list">
+                                {boards.data.map((board) => {
+                                    const posts = getBoardPosts(board);
 
-                                        <div className="board-body">
-                                            <h3>{board.title}</h3>
-                                            <p>{stripHtml(board.description).slice(0, 120)}</p>
+                                    return (
+                                        <article className="board-row-card" key={board.id}>
+                                            <div className="board-main-row">
+                                                <Link
+                                                    href={route(
+                                                        "exhibition-board.show",
+                                                        board.id,
+                                                    )}
+                                                    className="board-image-wrap"
+                                                >
+                                                    <img
+                                                        src={getBoardImageUrl(board)}
+                                                        alt={stripHtml(board.title) || "Exhibition Board"}
+                                                        onError={(e) => {
+                                                            e.currentTarget.src = fallbackImage;
+                                                        }}
+                                                    />
+                                                    <span className="board-count">
+                                                        {board.exhibitions_count || posts.length || 0} Exhibitions
+                                                    </span>
+                                                </Link>
 
-                                            <div className="board-owner">
-                                                <span>Owner:</span> {board.owner?.name || "Unknown"}
+                                                <div className="board-body">
+                                                    <div className="board-topline">
+                                                        <span className="board-label">Board</span>
+                                                        <span className="board-views">
+                                                            {Number(board.views_count || 0).toLocaleString()} views
+                                                        </span>
+                                                    </div>
+
+                                                    <Link
+                                                        href={route(
+                                                            "exhibition-board.show",
+                                                            board.id,
+                                                        )}
+                                                        className="board-title-link"
+                                                    >
+                                                        {stripHtml(board.title) || "Untitled Board"}
+                                                    </Link>
+
+                                                    <p className="board-description">
+                                                        {stripHtml(board.description).slice(0, 180) ||
+                                                            "Explore exhibitions shared under this board."}
+                                                    </p>
+
+                                                    <div className="board-owner">
+                                                        <span>Owner:</span> {board.owner?.name || "Unknown"}
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                                <span>{Number(board.views_count || 0).toLocaleString()} total views</span>
+                                            <div className="board-posts-wrap">
+                                                <div className="board-posts-header">
+                                                    <h4>Latest Exhibition Posts</h4>
+                                                    <Link
+                                                        href={route(
+                                                            "exhibition-board.show",
+                                                            board.id,
+                                                        )}
+                                                    >
+                                                        View board <i className="fas fa-arrow-right"></i>
+                                                    </Link>
+                                                </div>
+
+                                                {posts.length > 0 ? (
+                                                    <div className="board-posts-list">
+                                                        {posts.map((post) => (
+                                                            <Link
+                                                                href={`/exhibition-detail/${post.id}`}
+                                                                className="board-post-item"
+                                                                key={post.id}
+                                                            >
+                                                                <img
+                                                                    src={getPostImageUrl(post)}
+                                                                    alt={stripHtml(post.title) || "Exhibition"}
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.src = fallbackImage;
+                                                                    }}
+                                                                />
+                                                                <div className="board-post-content">
+                                                                    <h5>{stripHtml(post.title) || "Untitled Exhibition"}</h5>
+                                                                    <p>
+                                                                        {stripHtml(
+                                                                            post.description || post.content,
+                                                                        ).slice(0, 95)}
+                                                                    </p>
+                                                                    <span>
+                                                                        {post.type || "Exhibition"}
+                                                                    </span>
+                                                                </div>
+                                                            </Link>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="empty-posts">
+                                                        No approved exhibition post found in this board.
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    </Link>
-                                ))}
+                                        </article>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="empty-state">
                                 <h3>No approved board found</h3>
                                 <p>Please try another search.</p>
+                            </div>
+                        )}
+
+                        {boards?.links && boards.links.length > 3 && (
+                            <div className="pagination-wrap">
+                                {boards.links.map((link, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        disabled={!link.url}
+                                        className={`pagination-btn ${link.active ? "active" : ""}`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        onClick={() => {
+                                            if (link.url) {
+                                                router.visit(link.url, {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                });
+                                            }
+                                        }}
+                                    />
+                                ))}
                             </div>
                         )}
                     </div>
@@ -121,11 +247,7 @@ export default function ExhibitionBoards() {
 
                 .board-hero {
                     padding: 60px 0 35px;
-                    background: linear-gradient(
-                            135deg,
-                            #1b7a3a 0%,
-                            #2e8b57 100%
-                        );
+                    background: linear-gradient(135deg, #1b7a3a 0%, #2e8b57 100%);
                     color: white;
                     text-align: center;
                 }
@@ -169,89 +291,285 @@ export default function ExhibitionBoards() {
                     min-height: 60vh;
                 }
 
-                .boards-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 24px;
+                .boards-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 26px;
                 }
 
-                .board-card {
-                    background: white;
-                    border-radius: 18px;
+                .board-row-card {
+                    width: 100%;
+                    background: #ffffff;
+                    border-radius: 22px;
                     overflow: hidden;
-                    text-decoration: none;
-                    color: #111827;
-                    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
                     border: 1px solid #e5e7eb;
-                    transition: all 0.25s ease;
+                    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
                 }
 
-                .board-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+                .board-main-row {
+                    display: grid;
+                    grid-template-columns: 360px minmax(0, 1fr);
+                    gap: 0;
+                    min-height: 245px;
                 }
 
                 .board-image-wrap {
                     position: relative;
-                    height: 210px;
+                    display: block;
                     background: #e5e7eb;
+                    overflow: hidden;
+                    min-height: 245px;
                 }
 
                 .board-image-wrap img {
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
+                    transition: transform 0.3s ease;
+                }
+
+                .board-row-card:hover .board-image-wrap img {
+                    transform: scale(1.04);
                 }
 
                 .board-count {
                     position: absolute;
-                    left: 14px;
-                    bottom: 14px;
-                    background: rgba(17, 24, 39, 0.85);
+                    left: 16px;
+                    bottom: 16px;
+                    background: rgba(17, 24, 39, 0.88);
                     color: white;
-                    padding: 7px 12px;
+                    padding: 8px 13px;
                     border-radius: 999px;
+                    font-size: 13px;
+                    font-weight: 800;
+                }
+
+                .board-body {
+                    padding: 28px;
+                }
+
+                .board-topline {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    margin-bottom: 12px;
+                }
+
+                .board-label {
+                    display: inline-flex;
+                    align-items: center;
+                    background: #e8f8ed;
+                    color: #0f8022;
+                    border-radius: 999px;
+                    padding: 6px 12px;
+                    font-size: 12px;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+
+                .board-views {
+                    color: #64748b;
                     font-size: 13px;
                     font-weight: 700;
                 }
 
-                .board-body {
-                    padding: 20px;
+                .board-title-link {
+                    display: block;
+                    color: #0f172a;
+                    text-decoration: none;
+                    font-size: 28px;
+                    line-height: 1.2;
+                    font-weight: 900;
+                    margin-bottom: 10px;
                 }
 
-                .board-body h3 {
-                    font-size: 20px;
-                    font-weight: 800;
-                    margin-bottom: 8px;
+                .board-title-link:hover {
+                    color: #0f8022;
                 }
 
-                .board-body p {
-                    color: #6b7280;
-                    font-size: 14px;
-                    min-height: 42px;
+                .board-description {
+                    color: #64748b;
+                    font-size: 15px;
+                    line-height: 1.65;
+                    margin-bottom: 18px;
                 }
 
                 .board-owner {
-                    margin-top: 16px;
+                    color: #334155;
                     font-size: 14px;
-                    color: #374151;
                 }
 
                 .board-owner span {
-                    font-weight: 700;
+                    font-weight: 900;
                 }
 
+                .board-posts-wrap {
+                    border-top: 1px solid #eef2f7;
+                    padding: 20px 24px 24px;
+                    background: #ffffff;
+                }
+
+                .board-posts-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 14px;
+                    margin-bottom: 15px;
+                }
+
+                .board-posts-header h4 {
+                    color: #0f172a;
+                    font-size: 18px;
+                    font-weight: 900;
+                    margin: 0;
+                }
+
+                .board-posts-header a {
+                    color: #0f8022;
+                    font-size: 14px;
+                    font-weight: 800;
+                    text-decoration: none;
+                }
+
+                .board-posts-list {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    gap: 14px;
+                }
+
+                .board-post-item {
+                    display: block;
+                    color: inherit;
+                    text-decoration: none;
+                    background: #f8fafc;
+                    border: 1px solid #eef2f7;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    transition: all 0.22s ease;
+                }
+
+                .board-post-item:hover {
+                    transform: translateY(-3px);
+                    border-color: #bfe9ca;
+                    background: #f2fff5;
+                }
+
+                .board-post-item img {
+                    width: 100%;
+                    height: 110px;
+                    object-fit: cover;
+                    background: #e2e8f0;
+                }
+
+                .board-post-content {
+                    padding: 12px;
+                }
+
+                .board-post-content h5 {
+                    color: #0f172a;
+                    font-size: 15px;
+                    line-height: 1.3;
+                    font-weight: 900;
+                    margin: 0 0 6px;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                .board-post-content p {
+                    color: #64748b;
+                    font-size: 13px;
+                    line-height: 1.45;
+                    margin: 0 0 8px;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+
+                .board-post-content span {
+                    color: #0f8022;
+                    font-size: 12px;
+                    font-weight: 900;
+                }
+
+                .empty-posts,
                 .empty-state {
                     background: white;
                     border-radius: 18px;
-                    padding: 60px 20px;
+                    padding: 45px 20px;
                     text-align: center;
-                    border: 1px solid #e5e7eb;
+                    border: 1px dashed #cbd5e1;
+                    color: #64748b;
                 }
 
-                @media (max-width: 768px) {
+                .pagination-wrap {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    margin-top: 28px;
+                }
+
+                .pagination-btn {
+                    border: 1px solid #d1d5db;
+                    background: white;
+                    color: #111827;
+                    min-width: 38px;
+                    height: 38px;
+                    border-radius: 10px;
+                    font-weight: 800;
+                }
+
+                .pagination-btn.active {
+                    background: #0f8022;
+                    color: white;
+                    border-color: #0f8022;
+                }
+
+                .pagination-btn:disabled {
+                    opacity: 0.45;
+                    cursor: not-allowed;
+                }
+
+                @media (max-width: 991px) {
+                    .board-main-row {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .board-image-wrap {
+                        height: 260px;
+                    }
+
+                    .board-posts-list {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                    }
+                }
+
+                @media (max-width: 575px) {
                     .board-hero h1 {
                         font-size: 30px;
+                    }
+
+                    .board-body,
+                    .board-posts-wrap {
+                        padding: 18px;
+                    }
+
+                    .board-title-link {
+                        font-size: 22px;
+                    }
+
+                    .board-posts-header {
+                        align-items: flex-start;
+                        flex-direction: column;
+                    }
+
+                    .board-posts-list {
+                        grid-template-columns: 1fr;
                     }
                 }
             `}</style>

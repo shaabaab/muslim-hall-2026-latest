@@ -736,7 +736,7 @@ useEffect(() => {
                                     id={`replace-featured-${index}`}
                                     type="file"
                                     hidden
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     onChange={(e) => handleFileSelect(e, index)}
                                 />
                             </div>
@@ -768,7 +768,7 @@ useEffect(() => {
                     type="file"
                     id="add-featured-image"
                     hidden
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                     multiple
                     onChange={(e) => handleFileSelect(e)}
                 />
@@ -1835,7 +1835,7 @@ const handleUpdateMediaFile = useCallback((type, index, file, id, isExisting) =>
 <FileUploadComponent
     field="thumbnail"
     label="Thumbnail Image"
-    accept="image/*"
+    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
     postFile={data.remove_thumbnail ? null : post?.thumbnail}
     onFileChange={(f, file) => {
         setData("remove_thumbnail", false);
@@ -1872,7 +1872,7 @@ const handleUpdateMediaFile = useCallback((type, index, file, id, isExisting) =>
 <FileUploadComponent
     field="sponsor"
     label="Sponsor Image"
-    accept="image/*"
+    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
     postFile={data.remove_sponsor ? null : post?.sponsor}
     onFileChange={(f, file) => {
         setData("remove_sponsor", false);
