@@ -356,7 +356,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                     >
                         <Upload
                             beforeUpload={handleImageUpload}
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                             multiple
                             showUploadList={false}
                             listType="picture"
@@ -459,7 +459,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                     >
                         <Upload
                             beforeUpload={(file) => handleFileChange('pdf', file)}
-                            accept="application/pdf"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf"
                             showUploadList={false}
                             maxCount={1}
                         >

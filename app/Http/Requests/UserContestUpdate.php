@@ -33,7 +33,7 @@ class UserContestUpdate extends FormRequest
             'sponsor_ids' => 'required|array',
             'sponsor_ids.*' => 'integer|exists:sponsors,id',
             'sponsor_banners' => 'nullable|array',
-            'sponsor_banners.*.file' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'sponsor_banners.*.file' => 'nullable|file|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
             'payment_type' => 'required|in:free,paid',
             'user_type'    => 'required|in:all,user,member',
             'amount'       => 'nullable|numeric|min:0',

@@ -60,7 +60,7 @@ class IslamicZoneController extends Controller
         //     'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         //     'gallery' => 'nullable|array',
         //     'gallery.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
-        //     'document_file' => 'nullable|file|mimes:pdf',
+        //     'document_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar',
         //     'content_text' => 'nullable|string|max:100000',
         //     'youtube_url' => 'nullable|url|max:500',
         //     'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
@@ -75,14 +75,14 @@ class IslamicZoneController extends Controller
     'title' => 'required|string|max:255',  // Required
     'description' => 'nullable|string',
     'type' => 'nullable|in:quran,hadith,calendar,islamicContent',
-    'image' => 'nullable|image',
+    'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
     'gallery' => 'nullable|array',
-    'gallery.*' => 'nullable|image',
-    'document_file' => 'nullable|file|mimes:pdf',
+    'gallery.*' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
+    'document_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar',
     'content_text' => 'nullable|string|max:100000',
     'youtube_url' => 'nullable|url|max:500',
-    'audio_file' => 'nullable|file',
-    'video_file' => 'nullable|file',
+    'audio_file' => 'nullable|file|mimes:mp3,wav,ogg,m4a,aac,flac,webm',
+    'video_file' => 'nullable|file|mimes:mp4,mov,avi,mkv,webm,wmv,flv,m4v',
     'is_featured' => 'nullable|boolean',
     'status' => 'nullable|in:draft,published,archived',
     'lang_id' => 'nullable|exists:languages,id',
@@ -96,7 +96,7 @@ class IslamicZoneController extends Controller
         //         $rules['image'] = 'required|image|mimes:jpeg,png,jpg,gif|max:5120';
         //     }
         //     $rules['pdfs'] = 'nullable|array';
-        //     $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
+        //     $rules['pdfs.*'] = 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar';
         //     if (!$request->pdf_temp_paths && !$request->hasFile('pdfs')) {
         //         $rules['pdfs'] = 'required|array|min:1';
         //     }
@@ -105,7 +105,7 @@ class IslamicZoneController extends Controller
     // শুধুমাত্র Title required
     $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120';  // optional
     $rules['pdfs'] = 'nullable|array';                                   // optional
-    $rules['pdfs.*'] = 'nullable|file|mimes:pdf';                        // optional
+    $rules['pdfs.*'] = 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar';                        // optional
 }
 
         $rules['video_temp_paths'] = 'nullable|array';
@@ -119,7 +119,7 @@ class IslamicZoneController extends Controller
 
         // Handle file uploads
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('islamic-zone/images');
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), 'islamic-zone/images');
         }
 
         // Document file and pdf backward compatibility are not used anymore for multiple uploads, skipping single pdf storage
@@ -127,7 +127,7 @@ class IslamicZoneController extends Controller
 
 
         if ($request->hasFile('video_file')) {
-            $validated['video_file'] = $request->file('video_file')->store('islamic-zone/video');
+            $validated['video_file'] = ServiceClass::uploadFile($request->file('video_file'), 'islamic-zone/video');
             $validated['file_size'] = $request->file('video_file')->getSize();
             $videoTempPath = null;
         } else {
@@ -138,7 +138,7 @@ class IslamicZoneController extends Controller
         }
 
         if ($request->hasFile('audio_file')) {
-            $validated['audio_file'] = $request->file('audio_file')->store('islamic-zone/audio');
+            $validated['audio_file'] = ServiceClass::uploadFile($request->file('audio_file'), 'islamic-zone/audio');
             $validated['file_size'] = $request->file('audio_file')->getSize();
             $audioTempPath = null;
         } else {
@@ -149,7 +149,7 @@ class IslamicZoneController extends Controller
         }
 
         if ($request->hasFile('document_file')) {
-            $validated['document_file'] = $request->file('document_file')->store('islamic-zone/ebooks');
+            $validated['document_file'] = ServiceClass::uploadFile($request->file('document_file'), 'islamic-zone/ebooks');
             $validated['file_size'] = $request->file('document_file')->getSize();
             $docTempPath = null;
         } else {
@@ -163,18 +163,29 @@ class IslamicZoneController extends Controller
         if ($request->hasFile('gallery')) {
             $galleryPaths = [];
             foreach ($request->file('gallery') as $galleryFile) {
-                $galleryPaths[] = $galleryFile->store('islamic-zone/gallery');
+                $galleryPaths[] = ServiceClass::uploadFile($galleryFile, 'islamic-zone/gallery');
             }
             $validated['gallery'] = json_encode($galleryPaths);
         }
 
         $validated['user_id'] = Auth::id();
         $validated['slug'] = $this->generateUniqueSlug($request->title);
-        $validated['lang_id'] = $request->lang_id;
+        $validated['lang_id'] = $request->filled('lang_id') ? $request->lang_id : null;
 
         $resource = IslamicZone::create($validated);
 
         if ($resource) {
+            // Single chunked uploads: temp file -> S3 -> update this record column.
+            if (!empty($videoTempPath)) {
+                ServiceClass::dispatchLargeFileJob($videoTempPath, 'islamic-zone/video', 'islamic_zones', 'video_file', $resource->id);
+            }
+            if (!empty($audioTempPath)) {
+                ServiceClass::dispatchLargeFileJob($audioTempPath, 'islamic-zone/audio', 'islamic_zones', 'audio_file', $resource->id);
+            }
+            if (!empty($docTempPath)) {
+                ServiceClass::dispatchLargeFileJob($docTempPath, 'islamic-zone/ebooks', 'islamic_zones', 'document_file', $resource->id);
+            }
+
             // Handle multiple videos
             ServiceClass::syncVideos($request, 'videos', $resource, 'islamic-zone/video', 'islamic_zone_videos');
             
@@ -235,7 +246,7 @@ class IslamicZoneController extends Controller
                         'id' => $video->id,
                         'video' => $video->video,
                         'name' => basename($video->video),
-                        'url' => Storage::url($video->video)
+                        'url' => ServiceClass::getFileUrl($video->video)
                     ];
                 }),
                 'islamic_pdfs' => $religiousContent->pdfs->map(function ($pdf) {
@@ -243,7 +254,7 @@ class IslamicZoneController extends Controller
                         'id' => $pdf->id,
                         'pdf' => $pdf->pdf,
                         'name' => basename($pdf->pdf),
-                        'url' => Storage::url($pdf->pdf)
+                        'url' => ServiceClass::getFileUrl($pdf->pdf)
                     ];
                 }),
                 'islamic_audios' => $religiousContent->audios->map(function ($audio) {
@@ -251,7 +262,7 @@ class IslamicZoneController extends Controller
                         'id' => $audio->id,
                         'audio' => $audio->audio,
                         'name' => basename($audio->audio),
-                        'url' => Storage::url($audio->audio)
+                        'url' => ServiceClass::getFileUrl($audio->audio)
                     ];
                 }),
             ],
@@ -273,7 +284,7 @@ class IslamicZoneController extends Controller
         //     'gallery' => 'nullable|array',
         //     'gallery.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
         //     // Large files are stored to temp then uploaded via queue job — no max limit here
-        //     'document_file' => 'nullable|file|mimes:pdf',
+        //     'document_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar',
         //     'content_text' => 'nullable|string|max:100000',
         //     'youtube_url' => 'nullable|url|max:500',
         //     'audio_file' => 'nullable|file|mimes:mp3,wav,ogg',
@@ -290,14 +301,14 @@ class IslamicZoneController extends Controller
     'title' => 'required|string|max:255',  // Required
     'description' => 'nullable|string',
     'type' => 'nullable|in:quran,hadith,calendar,islamicContent',
-    'image' => 'nullable|image',
+    'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
     'gallery' => 'nullable|array',
-    'gallery.*' => 'nullable|image',
-    'document_file' => 'nullable|file|mimes:pdf',
+    'gallery.*' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
+    'document_file' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar',
     'content_text' => 'nullable|string|max:100000',
     'youtube_url' => 'nullable|url|max:500',
-    'audio_file' => 'nullable|file',
-    'video_file' => 'nullable|file',
+    'audio_file' => 'nullable|file|mimes:mp3,wav,ogg,m4a,aac,flac,webm',
+    'video_file' => 'nullable|file|mimes:mp4,mov,avi,mkv,webm,wmv,flv,m4v',
     'is_featured' => 'nullable|boolean',
     'status' => 'nullable|in:draft,published,archived',
     'lang_id' => 'nullable|exists:languages,id',
@@ -310,7 +321,7 @@ class IslamicZoneController extends Controller
         //         $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120';
         //     }
         //     $rules['pdfs'] = 'nullable|array';
-        //     $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
+        //     $rules['pdfs.*'] = 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar';
         // }
 
         if ($request->type == 'islamicContent' || $request->type == 'quran' || $request->type == 'hadith') {
@@ -321,7 +332,7 @@ class IslamicZoneController extends Controller
     
     // পিডিএফ ফিল্ডগুলো সম্পূর্ণ অপশনাল (nullable) করা হলো
     $rules['pdfs'] = 'nullable|array';
-    $rules['pdfs.*'] = 'nullable|file|mimes:pdf';
+    $rules['pdfs.*'] = 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip,rar';
 }
 
         $rules['video_file_temp_path'] = 'nullable|string';
@@ -337,21 +348,21 @@ class IslamicZoneController extends Controller
         // image upload
         if ($request->hasFile('image')) {
             if ($religiousContent->image)
-                Storage::delete($religiousContent->image);
-            $validated['image'] = $request->file('image')->store('islamic-zone/images');
+                ServiceClass::deleteFile($religiousContent->image);
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), 'islamic-zone/images');
         }
 
         // video_file
         $videoTempPath = $request->video_file_temp_path;
         if ($request->hasFile('video_file')) {
             if ($religiousContent->video_file && $religiousContent->video_file !== 'processing')
-                Storage::delete($religiousContent->video_file);
-            $validated['video_file'] = $request->file('video_file')->store('islamic-zone/video');
+                ServiceClass::deleteFile($religiousContent->video_file);
+            $validated['video_file'] = ServiceClass::uploadFile($request->file('video_file'), 'islamic-zone/video');
             $validated['file_size'] = $request->file('video_file')->getSize();
             $videoTempPath = null;
         } elseif ($videoTempPath) {
             if ($religiousContent->video_file && $religiousContent->video_file !== 'processing')
-                Storage::delete($religiousContent->video_file);
+                ServiceClass::deleteFile($religiousContent->video_file);
             $validated['video_file'] = 'processing';
         }
 
@@ -359,13 +370,13 @@ class IslamicZoneController extends Controller
         $audioTempPath = $request->audio_file_temp_path;
         if ($request->hasFile('audio_file')) {
             if ($religiousContent->audio_file && $religiousContent->audio_file !== 'processing')
-                Storage::delete($religiousContent->audio_file);
-            $validated['audio_file'] = $request->file('audio_file')->store('islamic-zone/audio');
+                ServiceClass::deleteFile($religiousContent->audio_file);
+            $validated['audio_file'] = ServiceClass::uploadFile($request->file('audio_file'), 'islamic-zone/audio');
             $validated['file_size'] = $request->file('audio_file')->getSize();
             $audioTempPath = null;
         } elseif ($audioTempPath) {
             if ($religiousContent->audio_file && $religiousContent->audio_file !== 'processing')
-                Storage::delete($religiousContent->audio_file);
+                ServiceClass::deleteFile($religiousContent->audio_file);
             $validated['audio_file'] = 'processing';
         }
 
@@ -373,13 +384,13 @@ class IslamicZoneController extends Controller
         $docTempPath = $request->document_file_temp_path;
         if ($request->hasFile('document_file')) {
             if ($religiousContent->document_file && $religiousContent->document_file !== 'processing')
-                Storage::delete($religiousContent->document_file);
-            $validated['document_file'] = $request->file('document_file')->store('islamic-zone/ebooks');
+                ServiceClass::deleteFile($religiousContent->document_file);
+            $validated['document_file'] = ServiceClass::uploadFile($request->file('document_file'), 'islamic-zone/ebooks');
             $validated['file_size'] = $request->file('document_file')->getSize();
             $docTempPath = null;
         } elseif ($docTempPath) {
             if ($religiousContent->document_file && $religiousContent->document_file !== 'processing')
-                Storage::delete($religiousContent->document_file);
+                ServiceClass::deleteFile($religiousContent->document_file);
             $validated['document_file'] = 'processing';
         }
 
@@ -387,22 +398,33 @@ class IslamicZoneController extends Controller
         if ($request->hasFile('gallery')) {
             // delete old gallery files
             if ($religiousContent->gallery) {
-                foreach (json_decode($religiousContent->gallery) as $g) {
-                    Storage::delete($g);
+                foreach ((array) $religiousContent->gallery as $g) {
+                    ServiceClass::deleteFile($g);
                 }
             }
 
             $galleryPaths = [];
             foreach ($request->file('gallery') as $galleryFile) {
-                $galleryPaths[] = $galleryFile->store('islamic-zone/gallery');
+                $galleryPaths[] = ServiceClass::uploadFile($galleryFile, 'islamic-zone/gallery');
             }
             $validated['gallery'] = json_encode($galleryPaths);
         }
 
         $validated['slug'] = $this->generateUniqueSlug($request->title, $religiousContent->id);
-        $validated['lang_id'] = number_format($request->lang_id);
+        $validated['lang_id'] = $request->filled('lang_id') ? $request->lang_id : null;
 
         $religiousContent->update($validated);
+
+        // Single chunked uploads: temp file -> S3 -> update this record column.
+        if (!empty($videoTempPath)) {
+            ServiceClass::dispatchLargeFileJob($videoTempPath, 'islamic-zone/video', 'islamic_zones', 'video_file', $religiousContent->id);
+        }
+        if (!empty($audioTempPath)) {
+            ServiceClass::dispatchLargeFileJob($audioTempPath, 'islamic-zone/audio', 'islamic_zones', 'audio_file', $religiousContent->id);
+        }
+        if (!empty($docTempPath)) {
+            ServiceClass::dispatchLargeFileJob($docTempPath, 'islamic-zone/ebooks', 'islamic_zones', 'document_file', $religiousContent->id);
+        }
 
         // Handle multiple media
         ServiceClass::syncVideos($request, 'videos', $religiousContent, 'islamic-zone/video', 'islamic_zone_videos');
@@ -425,28 +447,28 @@ class IslamicZoneController extends Controller
 
         // delete image
         if ($religiousContent->image) {
-            Storage::delete($religiousContent->image);
+            ServiceClass::deleteFile($religiousContent->image);
         }
 
         // delete document file
         if ($religiousContent->document_file) {
-            Storage::delete($religiousContent->document_file);
+            ServiceClass::deleteFile($religiousContent->document_file);
         }
 
         // delete audio file
         if ($religiousContent->audio_file) {
-            Storage::delete($religiousContent->audio_file);
+            ServiceClass::deleteFile($religiousContent->audio_file);
         }
 
         // delete video file
         if ($religiousContent->video_file) {
-            Storage::delete($religiousContent->video_file);
+            ServiceClass::deleteFile($religiousContent->video_file);
         }
 
         // delete gallery array
         if ($religiousContent->gallery) {
-            foreach (json_decode($religiousContent->gallery) as $g) {
-                Storage::delete($g);
+            foreach ((array) $religiousContent->gallery as $g) {
+                ServiceClass::deleteFile($g);
             }
         }
 
@@ -487,13 +509,18 @@ class IslamicZoneController extends Controller
                 break;
         }
 
-        if (!$filePath || !Storage::exists($filePath)) {
+        if (!$filePath || $filePath === 'processing') {
             abort(404, 'File not found');
         }
 
         $religiousContent->increment('downloads');
 
-        return Storage::disk('public')->download($filePath);
+        $url = ServiceClass::getFileUrl($filePath);
+        if (!$url) {
+            abort(404, 'File not found');
+        }
+
+        return redirect()->away($url);
     }
 
     private function generateUniqueSlug($title, $ignoreId = null)
@@ -517,8 +544,8 @@ class IslamicZoneController extends Controller
         foreach ($fileTypes as $fileType) {
             if ($request->hasFile($fileType)) {
                 // Delete old file
-                if ($resource->$fileType && Storage::disk('public')->exists($resource->$fileType)) {
-                    Storage::delete($resource->$fileType);
+                if ($resource->$fileType) {
+                    ServiceClass::deleteFile($resource->$fileType);
                 }
 
                 // Store new file
@@ -530,7 +557,7 @@ class IslamicZoneController extends Controller
                     default => 'islamic-zone'
                 };
 
-                $validated[$fileType] = $request->file($fileType)->store($folder, 'public');
+                $validated[$fileType] = ServiceClass::uploadFile($request->file($fileType), $folder);
 
                 if ($fileType !== 'image') {
                     $validated['file_size'] = $request->file($fileType)->getSize();
@@ -547,16 +574,14 @@ class IslamicZoneController extends Controller
             if ($resource->gallery) {
                 $oldGallery = json_decode($resource->gallery, true);
                 foreach ($oldGallery as $oldFile) {
-                    if (Storage::disk('public')->exists($oldFile)) {
-                        Storage::delete($oldFile);
-                    }
+                    ServiceClass::deleteFile($oldFile);
                 }
             }
 
             // Store new gallery files
             $galleryPaths = [];
             foreach ($request->file('gallery') as $galleryFile) {
-                $galleryPaths[] = $galleryFile->store('islamic-zone/gallery');
+                $galleryPaths[] = ServiceClass::uploadFile($galleryFile, 'islamic-zone/gallery');
             }
             $validated['gallery'] = json_encode($galleryPaths);
         } else {
@@ -570,8 +595,8 @@ class IslamicZoneController extends Controller
         $fileTypes = ['image', 'document_file', 'audio_file', 'video_file'];
 
         foreach ($fileTypes as $fileType) {
-            if ($resource->$fileType && Storage::disk('public')->exists($resource->$fileType)) {
-                Storage::delete($resource->$fileType);
+            if ($resource->$fileType) {
+                ServiceClass::deleteFile($resource->$fileType);
             }
         }
 
@@ -579,9 +604,7 @@ class IslamicZoneController extends Controller
         if ($resource->gallery) {
             $galleryFiles = json_decode($resource->gallery, true);
             foreach ($galleryFiles as $galleryFile) {
-                if (Storage::disk('public')->exists($galleryFile)) {
-                    Storage::disk('public')->delete($galleryFile);
-                }
+                ServiceClass::deleteFile($galleryFile);
             }
         }
     }

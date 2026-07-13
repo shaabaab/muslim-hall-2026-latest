@@ -1160,11 +1160,12 @@ export default function PostDetail() {
                     flex: 1;
                 }
                     .card-date {
-                    display: flex;
-                    align-items: center;
-                    flex-wrap: wrap;
-                    gap: 4px;
-                }
+                        display: flex;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 4px;
+                        font-size:12px;
+                    }
                                     .card-author {
                     margin-left: 4px;
                     color: #64748b;

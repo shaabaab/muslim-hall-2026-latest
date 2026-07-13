@@ -428,7 +428,7 @@ export default function Edit({ auth, exhibition, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -499,7 +499,7 @@ export default function Edit({ auth, exhibition, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleGalleryUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     multiple
                                 >
@@ -762,7 +762,7 @@ export default function Edit({ auth, exhibition, langs }) {
                             <Form.Item label="Document File">
                                 <Upload
                                     beforeUpload={handleDocumentUpload}
-                                    accept=".pdf,.doc,.docx,.ppt,.pptx"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf"
                                     showUploadList={false}
                                     maxCount={1}
                                 >

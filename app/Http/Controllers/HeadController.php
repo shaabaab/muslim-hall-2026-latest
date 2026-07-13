@@ -82,7 +82,7 @@ class HeadController extends Controller
             'description' => 'nullable|string',
             'status' => 'required|boolean',
             'lang_id' => 'required|integer|exists:languages,id',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
             'parent_id' => 'nullable|integer|exists:heads,id',
         ]);
 
@@ -141,7 +141,7 @@ class HeadController extends Controller
             'description' => 'nullable|string',
             'status' => 'required|boolean',
             'lang_id' => 'required|integer|exists:languages,id',
-            'img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200',
             'parent_id' => 'nullable|integer|exists:heads,id',
         ]);
 

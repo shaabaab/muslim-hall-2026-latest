@@ -26,7 +26,7 @@ class ContestSponsorStore extends FormRequest
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
             'phone_alternative' => 'nullable|string|max:20',
-            'images.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120', 
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200', 
             'status' => 'nullable|boolean',
         ];
     }

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceClass;
 
 class SponsorController extends Controller
 {
@@ -104,7 +105,7 @@ class SponsorController extends Controller
         // Handle sponsor photo upload
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('sponsors');
+            $photoPath = ServiceClass::uploadFile($request->file('photo'), 'sponsors');
         }
 
         // Start database transaction to ensure both operations succeed or fail together
@@ -203,18 +204,18 @@ class SponsorController extends Controller
         DB::transaction(function () use ($request, $sponsor, $validatedData) {
             // Handle photo removal if requested
             if ($request->boolean('remove_photo')) {
-                if ($sponsor->photo && Storage::exists($sponsor->photo)) {
-                    Storage::delete($sponsor->photo);
+                if ($sponsor->photo) {
+                    ServiceClass::deleteFile($sponsor->photo);
                 }
                 $sponsor->photo = null;
             }
             // Handle new photo upload
             elseif ($request->hasFile('photo')) {
                 // Delete old photo if exists
-                if ($sponsor->photo && Storage::exists($sponsor->photo)) {
-                    Storage::delete($sponsor->photo);
+                if ($sponsor->photo) {
+                    ServiceClass::deleteFile($sponsor->photo);
                 }
-                $photoPath = $request->file('photo')->store('sponsors');
+                $photoPath = ServiceClass::uploadFile($request->file('photo'), 'sponsors');
                 $sponsor->photo = $photoPath;
             }
 
@@ -258,8 +259,8 @@ class SponsorController extends Controller
 
         DB::transaction(function () use ($sponsor) {
 
-            if ($sponsor->photo && Storage::exists($sponsor->photo)) {
-                Storage::delete($sponsor->photo);
+            if ($sponsor->photo) {
+                ServiceClass::deleteFile($sponsor->photo);
             }
 
             $sponsor->delete();

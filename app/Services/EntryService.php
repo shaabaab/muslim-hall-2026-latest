@@ -7,6 +7,7 @@ use App\Models\ContestFee;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ServiceClass;
 
 class EntryService
 {
@@ -73,7 +74,7 @@ class EntryService
 
         // ── Optional existing media_path ─────────────────────────
         $mediaPath = isset($data['media_path']) && $data['media_path'] instanceof UploadedFile
-            ? $data['media_path']->store('entries', 'public')
+            ? ServiceClass::uploadFile($data['media_path'], 'entries')
             : null;
 
         // ── Create entry ─────────────────────────────────────────

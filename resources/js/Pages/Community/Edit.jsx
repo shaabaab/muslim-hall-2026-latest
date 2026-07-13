@@ -191,7 +191,7 @@ export default function Edit({ post, auth }) {
                                 <div className="space-y-3">
                                     <Upload
                                         beforeUpload={handleImageUpload}
-                                        accept="image/*"
+                                        accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                         showUploadList={false}
                                         disabled={processing}
                                     >

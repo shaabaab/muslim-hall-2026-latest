@@ -484,7 +484,7 @@ const MultipleFeaturedImages = ({
                                         }
                                         type="file"
                                         hidden
-                                        accept="image/*"
+                                        accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                         onChange={(e) =>
                                             handleReplaceSelect(e, index)
                                         }
@@ -556,7 +556,7 @@ const MultipleFeaturedImages = ({
                     ref={addInputRef}
                     type="file"
                     hidden
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                     multiple
                     onChange={handleAddSelect}
                 />
@@ -1488,7 +1488,7 @@ export default function Create({
                 <FileUploadComponent
                     field="thumbnail"
                     label="Thumbnail Image"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                     postFile={data.remove_thumbnail ? null : post?.thumbnail}
                     description="Optional. Formats: JPEG, PNG, JPG, GIF, WebP"
                     previewHeight="h-40"
@@ -1530,7 +1530,7 @@ export default function Create({
                             <FileUploadComponent
                                 field="sponsor"
                                 label="Sponsor Image"
-                                accept="image/*"
+                                accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                 postFile={
                                     data.remove_sponsor ? null : post?.sponsor
                                 }

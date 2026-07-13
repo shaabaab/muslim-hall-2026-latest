@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceClass;
 
 class CommunityController extends Controller
 {
@@ -64,10 +65,11 @@ class CommunityController extends Controller
             'status' => 'required|in:draft,published',
             'mood'     => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('community');
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), 'community');
         }
 
         $validated['user_id'] = Auth::id();
@@ -129,7 +131,7 @@ class CommunityController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg',
             'status' => 'required|in:draft,published,archived',
             'mood'     => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -138,9 +140,9 @@ class CommunityController extends Controller
         if ($request->hasFile('image')) {
             // Delete old image
             if ($post->image) {
-                Storage::delete($post->image);
+                ServiceClass::deleteFile($post->image);
             }
-            $validated['image'] = $request->file('image')->store('community');
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), 'community');
         }
 
         $post->update($validated);
@@ -154,7 +156,7 @@ class CommunityController extends Controller
         $this->authorize('delete', $post);
 
         if ($post->image) {
-            Storage::delete($post->image);
+            ServiceClass::deleteFile($post->image);
         }
 
         $post->delete();

@@ -720,7 +720,7 @@ export default function Edit({ resource, auth, langs }) {
                             <Upload
                                 beforeUpload={handleMainImageUpload}
                                 onRemove={handleMainImageRemove}
-                                accept="image/*"
+                                accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                 showUploadList={false}
                                 maxCount={1}
                             >
@@ -857,7 +857,7 @@ export default function Edit({ resource, auth, langs }) {
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
                                     onRemove={handleMainImageRemove}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -913,7 +913,7 @@ export default function Edit({ resource, auth, langs }) {
                             >
                                 <Upload
                                     beforeUpload={handleGalleryUpload}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     multiple
                                 >
@@ -1095,7 +1095,7 @@ export default function Edit({ resource, auth, langs }) {
                                 <Upload
                                     beforeUpload={handleMainImageUpload}
                                     onRemove={handleMainImageRemove}
-                                    accept="image/*"
+                                    accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                                     showUploadList={false}
                                     maxCount={1}
                                 >
@@ -1212,7 +1212,7 @@ export default function Edit({ resource, auth, langs }) {
                     >
                         <Upload
                             beforeUpload={handleGalleryUpload}
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                             showUploadList={false}
                             multiple
                         >

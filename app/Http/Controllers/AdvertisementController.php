@@ -111,7 +111,7 @@ class AdvertisementController extends Controller
 
         // Only validate image if it's a banner or if an image file is actually present
         if ($request->type === 'banner' || $request->hasFile('image')) {
-            $rules['image'] = ($request->type === 'banner' ? 'required' : 'nullable') . '|image|mimes:jpeg,png,jpg,gif,svg';
+            $rules['image'] = ($request->type === 'banner' ? 'required' : 'nullable') . '|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200';
         }
 
         $validated = $request->validate($rules);
@@ -252,7 +252,7 @@ class AdvertisementController extends Controller
 
         // Only validate image if it's a banner or if an image file is actually present in the request
         if ($request->hasFile('image')) {
-            $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg';
+            $rules['image'] = 'nullable|image|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:51200';
         }
 
         $validated = $request->validate($rules);

@@ -176,7 +176,7 @@ export default function Edit({ post, auth }) {
                         <Upload
                             beforeUpload={handleImageUpload}
                             onRemove={handleImageRemove}
-                            accept="image/*"
+                            accept=".jpg,.jpeg,.png,.webp,.gif,.svg,.bmp,.avif,image/*"
                             showUploadList={false}
                             listType="picture"
                             maxCount={1}
