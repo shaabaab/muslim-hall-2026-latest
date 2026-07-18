@@ -9,6 +9,8 @@ class ExhibitionAudio extends Model
 {
     use HasFactory;
 
+    protected $table = 'exhibition_audios';
+
     protected $fillable = ['exhibition_id', 'audio'];
 
     public function exhibition()
