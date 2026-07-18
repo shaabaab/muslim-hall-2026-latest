@@ -35,12 +35,18 @@ jobs:
             # 4. Pull down the fresh updates from your repository
             git pull origin ${{ github.ref_name }}
 
-            # 5. Install npm packages and run production Vite compilation
+            # 5. Install PHP dependencies (in case composer.json changed)
+            /www/server/php/83/bin/php /usr/bin/composer install --no-dev --optimize-autoloader --no-interaction
+
+            # 6. Apply any new database migrations
+            /www/server/php/83/bin/php artisan migrate --force
+
+            # 7. Install npm packages and run production Vite compilation
             npm install
             npm run build
 
-            # 6. Hand security ownership back to aaPanel's web server worker
+            # 8. Hand security ownership back to aaPanel's web server worker
             sudo chown -R www:www /www/wwwroot/13.232.248.155
 
-            # 7. Wipe out old framework cache states safely
+            # 9. Wipe out old framework cache states safely
             sudo -u www /www/server/php/83/bin/php artisan optimize:clear
