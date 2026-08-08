@@ -9,6 +9,8 @@ class CommunityAudio extends Model
 {
     use HasFactory;
 
+    protected $table = 'community_audios';
+
     protected $fillable = ['community_id', 'audio'];
 
     public function community()
