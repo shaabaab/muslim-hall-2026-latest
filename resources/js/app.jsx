@@ -1,27 +1,30 @@
-import './bootstrap';
-import '../css/app.css';
+import "./bootstrap";
+import "../css/app.css";
 // import 'react-quill/dist/quill.snow.css';
 
-import { createRoot } from 'react-dom/client';
-import { createInertiaApp } from '@inertiajs/react';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { ConfigProvider } from 'antd';
-import { pdfjs } from 'react-pdf';
+import { createRoot } from "react-dom/client";
+import { createInertiaApp } from "@inertiajs/react";
+import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
+import { ConfigProvider } from "antd";
+import { pdfjs } from "react-pdf";
 // updated
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url,
 ).toString();
 
-
 // Import Ant Design CSS
-import { BackgroundUploadProvider } from './Contexts/BackgroundUploadContext';
+import { BackgroundUploadProvider } from "./Contexts/BackgroundUploadContext";
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 createInertiaApp({
     title: (title) => `Muslim Hall`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
+    resolve: (name) =>
+        resolvePageComponent(
+            `./Pages/${name}.jsx`,
+            import.meta.glob("./Pages/**/*.jsx"),
+        ),
     setup({ el, App, props }) {
         const root = createRoot(el);
 
@@ -29,7 +32,7 @@ createInertiaApp({
             <ConfigProvider
                 theme={{
                     token: {
-                        colorPrimary: '#3b82f6',
+                        colorPrimary: "#3b82f6",
                         borderRadius: 6,
                     },
                 }}
@@ -37,10 +40,10 @@ createInertiaApp({
                 <BackgroundUploadProvider>
                     <App {...props} />
                 </BackgroundUploadProvider>
-            </ConfigProvider>
+            </ConfigProvider>,
         );
     },
     progress: {
-        color: '#3b82f6',
+        color: "#3b82f6",
     },
 });
