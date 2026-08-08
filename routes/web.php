@@ -240,7 +240,8 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::resource('exhibitions', ExhibitionController::class);
 
     Route::resource('exhibition-boards', AdminExhibitionBoardController::class)
-        ->only(['index', 'show', 'destroy']);
+        // ->only(['index', 'show', 'destroy']);
+        ->only(['index', 'create', 'store', 'show', 'destroy']);
 
     Route::post('/exhibition-boards/{board}/approve', [AdminExhibitionBoardController::class, 'approve'])
         ->name('exhibition-boards.approve');

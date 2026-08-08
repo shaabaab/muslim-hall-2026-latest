@@ -98,7 +98,7 @@ export default function FrontAuthenticatedLayout({ children }) {
             "/user/contests": ["contests-list"],
             "/user/communities": ["communities-list"],
 
-            "/user/exhibition-boards/create": ["exhibition-boards-create"],
+            // "/user/exhibition-boards/create": ["exhibition-boards-create"],
             "/user/exhibition-boards": ["exhibition-boards-list"],
             "/user/exhibitions/create": ["exhibitions-create"],
             "/user/exhibitions": ["exhibitions-list"],
@@ -139,7 +139,7 @@ export default function FrontAuthenticatedLayout({ children }) {
             "exhibition-boards-list": "exhibition-management",
             "exhibition-boards-create": "exhibition-management",
             "exhibitions-list": "exhibition-management",
-            "exhibitions-create": "exhibition-management",
+            // "exhibitions-create": "exhibition-management",
 
             "posts-create": "post-management",
             "posts-list": "post-management",
@@ -297,9 +297,14 @@ export default function FrontAuthenticatedLayout({ children }) {
         },
         {
             key: "exhibition-management",
-            icon: canAccessExhibitionMenu ? <PictureOutlined /> : <LockOutlined />,
+            icon: canAccessExhibitionMenu ? (
+                <PictureOutlined />
+            ) : (
+                <LockOutlined />
+            ),
             label: "Exhibitions",
-            disabled: !canAccessExhibitionMenu,
+            // disabled: !canAccessExhibitionMenu,
+            disabled: false,
             children: [
                 {
                     key: "exhibition-boards-list",
@@ -309,14 +314,15 @@ export default function FrontAuthenticatedLayout({ children }) {
                         </Link>
                     ),
                 },
-                {
-                    key: "exhibition-boards-create",
-                    label: (
-                        <Link href={route("user.exhibition-boards.create")}>
-                            Create Board
-                        </Link>
-                    ),
-                },
+                // {
+                //     key: "exhibition-boards-create",
+                //     disabled: !isAdmin,
+                //     label: (
+                //         <Link href={route("user.exhibition-boards.create")}>
+                //             Create Board
+                //         </Link>
+                //     ),
+                // },
                 {
                     key: "exhibitions-list",
                     label: (
@@ -329,7 +335,7 @@ export default function FrontAuthenticatedLayout({ children }) {
                     key: "exhibitions-create",
                     label: (
                         <Link href={route("user.exhibitions.create")}>
-                            Create Exhibition
+                            Join Exibition
                         </Link>
                     ),
                 },

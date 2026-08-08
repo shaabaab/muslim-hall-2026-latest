@@ -15,6 +15,11 @@ use App\Models\ExhibitionBoardMember;
 
 class ExhibitionBoardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('admin')->only(['create', 'store']);
+    }
+
     private function ensureMember()
     {
         $user = Auth::user();

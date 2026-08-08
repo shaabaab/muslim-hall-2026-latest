@@ -13,6 +13,7 @@ use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ServiceClass;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -76,9 +77,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? array_merge(
                     $user->only(['id', 'name', 'email', 'role', 'deposit', 'photo', 'bio']),
                     [
-                        'photo_url' => $user->photo
-                            ? Storage::disk(config('filesystems.default'))->url($user->photo)
-                            : null,
+                        'photo_url' => ServiceClass::getFileUrl($user->photo),
 
                         'roles' => $user->roles()->get(['id', 'name'])->toArray(),
 

@@ -10,6 +10,7 @@ use App\Models\ExhibitionBoardMember;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Services\ServiceClass;
+use App\Support\UploadRules;
 
 class ExhibitionBoardController extends Controller
 {
@@ -38,7 +39,40 @@ class ExhibitionBoardController extends Controller
             'filters' => $request->only(['search', 'approval_status']),
         ]);
     }
+  public function create()
+    {
+        return Inertia::render('Admin/ExhibitionBoards/Create');
+    }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => UploadRules::image(),
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $imagePath = ServiceClass::uploadFile($request->file('image'), 'exhibition-boards');
+
+            if (!$imagePath) {
+                return back()->with('error', 'Board image upload failed.')->withInput();
+            }
+
+            $validated['image'] = $imagePath;
+        }
+
+        $validated['user_id'] = Auth::id();
+        $validated['slug'] = $this->generateUniqueSlug($validated['title']);
+        $validated['approval_status'] = ExhibitionBoard::STATUS_APPROVED;
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        $board = ExhibitionBoard::create($validated);
+
+        return redirect()->route('admin.exhibition-boards.index')
+            ->with('success', 'Board created successfully.');
+    }
     public function show(ExhibitionBoard $board)
     {
         $board->load([
@@ -123,5 +157,24 @@ class ExhibitionBoardController extends Controller
         $board->image_url = ServiceClass::getFileUrl($board->image);
 
         return $board;
+    }
+
+    private function generateUniqueSlug($title, $ignoreId = null)
+    {
+        $slug = Str::slug(strip_tags($title));
+
+        if (!$slug) {
+            $slug = 'board';
+        }
+
+        $query = ExhibitionBoard::where('slug', 'like', $slug . '%');
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        $count = $query->count();
+
+        return $count > 0 ? $slug . '-' . ($count + 1) : $slug;
     }
 }

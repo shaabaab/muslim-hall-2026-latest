@@ -71,8 +71,8 @@ export default function AuthenticatedLayout({ header, children }) {
     const profilePhotoUrl = auth?.user?.photo_url
         ? auth.user.photo_url
         : auth?.user?.photo
-            ? getS3PublicUrl(auth.user.photo)
-            : null;
+          ? getS3PublicUrl(auth.user.photo)
+          : null;
 
     const can = (permission) => user?.permissions?.includes(permission);
     const handleLogout = () => router.post(route("logout"));
@@ -92,7 +92,14 @@ export default function AuthenticatedLayout({ header, children }) {
             "/admin/communities": ["communities-list", ["communities"]],
             "/admin/islamic-zone": ["islamic-zone-list", ["islamic-zone"]],
             "/admin/exhibitions": ["exhibitions-list", ["exhibitions"]],
-            "/admin/exhibition-boards": ["exhibition-boards-list", ["exhibitions"]],
+            "/admin/exhibition-boards/create": [
+                "exhibition-boards-create",
+                ["exhibitions"],
+            ],
+            "/admin/exhibition-boards": [
+                "exhibition-boards-list",
+                ["exhibitions"],
+            ],
             "/admin/advertisements": [
                 "advertisements-list",
                 ["advertisements"],
@@ -175,7 +182,10 @@ export default function AuthenticatedLayout({ header, children }) {
                     key: "users-list",
                     icon: <UserOutlined />,
                     label: (
-                        <InertiaLink href={route("admin.users.index")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.users.index")}
+                            preserveScroll
+                        >
                             Users
                         </InertiaLink>
                     ),
@@ -184,7 +194,10 @@ export default function AuthenticatedLayout({ header, children }) {
                     key: "users-create",
                     icon: <UserOutlined />,
                     label: (
-                        <InertiaLink href={route("admin.users.create")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.users.create")}
+                            preserveScroll
+                        >
                             Create User
                         </InertiaLink>
                     ),
@@ -200,7 +213,10 @@ export default function AuthenticatedLayout({ header, children }) {
                     key: "roles-list",
                     icon: <SafetyCertificateOutlined />,
                     label: (
-                        <InertiaLink href={route("admin.roles.index")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.roles.index")}
+                            preserveScroll
+                        >
                             Roles
                         </InertiaLink>
                     ),
@@ -209,7 +225,10 @@ export default function AuthenticatedLayout({ header, children }) {
                     key: "roles-create",
                     icon: <SafetyCertificateOutlined />,
                     label: (
-                        <InertiaLink href={route("admin.roles.create")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.roles.create")}
+                            preserveScroll
+                        >
                             Create Role
                         </InertiaLink>
                     ),
@@ -224,7 +243,10 @@ export default function AuthenticatedLayout({ header, children }) {
                 {
                     key: "seos-list",
                     label: (
-                        <InertiaLink href={route("admin.seos.index")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.seos.index")}
+                            preserveScroll
+                        >
                             SEO List
                         </InertiaLink>
                     ),
@@ -239,7 +261,10 @@ export default function AuthenticatedLayout({ header, children }) {
                 {
                     key: "blockedips-list",
                     label: (
-                        <InertiaLink href={route("admin.blockedips.index")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.blockedips.index")}
+                            preserveScroll
+                        >
                             Blocked IPs
                         </InertiaLink>
                     ),
@@ -254,7 +279,10 @@ export default function AuthenticatedLayout({ header, children }) {
                 {
                     key: "sponsors-list",
                     label: (
-                        <InertiaLink href={route("admin.sponsors.index")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.sponsors.index")}
+                            preserveScroll
+                        >
                             List
                         </InertiaLink>
                     ),
@@ -347,15 +375,32 @@ export default function AuthenticatedLayout({ header, children }) {
                 {
                     key: "exhibition-boards-list",
                     label: (
-                        <InertiaLink href={route("admin.exhibition-boards.index")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.exhibition-boards.index")}
+                            preserveScroll
+                        >
                             Board List
+                        </InertiaLink>
+                    ),
+                },
+                {
+                    key: "exhibition-boards-create",
+                    label: (
+                        <InertiaLink
+                            href={route("admin.exhibition-boards.create")}
+                            preserveScroll
+                        >
+                            Create Board
                         </InertiaLink>
                     ),
                 },
                 {
                     key: "exhibitions-list",
                     label: (
-                        <InertiaLink href={route("admin.exhibitions.index")} preserveScroll>
+                        <InertiaLink
+                            href={route("admin.exhibitions.index")}
+                            preserveScroll
+                        >
                             Exhibition List
                         </InertiaLink>
                     ),
@@ -808,7 +853,13 @@ export default function AuthenticatedLayout({ header, children }) {
                         </Button>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                        }}
+                    >
                         <BackgroundUploadIndicator />
                         <NotificationDropdown />
 
@@ -828,7 +879,11 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <Avatar
                                         size="large"
                                         src={profilePhotoUrl || undefined}
-                                        icon={!profilePhotoUrl ? <UserOutlined /> : null}
+                                        icon={
+                                            !profilePhotoUrl ? (
+                                                <UserOutlined />
+                                            ) : null
+                                        }
                                         style={{ backgroundColor: "#001529" }}
                                     />
                                 </Badge>

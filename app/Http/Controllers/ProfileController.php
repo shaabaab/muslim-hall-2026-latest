@@ -69,13 +69,20 @@ class ProfileController extends Controller
             $request->user()->photo = null;
         }
 
-        // ── Photo: upload new (mirrors thumbnail in PostController) ────
+     
+        // ── Photo: upload new ───────────────────────────────────────────
         if ($request->hasFile('photo')) {
-            $request->user()->photo = ServiceClass::uploadFile(
+            $oldPhoto = $request->user()->getOriginal('photo');
+
+            $newPath = ServiceClass::uploadFile(
                 $request->file('photo'),
-                'users/photos',
-                $request->user()->getOriginal('photo') // deletes old file automatically
+                'users/photos'
             );
+
+            if ($newPath) {
+                $request->user()->photo = $newPath;
+                ServiceClass::deleteFile($oldPhoto);
+            }
         }
         $request->user()->save();
 
