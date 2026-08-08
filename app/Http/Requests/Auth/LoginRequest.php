@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class LoginRequest extends FormRequest
 {
@@ -35,13 +38,24 @@ class LoginRequest extends FormRequest
     /**
      * Attempt to authenticate the request's credentials.
      *
+     * Supports current Laravel hashes and safely upgrades legacy
+     * plain-text/MD5/SHA1/SHA256 passwords to the configured hash driver.
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $email = Str::lower(trim((string) $this->input('email')));
+        $plainPassword = (string) $this->input('password');
+
+        /** @var \App\Models\User|null $user */
+        $user = User::query()
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
+
+        if (! $user || ! $this->passwordMatches($plainPassword, (string) $user->getRawOriginal('password'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -49,7 +63,53 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $storedPassword = (string) $user->getRawOriginal('password');
+
+        // Upgrade legacy or outdated hashes after a successful password match.
+        if ($this->passwordNeedsUpgrade($storedPassword)) {
+            $user->forceFill([
+                'password' => Hash::make($plainPassword),
+            ])->saveQuietly();
+        }
+
+        Auth::login($user, $this->boolean('remember'));
+
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Verify current Laravel hashes and supported legacy password formats.
+     */
+    private function passwordMatches(string $plainPassword, string $storedPassword): bool
+    {
+        if ($storedPassword === '') {
+            return false;
+        }
+
+        try {
+            if (Hash::check($plainPassword, $storedPassword)) {
+                return true;
+            }
+        } catch (RuntimeException) {
+            // The configured Laravel hasher rejected a legacy hash format.
+        }
+
+        return hash_equals($storedPassword, $plainPassword)
+            || hash_equals(strtolower($storedPassword), md5($plainPassword))
+            || hash_equals(strtolower($storedPassword), sha1($plainPassword))
+            || hash_equals(strtolower($storedPassword), hash('sha256', $plainPassword));
+    }
+
+    /**
+     * Determine whether the stored password should be re-hashed.
+     */
+    private function passwordNeedsUpgrade(string $storedPassword): bool
+    {
+        try {
+            return Hash::needsRehash($storedPassword);
+        } catch (RuntimeException) {
+            return true;
+        }
     }
 
     /**
