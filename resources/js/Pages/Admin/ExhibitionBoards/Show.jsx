@@ -42,6 +42,10 @@ export default function Show({ auth, board }) {
     const [selectedMemberRequest, setSelectedMemberRequest] = useState(null);
     const [rejectMemberNote, setRejectMemberNote] = useState("");
 
+    // Membership needs consent from the board owner AND an admin. When the logged-in
+    // admin happens to own the board, both buttons can live on this page.
+    const isBoardOwner = Number(board?.user_id) === Number(auth?.user?.id);
+
     const placeholderImage = "/placeholder-image.jpg";
 
     const makeImageUrl = (urlOrPath) => {
@@ -209,6 +213,24 @@ export default function Show({ auth, board }) {
                 },
                 onError: () => {
                     message.error("Failed to approve member request");
+                },
+            }
+        );
+    };
+
+    // Owner-side approval. Only usable when the logged-in admin also owns this board —
+    // saves them a trip to /user/exhibition-boards to give the same consent.
+    const ownerApproveMemberRequest = (requestId) => {
+        router.post(
+            route("user.exhibition-board-member-requests.owner-approve", requestId),
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    message.success("Member request approved by board owner");
+                },
+                onError: () => {
+                    message.error("Failed to approve as board owner");
                 },
             }
         );
@@ -460,12 +482,13 @@ export default function Show({ auth, board }) {
         {
             title: "Action",
             key: "action",
-            width: 230,
+            width: 340,
             render: (_, record) => (
                 <Space wrap>
                     {record.admin_status !== "approved" && (
                         <Popconfirm
                             title="Approve this member request?"
+                            description="This is the admin half of the approval."
                             okText="Approve"
                             cancelText="Cancel"
                             onConfirm={() => approveMemberRequest(record.id)}
@@ -475,7 +498,26 @@ export default function Show({ auth, board }) {
                                 type="primary"
                                 icon={<CheckCircleOutlined />}
                             >
-                                Approve
+                                Approve as Admin
+                            </Button>
+                        </Popconfirm>
+                    )}
+
+                    {isBoardOwner && record.owner_status !== "approved" && (
+                        <Popconfirm
+                            title="Approve as board owner?"
+                            description="You own this board, so you can give the owner consent here."
+                            okText="Approve"
+                            cancelText="Cancel"
+                            onConfirm={() => ownerApproveMemberRequest(record.id)}
+                        >
+                            <Button
+                                size="small"
+                                type="primary"
+                                ghost
+                                icon={<CheckCircleOutlined />}
+                            >
+                                Approve as Owner
                             </Button>
                         </Popconfirm>
                     )}

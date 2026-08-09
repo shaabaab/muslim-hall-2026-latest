@@ -1,5 +1,6 @@
 import { Link, router } from "@inertiajs/react";
 import Authenticated from "@/Layouts/FrontAuthenticatedLayout";
+import { useState } from "react";
 import {
     Card,
     Button,
@@ -14,6 +15,8 @@ import {
     message,
     Tabs,
     Empty,
+    Modal,
+    Input,
 } from "antd";
 import {
     PlusOutlined,
@@ -25,6 +28,7 @@ import {
     ClockCircleOutlined,
     TeamOutlined,
     AppstoreOutlined,
+    UsergroupAddOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -34,7 +38,11 @@ export default function Index({
     myBoards = [],
     joinedBoards = [],
     pendingRequests = [],
+    availableBoards = [],
 }) {
+    const [requestBoard, setRequestBoard] = useState(null);
+    const [requestMessage, setRequestMessage] = useState("");
+    const [requesting, setRequesting] = useState(false);
 
     const getImageUrl = (recordOrPath) => {
         if (!recordOrPath) {
@@ -104,23 +112,31 @@ export default function Index({
 
     const approveOwnerRequest = (requestId) => {
         router.post(
-            route("user.exhibition-board-member-requests.owner-approve", requestId),
+            route(
+                "user.exhibition-board-member-requests.owner-approve",
+                requestId,
+            ),
             {},
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    message.success("Request approved. Waiting for admin approval.");
+                    message.success(
+                        "Request approved. Waiting for admin approval.",
+                    );
                 },
                 onError: () => {
                     message.error("Failed to approve request");
                 },
-            }
+            },
         );
     };
 
     const rejectOwnerRequest = (requestId) => {
         router.post(
-            route("user.exhibition-board-member-requests.owner-reject", requestId),
+            route(
+                "user.exhibition-board-member-requests.owner-reject",
+                requestId,
+            ),
             {},
             {
                 preserveScroll: true,
@@ -130,7 +146,45 @@ export default function Index({
                 onError: () => {
                     message.error("Failed to reject request");
                 },
-            }
+            },
+        );
+    };
+
+    const openRequestModal = (board) => {
+        setRequestBoard(board);
+        setRequestMessage("");
+    };
+
+    const closeRequestModal = () => {
+        setRequestBoard(null);
+        setRequestMessage("");
+    };
+
+    const submitRequestAccess = () => {
+        if (!requestBoard) {
+            return;
+        }
+
+        setRequesting(true);
+
+        router.post(
+            route("user.exhibition-boards.request-access", requestBoard.id),
+            { request_message: requestMessage },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    message.success(
+                        "Request sent. Board owner and admin approval required.",
+                    );
+                    closeRequestModal();
+                },
+                onError: (errors) => {
+                    message.error(
+                        errors?.request_message || "Failed to send request",
+                    );
+                },
+                onFinish: () => setRequesting(false),
+            },
         );
     };
 
@@ -166,7 +220,10 @@ export default function Index({
             dataIndex: "approval_status",
             key: "approval_status",
             render: (status) => (
-                <Tag color={getApprovalColor(status)} icon={getApprovalIcon(status)}>
+                <Tag
+                    color={getApprovalColor(status)}
+                    icon={getApprovalIcon(status)}
+                >
                     {status ? status.toUpperCase() : "PENDING"}
                 </Tag>
             ),
@@ -204,7 +261,9 @@ export default function Index({
                 note ? (
                     <Tooltip title={note}>
                         <Text type="danger">
-                            {note.length > 30 ? `${note.slice(0, 30)}...` : note}
+                            {note.length > 30
+                                ? `${note.slice(0, 30)}...`
+                                : note}
                         </Text>
                     </Tooltip>
                 ) : (
@@ -217,14 +276,22 @@ export default function Index({
             width: 230,
             render: (_, record) => (
                 <Space wrap>
-                    <Link href={route("user.exhibition-boards.show", record.id)}>
+                    <Link
+                        href={route("user.exhibition-boards.show", record.id)}
+                    >
                         <Button size="small" icon={<EyeOutlined />}>
                             View
                         </Button>
                     </Link>
 
-                    <Link href={route("user.exhibition-boards.edit", record.id)}>
-                        <Button size="small" type="primary" icon={<EditOutlined />}>
+                    <Link
+                        href={route("user.exhibition-boards.edit", record.id)}
+                    >
+                        <Button
+                            size="small"
+                            type="primary"
+                            icon={<EditOutlined />}
+                        >
                             Edit
                         </Button>
                     </Link>
@@ -277,7 +344,10 @@ export default function Index({
             dataIndex: "approval_status",
             key: "approval_status",
             render: (status) => (
-                <Tag color={getApprovalColor(status)} icon={getApprovalIcon(status)}>
+                <Tag
+                    color={getApprovalColor(status)}
+                    icon={getApprovalIcon(status)}
+                >
                     {status ? status.toUpperCase() : "PENDING"}
                 </Tag>
             ),
@@ -302,6 +372,81 @@ export default function Index({
                         View
                     </Button>
                 </Link>
+            ),
+        },
+    ];
+
+    const availableBoardColumns = [
+        {
+            title: "Board",
+            key: "board",
+            render: (_, record) => (
+                <Space>
+                    <Image
+                        width={70}
+                        height={55}
+                        src={getImageUrl(record)}
+                        fallback="/placeholder-image.jpg"
+                        style={{
+                            borderRadius: 8,
+                            objectFit: "cover",
+                            border: "1px solid #eee",
+                        }}
+                    />
+
+                    <Space direction="vertical" size={0}>
+                        <Text strong>{record.title}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            Owner: {record.owner?.name || "Unknown"}
+                        </Text>
+                    </Space>
+                </Space>
+            ),
+        },
+        {
+            title: "Description",
+            dataIndex: "description",
+            key: "description",
+            render: (description) =>
+                description ? (
+                    <Tooltip title={description}>
+                        <Text>
+                            {description.length > 60
+                                ? `${description.slice(0, 60)}...`
+                                : description}
+                        </Text>
+                    </Tooltip>
+                ) : (
+                    <Text type="secondary">N/A</Text>
+                ),
+        },
+        {
+            title: "Exhibitions",
+            key: "exhibitions",
+            render: (_, record) => (
+                <Space direction="vertical" size={0}>
+                    <Text>
+                        Total: <strong>{record.exhibitions_count || 0}</strong>
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                        Approved: {record.approved_exhibitions_count || 0}
+                    </Text>
+                </Space>
+            ),
+        },
+        {
+            title: "Action",
+            key: "action",
+            width: 200,
+            render: (_, record) => (
+                <Button
+                    size="small"
+                    type="primary"
+                    icon={<UsergroupAddOutlined />}
+                    onClick={() => openRequestModal(record)}
+                >
+                    Request Access
+                </Button>
             ),
         },
     ];
@@ -336,7 +481,9 @@ export default function Index({
             dataIndex: "owner_status",
             key: "owner_status",
             render: (status) => (
-                <Tag color={getApprovalColor(status)}>{status?.toUpperCase()}</Tag>
+                <Tag color={getApprovalColor(status)}>
+                    {status?.toUpperCase()}
+                </Tag>
             ),
         },
         {
@@ -344,7 +491,9 @@ export default function Index({
             dataIndex: "admin_status",
             key: "admin_status",
             render: (status) => (
-                <Tag color={getApprovalColor(status)}>{status?.toUpperCase()}</Tag>
+                <Tag color={getApprovalColor(status)}>
+                    {status?.toUpperCase()}
+                </Tag>
             ),
         },
         {
@@ -352,7 +501,9 @@ export default function Index({
             dataIndex: "status",
             key: "status",
             render: (status) => (
-                <Tag color={getApprovalColor(status)}>{status?.toUpperCase()}</Tag>
+                <Tag color={getApprovalColor(status)}>
+                    {status?.toUpperCase()}
+                </Tag>
             ),
         },
         {
@@ -458,9 +609,38 @@ export default function Index({
                         showSizeChanger: true,
                     }}
                     locale={{
-                        emptyText: <Empty description="No joined board found." />,
+                        emptyText: (
+                            <Empty description="No joined board found." />
+                        ),
                     }}
                     scroll={{ x: 700 }}
+                />
+            ),
+        },
+        {
+            key: "available-boards",
+            label: (
+                <span>
+                    <UsergroupAddOutlined /> Available Boards
+                    {availableBoards.length > 0 &&
+                        ` (${availableBoards.length})`}
+                </span>
+            ),
+            children: (
+                <Table
+                    rowKey="id"
+                    columns={availableBoardColumns}
+                    dataSource={availableBoards}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                    }}
+                    locale={{
+                        emptyText: (
+                            <Empty description="No board available to join right now." />
+                        ),
+                    }}
+                    scroll={{ x: 900 }}
                 />
             ),
         },
@@ -507,20 +687,47 @@ export default function Index({
                             Exhibition Boards
                         </Title>
                         <Text type="secondary">
-                            Create boards, manage approval requests, and post exhibitions
-                            under approved boards.
+                            Create boards, manage approval requests, and post
+                            exhibitions under approved boards.
                         </Text>
                     </div>
 
-                    <Link href={route("user.exhibition-boards.create")}>
+                    {/* <Link href={route("user.exhibition-boards.create")}>
                         <Button type="primary" icon={<PlusOutlined />}>
                             Create Board
                         </Button>
-                    </Link>
+                    </Link> */}
                 </div>
 
                 <Tabs defaultActiveKey="my-boards" items={tabItems} />
             </Card>
+
+            <Modal
+                title={`Request access to "${requestBoard?.title || ""}"`}
+                open={!!requestBoard}
+                onOk={submitRequestAccess}
+                onCancel={closeRequestModal}
+                okText="Send Request"
+                cancelText="Cancel"
+                confirmLoading={requesting}
+                destroyOnClose
+            >
+                <Text type="secondary">
+                    Your request needs approval from the board owner and then
+                    from an admin before you can post exhibitions under this
+                    board.
+                </Text>
+
+                <Input.TextArea
+                    rows={4}
+                    maxLength={1000}
+                    showCount
+                    style={{ marginTop: 16 }}
+                    placeholder="Optional message to the board owner"
+                    value={requestMessage}
+                    onChange={(e) => setRequestMessage(e.target.value)}
+                />
+            </Modal>
         </Authenticated>
     );
 }

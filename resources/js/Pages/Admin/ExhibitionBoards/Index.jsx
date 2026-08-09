@@ -323,14 +323,14 @@ export default function Index({ boards, filters = {}, auth }) {
             title: "Action",
             key: "action",
             fixed: "right",
-            width: 310,
+            width: 380,
             render: (_, record) => (
                 <Space wrap>
-                    {/* <Link href={route("admin.exhibition-boards.show", record.id)}>
-                        <Button size="small" icon={<EyeOutlined />}>
+                    <Link href={route("admin.exhibition-boards.show", record.id)}>
+                        <Button size="small" type="primary" ghost icon={<EyeOutlined />}>
                             View
                         </Button>
-                    </Link> */}
+                    </Link>
 
                     {record.approval_status !== "approved" && (
                         <Popconfirm
