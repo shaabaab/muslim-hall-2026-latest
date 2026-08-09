@@ -97,7 +97,10 @@ export default function Home() {
         );
     };
 
-    const stripHtml = (html = "") => String(html || "").replace(/<[^>]*>/g, "").trim();
+    const stripHtml = (html = "") =>
+        String(html || "")
+            .replace(/<[^>]*>/g, "")
+            .trim();
 
     const getBoardImage = (board) => {
         return getS3PublicUrl(
@@ -131,7 +134,6 @@ export default function Home() {
 
         return Array.isArray(posts) ? posts.slice(0, 4) : [];
     };
-
 
     useEffect(() => {
         const resume = () => {
@@ -202,10 +204,11 @@ export default function Home() {
                                 return (
                                     <SwiperSlide key={slide.id}>
                                         <div
-                                            className={`hero-slide-content ${isFullWidthImage
-                                                ? "hero-full-image-mode"
-                                                : ""
-                                                }`}
+                                            className={`hero-slide-content ${
+                                                isFullWidthImage
+                                                    ? "hero-full-image-mode"
+                                                    : ""
+                                            }`}
                                             style={{
                                                 backgroundColor:
                                                     slide.background_color ||
@@ -219,10 +222,11 @@ export default function Home() {
                                             )}
 
                                             <div
-                                                className={`hero-text-col ${isFullWidthImage
-                                                    ? "hero-text-center"
-                                                    : ""
-                                                    }`}
+                                                className={`hero-text-col ${
+                                                    isFullWidthImage
+                                                        ? "hero-text-center"
+                                                        : ""
+                                                }`}
                                             >
                                                 <h1
                                                     className="hero-title"
@@ -263,9 +267,9 @@ export default function Home() {
 
                                                     <Link
                                                         className="hero-btn secondary"
-                                                        href="/contests-details"
+                                                        href="/user/exhibitions/create"
                                                     >
-                                                        Join Contest
+                                                        Join Exhibition
                                                     </Link>
                                                 </div>
                                             </div>
@@ -274,9 +278,7 @@ export default function Home() {
                                                 <div className="hero-img-col">
                                                     <div className="img-frame">
                                                         <img
-                                                            src={
-                                                                sliderImageUrl
-                                                            }
+                                                            src={sliderImageUrl}
                                                             alt={slide.title}
                                                             onError={(e) => {
                                                                 e.target.src =
@@ -660,11 +662,13 @@ export default function Home() {
                                         rel="noopener noreferrer"
                                         className="header-ad-link"
                                     >
-                                        {ad.type === 'video_ad' ? (
+                                        {ad.type === "video_ad" ? (
                                             <div className="header-ad-video-container">
                                                 {ad.video ? (
                                                     <video
-                                                        src={getS3PublicUrl(ad.video)}
+                                                        src={getS3PublicUrl(
+                                                            ad.video,
+                                                        )}
                                                         className="header-ad-video"
                                                         controls={false}
                                                         autoPlay
@@ -767,7 +771,7 @@ export default function Home() {
                                                     <img
                                                         src={getS3PublicUrl(
                                                             p.thumbnail ??
-                                                            p.image,
+                                                                p.image,
                                                         )}
                                                         alt={p.title}
                                                         onError={(e) => {
@@ -861,13 +865,13 @@ export default function Home() {
                                                     src={
                                                         p.gallery
                                                             ? getS3PublicUrl(
-                                                                JSON.parse(
-                                                                    p.gallery,
-                                                                )[0],
-                                                            )
+                                                                  JSON.parse(
+                                                                      p.gallery,
+                                                                  )[0],
+                                                              )
                                                             : getS3PublicUrl(
-                                                                p.image,
-                                                            )
+                                                                  p.image,
+                                                              )
                                                     }
                                                     alt={p.title}
                                                     onError={(e) => {
@@ -941,11 +945,13 @@ export default function Home() {
                                         rel="noopener noreferrer"
                                         className="in-content-ad-link"
                                     >
-                                        {ad.type === 'video_ad' ? (
+                                        {ad.type === "video_ad" ? (
                                             <div className="in-content-ad-video-container">
                                                 {ad.video ? (
                                                     <video
-                                                        src={getS3PublicUrl(ad.video)}
+                                                        src={getS3PublicUrl(
+                                                            ad.video,
+                                                        )}
                                                         className="in-content-ad-video"
                                                         controls={false}
                                                         autoPlay
@@ -1022,8 +1028,7 @@ export default function Home() {
                             href="/exhibition-details"
                             className="btn-view-all"
                         >
-                            View Gallery{" "}
-                            <i className="fas fa-arrow-right"></i>
+                            View Gallery <i className="fas fa-arrow-right"></i>
                         </Link>
                     </div>
 
@@ -1033,21 +1038,30 @@ export default function Home() {
                                 const posts = getBoardPosts(board);
 
                                 return (
-                                    <div className="home-exhibition-board-card" key={board.id}>
+                                    <div
+                                        className="home-exhibition-board-card"
+                                        key={board.id}
+                                    >
                                         <Link
                                             href={`/exhibition-board/${board.id}`}
                                             className="home-exhibition-board-cover"
                                         >
                                             <img
                                                 src={getBoardImage(board)}
-                                                alt={stripHtml(board.title) || "Exhibition Board"}
+                                                alt={
+                                                    stripHtml(board.title) ||
+                                                    "Exhibition Board"
+                                                }
                                                 onError={(e) => {
                                                     e.currentTarget.src =
                                                         "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
                                                 }}
                                             />
                                             <span className="home-exhibition-board-badge">
-                                                {board.exhibitions_count || posts.length || 0} Exhibitions
+                                                {board.exhibitions_count ||
+                                                    posts.length ||
+                                                    0}{" "}
+                                                Exhibitions
                                             </span>
                                         </Link>
 
@@ -1056,11 +1070,14 @@ export default function Home() {
                                                 href={`/exhibition-board/${board.id}`}
                                                 className="home-exhibition-board-title"
                                             >
-                                                {stripHtml(board.title) || "Untitled Board"}
+                                                {stripHtml(board.title) ||
+                                                    "Untitled Board"}
                                             </Link>
 
                                             <p className="home-exhibition-board-desc">
-                                                {stripHtml(board.description).slice(0, 95) ||
+                                                {stripHtml(
+                                                    board.description,
+                                                ).slice(0, 95) ||
                                                     "Explore selected exhibition posts from this board."}
                                             </p>
 
@@ -1073,24 +1090,45 @@ export default function Home() {
                                                             key={item.id}
                                                         >
                                                             <img
-                                                                src={getExhibitionImage(item)}
-                                                                alt={stripHtml(item.title) || "Exhibition"}
-                                                                onError={(e) => {
+                                                                src={getExhibitionImage(
+                                                                    item,
+                                                                )}
+                                                                alt={
+                                                                    stripHtml(
+                                                                        item.title,
+                                                                    ) ||
+                                                                    "Exhibition"
+                                                                }
+                                                                onError={(
+                                                                    e,
+                                                                ) => {
                                                                     e.currentTarget.src =
                                                                         "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
                                                                 }}
                                                             />
                                                             <div>
-                                                                <h4>{stripHtml(item.title) || "Untitled Exhibition"}</h4>
+                                                                <h4>
+                                                                    {stripHtml(
+                                                                        item.title,
+                                                                    ) ||
+                                                                        "Untitled Exhibition"}
+                                                                </h4>
                                                                 <p>
-                                                                    {stripHtml(item.description || item.content).slice(0, 55)}
+                                                                    {stripHtml(
+                                                                        item.description ||
+                                                                            item.content,
+                                                                    ).slice(
+                                                                        0,
+                                                                        55,
+                                                                    )}
                                                                 </p>
                                                             </div>
                                                         </Link>
                                                     ))
                                                 ) : (
                                                     <div className="home-exhibition-empty-post">
-                                                        No exhibition post found.
+                                                        No exhibition post
+                                                        found.
                                                     </div>
                                                 )}
                                             </div>
@@ -1104,7 +1142,6 @@ export default function Home() {
                     )}
                 </div>
             </section>
-
 
             <style>{`
                 .home-exhibition-board-grid {
