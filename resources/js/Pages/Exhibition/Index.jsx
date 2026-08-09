@@ -38,6 +38,7 @@ import {
     ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -59,22 +60,8 @@ export default function Index({ exhibitions, filters = {}, auth }) {
         }
 
         if (record.image) {
-            if (
-                record.image.startsWith("http://") ||
-                record.image.startsWith("https://")
-            ) {
-                return record.image;
-            }
-
-            if (record.image.startsWith("/storage/")) {
-                return record.image;
-            }
-
-            if (record.image.startsWith("storage/")) {
-                return `/${record.image}`;
-            }
-
-            return `/storage/${record.image}`;
+            // Media is on S3; resolve the key rather than pointing at /storage/.
+            return buildS3UrlAlways(record.image);
         }
 
         return "/placeholder-image.jpg";

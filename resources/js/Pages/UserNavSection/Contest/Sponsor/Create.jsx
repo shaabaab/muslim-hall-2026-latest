@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import { Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -45,7 +46,7 @@ export default function SponsorForm({ auth, sponsor = null, isEdit = false }) {
     // Set photo preview if editing and sponsor has photo
     useEffect(() => {
         if (isEdit && sponsor?.photo) {
-            setPhotoPreview(`/storage/${sponsor.photo}`);
+            setPhotoPreview(buildS3UrlAlways(sponsor.photo));
         }
     }, [isEdit, sponsor]);
 

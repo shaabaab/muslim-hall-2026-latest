@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Footer from "./Footer";
 import Header from "./Header";
 import FrontAuthenticatedLayout from '@/Layouts/FrontEndLayout';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 export default function Search() {
     const { q, results, auth } = usePage().props;
@@ -640,20 +641,21 @@ function SearchResultCard({ item }) {
         }
     };
 
+    // Media is on S3, not storage/app/public — resolve keys via the shared
+    // helper instead of building /storage/ URLs by hand.
     const getItemImage = () => {
-        if (item.images && item.images.length > 0) {
-            return `${window.location.origin}/storage/${item.images[0].image}`;
+        const source =
+            item.image_url ||
+            item.images?.[0]?.image ||
+            item.photo ||
+            item.thumbnail ||
+            item.image;
+
+        if (!source) {
+            return 'https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png';
         }
-        if (item.photo) {
-            return `${window.location.origin}/storage/${item.photo}`;
-        }
-        if (item.thumbnail) {
-            return `${window.location.origin}/storage/${item.thumbnail}`;
-        }
-        if (item.image) {
-            return `${window.location.origin}/storage/${item.image}`;
-        }
-        return 'https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png';
+
+        return buildS3UrlAlways(source);
     };
 
     const getItemExcerpt = () => {

@@ -5,6 +5,7 @@ import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 import Footer from "./Footer";
 import Header from "./Header";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 export default function ContestDetails() {
     const { contests, auth, flash, contestCategory } = usePage().props;
@@ -274,7 +275,7 @@ export default function ContestDetails() {
                 <div className="sponsor-image">
                     {sponsor.banner ? (
                         <img
-                            src={`/storage/${sponsor.banner}`}
+                            src={buildS3UrlAlways(sponsor.banner)}
                             alt={sponsor.name}
                         />
                     ) : (

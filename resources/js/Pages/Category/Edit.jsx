@@ -26,13 +26,14 @@ import {
 
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 export default function Edit({ category, auth, langs, categories }) {
     const [previewImg, setPreviewImg] = useState(
-        category.img ? `/storage/${category.img}` : null
+        category.img ? buildS3UrlAlways(category.img) : null
     );
     const [fileList, setFileList] = useState([]);
 
@@ -236,7 +237,7 @@ export default function Edit({ category, auth, langs, categories }) {
                                             <Text strong className="block mb-2">Current Image:</Text>
                                             <div className="relative inline-block">
                                                 <img
-                                                    src={`/storage/${category.img}`}
+                                                    src={buildS3UrlAlways(category.img)}
                                                     alt="Current Category"
                                                     style={{ maxWidth: '200px', maxHeight: '200px' }}
                                                     className="rounded shadow"

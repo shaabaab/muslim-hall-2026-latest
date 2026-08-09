@@ -4,6 +4,7 @@ import FrontAuthenticatedLayout from '@/Layouts/FrontEndLayout';
 import Header from "./Header";
 import Footer from "./Footer";
 import { Head } from '@inertiajs/react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 export default function Community() {
     const { community, auth, categories, popular_tags, trending_posts, featured_posts } = usePage().props;
@@ -994,7 +995,7 @@ export default function Community() {
                                                         {post.image && (
                                                             <div className="mb-3">
                                                                 <img
-                                                                    src={`/storage/${post.image}`}
+                                                                    src={buildS3UrlAlways(post.image)}
                                                                     alt={post.title}
                                                                     className="img-fluid rounded"
                                                                     style={{ maxHeight: '300px', objectFit: 'cover', width: '100%' }}

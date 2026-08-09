@@ -1,5 +1,6 @@
 import { Link, usePage } from "@inertiajs/react";
 import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
+import { getS3PublicUrl } from "@/Utils/s3Helpers";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useState } from "react";
@@ -9,14 +10,18 @@ export default function ExhibitionBoardShow() {
     const exhibitions = board?.approved_exhibitions || [];
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    const getImageUrl = (imagePath) => {
-        if (!imagePath) {
-            return "https://via.placeholder.com/900x600?text=Exhibition";
-        }
+    const fallbackImage = "/assets/images/logo3.png";
 
-        return imagePath.startsWith("http")
-            ? imagePath
-            : `${window.location.origin}/storage/${imagePath}`;
+    // `image` / `sponsor_image` hold the raw S3 key; the full URL lives on the
+    // appended `*_url` accessors. Prefer those, and let getS3PublicUrl resolve
+    // bare keys through /local-s3-proxy when running locally.
+    const getImageUrl = (...candidates) =>
+        getS3PublicUrl(candidates.find(Boolean));
+
+    const handleImageError = (e) => {
+        if (e.currentTarget.src !== window.location.origin + fallbackImage) {
+            e.currentTarget.src = fallbackImage;
+        }
     };
 
     const stripHtml = (html) => {
@@ -70,8 +75,12 @@ export default function ExhibitionBoardShow() {
 
                                 <div className="slider-image">
                                     <img
-                                        src={getImageUrl(currentItem.image)}
+                                        src={getImageUrl(
+                                            currentItem.image_url,
+                                            currentItem.image,
+                                        )}
                                         alt={stripHtml(currentItem.title)}
+                                        onError={handleImageError}
                                     />
                                 </div>
 
@@ -116,12 +125,17 @@ export default function ExhibitionBoardShow() {
                                         </div>
                                     </div>
 
-                                    {currentItem.sponsor_image && (
+                                    {(currentItem.sponsor_image_url ||
+                                        currentItem.sponsor_image) && (
                                         <div className="sponsor-box">
                                             <span>Sponsored By</span>
                                             <img
-                                                src={getImageUrl(currentItem.sponsor_image)}
+                                                src={getImageUrl(
+                                                    currentItem.sponsor_image_url,
+                                                    currentItem.sponsor_image,
+                                                )}
                                                 alt="Sponsor"
+                                                onError={handleImageError}
                                             />
                                         </div>
                                     )}
@@ -156,8 +170,12 @@ export default function ExhibitionBoardShow() {
                                         onClick={() => setCurrentIndex(index)}
                                     >
                                         <img
-                                            src={getImageUrl(item.image)}
+                                            src={getImageUrl(
+                                                item.image_url,
+                                                item.image,
+                                            )}
                                             alt={stripHtml(item.title)}
+                                            onError={handleImageError}
                                         />
                                     </button>
                                 ))}

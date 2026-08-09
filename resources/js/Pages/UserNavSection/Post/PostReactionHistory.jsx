@@ -29,6 +29,7 @@ import {
     UserOutlined,
     DeleteOutlined 
 } from '@ant-design/icons';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -106,7 +107,7 @@ export default function PostReactionHistory({ reactions, filters, auth, post }) 
             render: (user) => (
                 <Space>
                     <Avatar 
-                        src={user?.avatar ? `/storage/${user.avatar}` : null} 
+                        src={user?.avatar ? buildS3UrlAlways(user.avatar) : null} 
                         icon={!user?.avatar && <UserOutlined />}
                         size="small"
                     />

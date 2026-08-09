@@ -26,6 +26,7 @@ import {
     Tooltip,
     Typography,
 } from "antd";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -205,7 +206,7 @@ export default function Index({ entries, filters, auth }) {
             render: (text) => {
                 if (!text) return "N/A";
 
-                const fileUrl = `/storage/${text}`;
+                const fileUrl = buildS3UrlAlways(text);
                 const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(text);
                 const isVideo = /\.(mp4|webm|ogg)$/i.test(text);
 

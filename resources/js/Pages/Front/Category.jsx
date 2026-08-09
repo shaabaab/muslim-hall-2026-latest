@@ -4,6 +4,7 @@ import { Navigation } from 'swiper/modules';
 import Footer from "./Footer";
 import Header from "./Header";
 import FrontAuthenticatedLayout from '@/Layouts/FrontEndLayout';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 // Import Swiper styles
 import 'swiper/css';
@@ -62,7 +63,7 @@ export default function Category() {
                                         <Link href={`/category-single/${c.slug}`} className="quick-link-content">
                                             <div className="quick-link-icon">
                                                 <img
-                                                    src={`${window.location.origin}/storage/${c.img}`}
+                                                    src={buildS3UrlAlways(c.img)}
                                                     alt={c.name}
                                                     onError={(e) => {
                                                         e.target.src = 'https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png';

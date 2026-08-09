@@ -34,6 +34,7 @@ import {
     StarOutlined,
     StarFilled,
 } from "@ant-design/icons";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -50,11 +51,8 @@ export default function Index({ exhibitions, filters, auth }) {
         }
 
         if (record.image) {
-            if (record.image.startsWith("http")) {
-                return record.image;
-            }
-
-            return `/storage/${record.image}`;
+            // Media is on S3; resolve the key rather than using /storage/.
+            return buildS3UrlAlways(record.image);
         }
 
         return "/placeholder-image.jpg";

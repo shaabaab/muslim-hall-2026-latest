@@ -28,6 +28,7 @@ import {
     Tooltip,
     Typography,
 } from "antd";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -250,7 +251,7 @@ export default function Index({ posts, filters, auth }) {
             render: (image) =>
                 image ? (
                     <img
-                        src={`/storage/${image}`}
+                        src={buildS3UrlAlways(image)}
                         alt="Post"
                         style={{
                             width: "50px",

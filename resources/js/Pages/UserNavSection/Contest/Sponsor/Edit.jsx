@@ -24,6 +24,7 @@ import {
 } from '@ant-design/icons';
 
 import { Link } from '@inertiajs/react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 import { useState } from 'react'; // Added missing import
 
 const { Title, Text } = Typography;
@@ -31,7 +32,7 @@ const { Option } = Select;
 
 export default function Edit({ sponsor, auth, langs, sponsors }) {
     const [previewImg, setPreviewImg] = useState( // Added missing state
-        sponsor.img ? `/storage/${sponsor.img}` : null
+        sponsor.img ? buildS3UrlAlways(sponsor.img) : null
     );
 
     const { data, setData, post, processing, errors } = useForm({
@@ -223,7 +224,7 @@ export default function Edit({ sponsor, auth, langs, sponsors }) {
                                     {data.img && typeof data.img === 'string' && !previewImg && (
                                         <div className="mt-2">
                                             <img
-                                                src={`/storage/${data.img}`}
+                                                src={buildS3UrlAlways(data.img)}
                                                 alt="Existing Sponsor"
                                                 style={{ maxWidth: '200px', maxHeight: '200px' }}
                                                 className="mt-2 rounded shadow"

@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -28,7 +29,7 @@ const { Option } = Select;
 export default function Edit({ post, auth }) {
     
     const [imagePreview, setImagePreview] = useState(
-        post.image ? `/storage/${post.image}` : null
+        post.image ? buildS3UrlAlways(post.image) : null
     );
     
     const { data, setData, put, processing, errors } = useForm({
@@ -70,7 +71,7 @@ export default function Edit({ post, auth }) {
         setData('image', null);
         // If there was an existing image, keep it as preview
         if (post.image) {
-            setImagePreview(`/storage/${post.image}`);
+            setImagePreview(buildS3UrlAlways(post.image));
         } else {
             setImagePreview(null);
         }

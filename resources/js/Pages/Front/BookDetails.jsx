@@ -7,6 +7,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import Footer from "./Footer";
 import Header from "./Header";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -44,15 +45,17 @@ export default function BookDetails() {
         });
     };
 
-    // Get photo URL
+    // Media is on S3, not storage/app/public — resolve keys via the shared helper.
     const getPhotoUrl = (photoPath) => {
-        return photoPath ? `/storage/${photoPath}` : "/default-book-cover.jpg";
+        return photoPath
+            ? buildS3UrlAlways(photoPath)
+            : "/default-book-cover.jpg";
     };
 
     // Get PDF file URL
     const getPdfUrl = (filePath) => {
         if (!filePath) return null;
-        return `/storage/${filePath}`;
+        return buildS3UrlAlways(filePath);
     };
 
     // Get file size in readable format

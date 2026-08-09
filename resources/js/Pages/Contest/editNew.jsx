@@ -26,6 +26,7 @@ import {
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import ReactQuill from "react-quill";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 import "react-quill/dist/quill.snow.css";
 
 const { Title, Text } = Typography;
@@ -98,7 +99,7 @@ export default function Edit({ auth, contest, prizes, categories, sponsors }) {
                     acc[sponsorId] = {
                         file: null,
                         preview: sponsor.banner
-                            ? `/storage/${sponsor.banner}`
+                            ? buildS3UrlAlways(sponsor.banner)
                             : null,
                         name: "Existing banner",
                         existing: true,
@@ -138,7 +139,7 @@ export default function Edit({ auth, contest, prizes, categories, sponsors }) {
                             acc[sponsorId] = {
                                 file: null,
                                 preview: sponsor.banner
-                                    ? `/storage/${sponsor.banner}`
+                                    ? buildS3UrlAlways(sponsor.banner)
                                     : null,
                                 name: "Existing banner",
                                 existing: true,

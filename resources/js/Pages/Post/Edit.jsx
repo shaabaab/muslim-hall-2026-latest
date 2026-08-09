@@ -37,6 +37,7 @@ import 'react-quill/dist/quill.snow.css';
 import MagicUrl from 'quill-magic-url';
 import { useState, useEffect, useCallback } from 'react';
 import MultipleMediaUpload from '@/Components/MultipleMediaUpload';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 Quill.register('modules/magicUrl', MagicUrl);
 const { Title, Text } = Typography;
@@ -86,7 +87,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                 const imagePath = typeof img === 'object' ? img.image : img;
                 return {
                     file: null,
-                    preview: `/storage/${imagePath}`,
+                    preview: buildS3UrlAlways(imagePath),
                     isExisting: true,
                     path: imagePath,
                     id: `existing-${editPost.id}-${index}`
@@ -131,7 +132,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                         const draftPreviews = draftData.data.imagePreviews.map(preview => ({
                             ...preview,
                             preview: preview.isExisting
-                                ? `/storage/${preview.path}`
+                                ? buildS3UrlAlways(preview.path)
                                 : URL.createObjectURL(new Blob([preview.data]))
                         }));
                         setImagePreviews([...existingPreviews, ...draftPreviews]);
@@ -226,7 +227,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                 const imagePath = typeof img === 'object' ? img.image : img;
                 return {
                     file: null,
-                    preview: `/storage/${imagePath}`,
+                    preview: buildS3UrlAlways(imagePath),
                     isExisting: true,
                     path: imagePath,
                     id: `existing-${editPost.id}-${index}`
@@ -495,7 +496,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
         if (currentFile instanceof File) {
             return URL.createObjectURL(currentFile);
         } else if (originalFile) {
-            return `/storage/${originalFile}`;
+            return buildS3UrlAlways(originalFile);
         }
         return null;
     };
@@ -811,7 +812,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                                     </Text>
                                 ) : editPost.pdf ? (
                                     <a
-                                        href={`/storage/${editPost.pdf}`}
+                                        href={buildS3UrlAlways(editPost.pdf)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         style={{ marginTop: '8px', display: 'inline-block' }}

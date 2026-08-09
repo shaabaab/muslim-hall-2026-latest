@@ -4,6 +4,7 @@ import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Footer from "./Footer";
 import Header from "./Header";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 export default function Home() {
     const { post, auth, flash, reaction_counts, userReactionType } =
@@ -362,7 +363,7 @@ export default function Home() {
                     PDF Document
                 </h3>
                 <a
-                    href={`/storage/${post.pdf}`}
+                    href={buildS3UrlAlways(post.pdf)}
                     className="download-pdf-btn"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -373,7 +374,7 @@ export default function Home() {
             </div>
             <div className="pdf-preview">
                 <iframe
-                    src={`/storage/${post.pdf}#view=FitH`}
+                    src={`${buildS3UrlAlways(post.pdf)}#view=FitH`}
                     title={post.title}
                     className="pdf-iframe"
                     style={{ width: "100%", height: "600px", border: "none" }}
@@ -437,7 +438,7 @@ export default function Home() {
                                 Video Content
                             </h3>
                             <a
-                                href={`/storage/${post.video}`}
+                                href={buildS3UrlAlways(post.video)}
                                 className="download-video-btn"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -453,12 +454,12 @@ export default function Home() {
                                 className="video-player"
                                 poster={
                                     post.images?.[0]?.image
-                                        ? `/storage/${post.images[0].image}`
+                                        ? buildS3UrlAlways(post.images[0].image)
                                         : ""
                                 }
                             >
                                 <source
-                                    src={`/storage/${post.video}`}
+                                    src={buildS3UrlAlways(post.video)}
                                     type="video/mp4"
                                 />
                                 Your browser does not support the video tag.
@@ -511,7 +512,7 @@ export default function Home() {
                         <div className="audio-player-header d-flex justify-content-between align-items-center mb-2">
                             <span>Audio File</span>
                             <a
-                                href={`/storage/${post.audio}`}
+                                href={buildS3UrlAlways(post.audio)}
                                 className="download-audio-btn"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -526,7 +527,7 @@ export default function Home() {
                                 className="audio-player"
                                 style={{ width: "100%" }}
                             >
-                                <source src={`/storage/${post.audio}`} type="audio/mpeg" />
+                                <source src={buildS3UrlAlways(post.audio)} type="audio/mpeg" />
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
@@ -539,7 +540,7 @@ export default function Home() {
                         <div className="audio-player-header d-flex justify-content-between align-items-center mb-2">
                             <span>Audio {idx + 1}</span>
                             <a
-                                href={`/storage/${audioItem.audio}`}
+                                href={buildS3UrlAlways(audioItem.audio)}
                                 className="download-audio-btn"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -554,7 +555,7 @@ export default function Home() {
                                 className="audio-player"
                                 style={{ width: "100%" }}
                             >
-                                <source src={`/storage/${audioItem.audio}`} type="audio/mpeg" />
+                                <source src={buildS3UrlAlways(audioItem.audio)} type="audio/mpeg" />
                                 Your browser does not support the audio element.
                             </audio>
                         </div>
@@ -710,7 +711,7 @@ export default function Home() {
                             {post.image && (
                                 <div className="hero-frame">
                                     <img
-                                        src={`/storage/${post.image}`}
+                                        src={buildS3UrlAlways(post.image)}
                                         alt={post.title}
                                         className="hero-img"
                                     />
