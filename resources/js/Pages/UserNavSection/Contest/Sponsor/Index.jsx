@@ -30,6 +30,7 @@ import {
     CloseCircleOutlined,
     EyeOutlined,
 } from "@ant-design/icons";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -157,7 +158,7 @@ export default function Index({ sponsors, filters, auth }) {
             render: (photo) =>
                 photo ? (
                     <img
-                        src={`/storage/${photo}`}
+                        src={buildS3UrlAlways(photo)}
                         alt="Sponsor"
                         style={{
                             width: "50px",

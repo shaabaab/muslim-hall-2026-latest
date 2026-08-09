@@ -21,6 +21,7 @@ import {
 } from '@ant-design/icons';
 import { Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -68,11 +69,11 @@ export default function Edit({ seo, auth }) {
 
     // Set initial previews from existing images
     useEffect(() => {
-        if (seo.fav_icon) setFavIconPreview(`/storage/${seo.fav_icon}`);
-        if (seo.header_logo) setHeaderLogoPreview(`/storage/${seo.header_logo}`);
-        if (seo.footer_logo) setFooterLogoPreview(`/storage/${seo.footer_logo}`);
-        if (seo.og_image) setOgImagePreview(`/storage/${seo.og_image}`);
-        if (seo.twitter_image) setTwitterImagePreview(`/storage/${seo.twitter_image}`);
+        if (seo.fav_icon) setFavIconPreview(buildS3UrlAlways(seo.fav_icon));
+        if (seo.header_logo) setHeaderLogoPreview(buildS3UrlAlways(seo.header_logo));
+        if (seo.footer_logo) setFooterLogoPreview(buildS3UrlAlways(seo.footer_logo));
+        if (seo.og_image) setOgImagePreview(buildS3UrlAlways(seo.og_image));
+        if (seo.twitter_image) setTwitterImagePreview(buildS3UrlAlways(seo.twitter_image));
     }, [seo]);
 
     // Handle file upload with preview

@@ -3,6 +3,7 @@ import { Link, router, usePage } from "@inertiajs/react";
 import { useEffect, useMemo, useState } from "react";
 import Footer from "./Footer";
 import Header from "./Header";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 export default function BookDetail() {
     const { book, filters: initialFilters } = usePage().props;
@@ -387,7 +388,7 @@ export default function BookDetail() {
                                                       <div className="card-img-wrapper">
                                                           <img
                                                               alt={p.title}
-                                                              src={`${window.location.origin}/storage/${p.photo}`}
+                                                              src={buildS3UrlAlways(p.photo)}
                                                               onError={(e) => {
                                                                   e.target.src =
                                                                       "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";

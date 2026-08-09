@@ -8,6 +8,7 @@ import Footer from "./Footer";
 
 import { Row, Col, message } from "antd";
 import Swal from "sweetalert2";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 // Constants
 const TOAST_DURATION = 4000;
@@ -1591,7 +1592,7 @@ const ContestTabs = ({
                                     <img
                                         src={
                                             sponsor.banner
-                                                ? `/storage/${sponsor.banner}`
+                                                ? buildS3UrlAlways(sponsor.banner)
                                                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(sponsor.name || "Sponsor")}&background=1b7a3a&color=fff`
                                         }
                                         alt={sponsor.name}

@@ -2,6 +2,7 @@ import { Link, usePage, useForm, router } from "@inertiajs/react";
 import Footer from "./Footer";
 import Header from "./Header";
 import FrontAuthenticatedLayout from '@/Layouts/FrontEndLayout';
+import { buildS3UrlAlways } from '@/Utils/s3Helpers';
 import { useState, useEffect, useMemo } from 'react';
 import {
     Modal,
@@ -158,10 +159,11 @@ export default function ExhibitionDetail() {
         }
     };
 
-    // Helper to get image
+    // Helper to get image. Media is on S3, not storage/app/public — resolve the
+    // key via the shared helper instead of building a /storage/ path by hand.
     const getImageUrl = (imagePath) => {
         if (!imagePath) return 'https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png';
-        return imagePath.startsWith('http') ? imagePath : `${window.location.origin}/storage/${imagePath}`;
+        return buildS3UrlAlways(imagePath);
     };
 
     // Derived Data for Filters

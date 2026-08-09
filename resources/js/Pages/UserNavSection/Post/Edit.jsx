@@ -31,6 +31,7 @@ import MagicUrl from 'quill-magic-url';
 import { useState, useEffect } from 'react';
 import MultipleMediaUpload from '@/Components/MultipleMediaUpload';
 import axios from 'axios';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 Quill.register('modules/magicUrl', MagicUrl);
 const { Title, Text } = Typography;
@@ -74,7 +75,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                 const imagePath = typeof img === 'object' ? img.image : img;
                 return {
                     file: null,
-                    preview: `/storage/${imagePath}`,
+                    preview: buildS3UrlAlways(imagePath),
                     isExisting: true,
                     path: imagePath,
                     id: `existing-${index}`
@@ -322,7 +323,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
         if (currentFile instanceof File) {
             return URL.createObjectURL(currentFile);
         } else if (originalFile) {
-            return `/storage/${originalFile}`;
+            return buildS3UrlAlways(originalFile);
         }
         return null;
     };
@@ -593,7 +594,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                                         </Text>
                                     ) : editPost.pdf ? (
                                         <a
-                                            href={`/storage/${editPost.pdf}`}
+                                            href={buildS3UrlAlways(editPost.pdf)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             style={{ display: 'block', }}
@@ -695,7 +696,7 @@ export default function Edit({ auth, categories, langs, sections, editPost }) {
                                                 icon={<PlayCircleOutlined />}
                                                 type="primary"
                                                 size="small"
-                                                href={`/storage/${editPost.video}`}
+                                                href={buildS3UrlAlways(editPost.video)}
                                                 target="_blank"
                                             >
                                                 Play Video

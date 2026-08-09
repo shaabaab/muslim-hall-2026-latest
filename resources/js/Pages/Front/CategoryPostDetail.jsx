@@ -3,6 +3,7 @@ import Footer from "./Footer";
 import Header from "./Header";
 import FrontAuthenticatedLayout from '@/Layouts/FrontEndLayout';
 import { useState, useEffect } from 'react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 export default function CategoryPostDetail() {
     const { category, filters: initialFilters } = usePage().props;
@@ -100,7 +101,7 @@ export default function CategoryPostDetail() {
                         </div>
                         <div className="hero-image">
                             <img
-                                src={category?.img ? `${window.location.origin}/storage/${category.img}` : "https://i.postimg.cc/rmRDSs27/vecteezy-islamic-new-year-celebration-4k-resolution-ai-generated-32976145.jpg"}
+                                src={category?.img ? buildS3UrlAlways(category.img) : "https://i.postimg.cc/rmRDSs27/vecteezy-islamic-new-year-celebration-4k-resolution-ai-generated-32976145.jpg"}
                                 alt={category?.name || 'Category'}
                                 onError={(e) => {
                                     e.target.src = 'https://i.postimg.cc/rmRDSs27/vecteezy-islamic-new-year-celebration-4k-resolution-ai-generated-32976145.jpg';
@@ -247,7 +248,7 @@ export default function CategoryPostDetail() {
                                 post.images && 
                                 post.images.length > 0 && 
                                 post.images[0]?.image
-                                    ? `${window.location.origin}/storage/${post.images[0].image}`
+                                    ? buildS3UrlAlways(post.images[0].image)
                                     : 'https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png'
                             }
                             onError={(e) => {

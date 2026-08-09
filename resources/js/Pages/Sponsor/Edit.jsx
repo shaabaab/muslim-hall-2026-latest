@@ -11,7 +11,7 @@ import {
     Col,
     Upload
 } from 'antd';
-import { getS3PublicUrl } from "@/Utils/s3Helpers";
+import { getS3PublicUrl, buildS3UrlAlways } from "@/Utils/s3Helpers";
 import {
     PictureOutlined,
     ArrowLeftOutlined,
@@ -297,7 +297,7 @@ export default function Edit({ sponsor, auth }) {
                                                 </Button>
                                             </div>
                                             <img
-                                                src={previewImg || `/storage/${sponsor.photo}`}
+                                                src={previewImg || buildS3UrlAlways(sponsor.photo)}
                                                 alt="Sponsor preview"
                                                 className="w-full h-48 object-cover rounded"
                                             />

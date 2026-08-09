@@ -1,6 +1,6 @@
 import { useForm, Link } from "@inertiajs/react";
 import Authenticated from "@/Layouts/AuthenticatedLayout";
-import { getS3PublicUrl } from "@/Utils/s3Helpers"; // ✅ HERE
+import { getS3PublicUrl, buildS3UrlAlways } from "@/Utils/s3Helpers"; // ✅ HERE
 import {
     Form,
     Input,
@@ -53,7 +53,7 @@ export default function Edit({ auth, langs, setting }) {
         // local storage fallback
         if (path.startsWith("/storage/")) return path;
         if (path.startsWith("storage/")) return `/${path}`;
-        return `/storage/${path}`;
+        return buildS3UrlAlways(path);
     };
 
     // ✅ Existing image urls (server)

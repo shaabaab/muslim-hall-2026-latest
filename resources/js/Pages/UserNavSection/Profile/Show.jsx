@@ -41,7 +41,7 @@ import {
 } from "@ant-design/icons";
 
 import { useState } from "react";
-import { getS3PublicUrl } from "@/Utils/s3Helpers";
+import { getS3PublicUrl, buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -798,7 +798,7 @@ export default function UserProfile({
                                                                     ?.length >
                                                                     0 ? (
                                                                     <img
-                                                                        src={`/storage/${post.images[0]?.image}`}
+                                                                        src={buildS3UrlAlways(post.images[0]?.image)}
                                                                         alt={
                                                                             post.title
                                                                         }
@@ -984,7 +984,7 @@ export default function UserProfile({
                                                                         item.image !=
                                                                             null ? (
                                                                             <img
-                                                                                src={`/storage/${item.image}`}
+                                                                                src={buildS3UrlAlways(item.image)}
                                                                                 alt={
                                                                                     item.title
                                                                                 }
@@ -1133,7 +1133,7 @@ export default function UserProfile({
                                                                         item.image !=
                                                                             null ? (
                                                                             <img
-                                                                                src={`/storage/${item.image}`}
+                                                                                src={buildS3UrlAlways(item.image)}
                                                                                 alt={
                                                                                     item.title
                                                                                 }

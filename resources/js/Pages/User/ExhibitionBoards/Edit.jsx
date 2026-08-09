@@ -16,6 +16,7 @@ import {
     SaveOutlined,
     UploadOutlined,
 } from "@ant-design/icons";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -27,11 +28,8 @@ export default function Edit({ auth, board }) {
         }
 
         if (board?.image) {
-            if (board.image.startsWith("http")) {
-                return board.image;
-            }
-
-            return `/storage/${board.image}`;
+            // Media is on S3; resolve the key rather than using /storage/.
+            return buildS3UrlAlways(board.image);
         }
 
         return null;

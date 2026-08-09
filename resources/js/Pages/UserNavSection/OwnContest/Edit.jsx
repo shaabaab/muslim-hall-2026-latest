@@ -11,7 +11,7 @@ import {
     UserOutlined,
 } from "@ant-design/icons";
 import { Link, useForm } from "@inertiajs/react";
-import { getS3PublicUrl } from "@/Utils/s3Helpers";
+import { getS3PublicUrl, buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 import {
     Button,
@@ -117,7 +117,7 @@ export default function Edit({ auth, contest, sponsors, categories, prizes }) {
                 if (id && s.banner) {
                     acc[id] = {
                         file: null,
-                        preview: `/storage/${s.banner}`,
+                        preview: buildS3UrlAlways(s.banner),
                         name: "Existing banner",
                         existing: true,
                     };

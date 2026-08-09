@@ -6,7 +6,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import Footer from "./Footer";
 import Header from "./Header";
-import { getS3PublicUrl } from "@/Utils/s3Helpers";
+import { getS3PublicUrl, buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 export default function AuthorProfile({
     auth,
@@ -39,8 +39,10 @@ export default function AuthorProfile({
             return author.photo;
         }
 
+        // Legacy /storage/ values point at the local symlink, but media lives on
+        // S3 — strip the prefix and resolve the key instead.
         if (String(author.photo).startsWith("/storage")) {
-            return author.photo;
+            return buildS3UrlAlways(author.photo);
         }
 
         if (String(author.photo).startsWith("/")) {

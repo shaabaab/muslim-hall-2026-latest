@@ -2,6 +2,7 @@ import { Link, usePage, router, Head } from "@inertiajs/react";
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 import Header from "./Header";
 import Footer from "./Footer";
 import { message } from "antd";
@@ -144,25 +145,11 @@ export default function ExhibitionDetail() {
         return String(html).replace(/<[^>]*>/g, "");
     };
 
-    const getImageUrl = (path) => {
-        if (!path) {
-            return "/placeholder-image.jpg";
-        }
-
-        if (String(path).startsWith("http")) {
-            return path;
-        }
-
-        if (String(path).startsWith("/storage")) {
-            return path;
-        }
-
-        if (String(path).startsWith("/")) {
-            return path;
-        }
-
-        return `/storage/${path}`;
-    };
+    // Media lives on S3, not in storage/app/public — never build /storage/ paths
+    // by hand. buildS3UrlAlways passes full URLs through and resolves bare keys
+    // (and any legacy /storage/ value) via /local-s3-proxy or the bucket URL.
+    const getImageUrl = (path) =>
+        buildS3UrlAlways(path) || "/assets/images/logo3.png";
 
     const formatDate = (date) => {
         if (!date) return "N/A";
@@ -179,6 +166,12 @@ export default function ExhibitionDetail() {
     };
 
     const galleryImages = useMemo(() => {
+        // gallery_urls is the appended accessor holding resolved URLs; fall back
+        // to the raw gallery keys, which getImageUrl resolves the same way.
+        if (Array.isArray(exhibition?.gallery_urls) && exhibition.gallery_urls.length) {
+            return exhibition.gallery_urls;
+        }
+
         if (!exhibition?.gallery) return [];
 
         if (Array.isArray(exhibition.gallery)) {
@@ -191,9 +184,10 @@ export default function ExhibitionDetail() {
         } catch (error) {
             return [];
         }
-    }, [exhibition?.gallery]);
+    }, [exhibition?.gallery_urls, exhibition?.gallery]);
 
-    const mainImage = selectedImage || exhibition?.image;
+    const mainImage =
+        selectedImage || exhibition?.image_url || exhibition?.image;
 
     useEffect(() => {
         setComments(exhibition?.comments || []);
@@ -491,7 +485,10 @@ export default function ExhibitionDetail() {
                                                 onClick={() => setSelectedImage(null)}
                                             >
                                                 <img
-                                                    src={getImageUrl(exhibition.image)}
+                                                    src={getImageUrl(
+                                                        exhibition.image_url ||
+                                                            exhibition.image,
+                                                    )}
                                                     alt="Main"
                                                 />
                                             </button>
@@ -648,7 +645,8 @@ export default function ExhibitionDetail() {
                                         {exhibition.document_file && (
                                             <a
                                                 href={getImageUrl(
-                                                    exhibition.document_file
+                                                    exhibition.document_url ||
+                                                        exhibition.document_file
                                                 )}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -971,7 +969,8 @@ export default function ExhibitionDetail() {
                                         </div>
                                     </div>
 
-                                    {exhibition.sponsor_image && (
+                                    {(exhibition.sponsor_image_url ||
+                                        exhibition.sponsor_image) && (
                                         <div className="white-card sponsor-card">
                                             <div className="section-title small">
                                                 <SvgIcon.Award />
@@ -980,7 +979,8 @@ export default function ExhibitionDetail() {
 
                                             <img
                                                 src={getImageUrl(
-                                                    exhibition.sponsor_image
+                                                    exhibition.sponsor_image_url ||
+                                                        exhibition.sponsor_image
                                                 )}
                                                 alt="Sponsor"
                                                 className="sponsor-image"

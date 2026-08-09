@@ -5,6 +5,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { Form, Input, Button, Card, Select, Typography, Space, message, Upload, Switch, Row, Col, InputNumber, Alert, Divider, Tag } from "antd";
 import { ArrowLeftOutlined, SaveOutlined, UploadOutlined, PictureOutlined, FileTextOutlined, ShoppingOutlined, EditOutlined, TeamOutlined, VideoCameraOutlined, AudioOutlined } from "@ant-design/icons";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -14,7 +15,8 @@ const AUDIO_ACCEPT = ".mp3,.wav,.ogg,.m4a,.aac,.flac,audio/*";
 const DOC_ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.rar,application/pdf";
 
 export default function Edit({ auth, exhibition, langs = [], boards = [] }) {
-    const fileUrl = (url, path) => url || (path?.startsWith?.("http") ? path : path ? `/storage/${path}` : null);
+    // Media is on S3; resolve the key rather than using /storage/.
+    const fileUrl = (url, path) => url || (path ? buildS3UrlAlways(path) : null);
     const oldGallery = Array.isArray(exhibition?.gallery_urls) ? exhibition.gallery_urls.map((x) => x?.url || x?.path || x).filter(Boolean) : [];
     const [mainImagePreview, setMainImagePreview] = useState(fileUrl(exhibition?.image_url, exhibition?.image));
     const [sponsorImagePreview, setSponsorImagePreview] = useState(fileUrl(exhibition?.sponsor_image_url, exhibition?.sponsor_image));

@@ -35,6 +35,7 @@ import {
     TrophyOutlined,
     CalendarOutlined,
 } from "@ant-design/icons";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 
@@ -150,7 +151,7 @@ export default function Show({ entry, auth }) {
             return (
                 <Image
                     width={300}
-                    src={`/storage/${entry.media_path}`}
+                    src={buildS3UrlAlways(entry.media_path)}
                     alt={getSafeValue(entry.title, "Entry image")}
                     className="mt-2 rounded"
                     placeholder={<Text type="secondary">Loading image...</Text>}
@@ -163,7 +164,7 @@ export default function Show({ entry, auth }) {
                 <div className="mt-2">
                     <video controls width={300} className="rounded">
                         <source
-                            src={`/storage/${entry.media_path}`}
+                            src={buildS3UrlAlways(entry.media_path)}
                             type="video/mp4"
                         />
                         Your browser does not support the video tag.
@@ -177,7 +178,7 @@ export default function Show({ entry, auth }) {
                 <div className="mt-2">
                     <Button
                         type="link"
-                        href={`/storage/${entry.media_path}`}
+                        href={buildS3UrlAlways(entry.media_path)}
                         target="_blank"
                         icon={<FileTextOutlined />}
                     >
@@ -191,7 +192,7 @@ export default function Show({ entry, auth }) {
             <div className="mt-2">
                 <Button
                     type="link"
-                    href={`/storage/${entry.media_path}`}
+                    href={buildS3UrlAlways(entry.media_path)}
                     target="_blank"
                     icon={<FileTextOutlined />}
                 >

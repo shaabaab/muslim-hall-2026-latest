@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -30,7 +31,7 @@ const { Option } = Select;
 
 export default function Edit({ post, auth }) {
     const [imagePreview, setImagePreview] = useState(
-        post.image ? `/storage/${post.image}` : null
+        post.image ? buildS3UrlAlways(post.image) : null
     );
     
     const { data, setData, post: inertiaPost, processing, errors, transform } = useForm({
@@ -219,7 +220,7 @@ export default function Edit({ post, auth }) {
                                                 </Button>
                                             </div>
                                             <img 
-                                                src={imagePreview || `/storage/${post.image}`}
+                                                src={imagePreview || buildS3UrlAlways(post.image)}
                                                 alt="Preview" 
                                                 className="w-full h-32 object-cover rounded"
                                             />

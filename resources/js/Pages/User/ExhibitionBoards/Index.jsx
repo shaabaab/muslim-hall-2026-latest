@@ -30,6 +30,7 @@ import {
     AppstoreOutlined,
     UsergroupAddOutlined,
 } from "@ant-design/icons";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 
@@ -55,21 +56,14 @@ export default function Index({
             }
 
             if (recordOrPath.image) {
-                if (recordOrPath.image.startsWith("http")) {
-                    return recordOrPath.image;
-                }
-
-                return `/storage/${recordOrPath.image}`;
+                // Media is on S3; resolve the key rather than using /storage/.
+                return buildS3UrlAlways(recordOrPath.image);
             }
 
             return "/placeholder-image.jpg";
         }
 
-        if (recordOrPath.startsWith("http")) {
-            return recordOrPath;
-        }
-
-        return `/storage/${recordOrPath}`;
+        return buildS3UrlAlways(recordOrPath);
     };
 
     const getApprovalColor = (status) => {

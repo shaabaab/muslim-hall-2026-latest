@@ -30,6 +30,7 @@ import {
     AppstoreOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -72,19 +73,13 @@ export default function Show({ auth, board }) {
             return value;
         }
 
-        if (value.startsWith("/storage/")) {
-            return value;
-        }
-
-        if (value.startsWith("storage/")) {
-            return `/${value}`;
-        }
-
         if (value.startsWith("/")) {
             return value;
         }
 
-        return `/storage/${value}`;
+        // Media is on S3; resolve the key (and any legacy storage/ value)
+        // instead of pointing at the local /storage/ symlink.
+        return buildS3UrlAlways(value);
     };
 
     const getBoardImageUrl = () => {

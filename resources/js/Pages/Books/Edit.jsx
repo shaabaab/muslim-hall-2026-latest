@@ -36,6 +36,7 @@ import {
 
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -44,13 +45,13 @@ const { TabPane } = Tabs;
 
 export default function Edit({ book, auth, seo, langs }) {
     const [photoPreview, setPhotoPreview] = useState(
-        book.photo ? `/storage/${book.photo}` : null
+        book.photo ? buildS3UrlAlways(book.photo) : null
     );
     const [ogImagePreview, setOgImagePreview] = useState(
-        seo?.og_image ? `/storage/${seo.og_image}` : null
+        seo?.og_image ? buildS3UrlAlways(seo.og_image) : null
     );
     const [twitterImagePreview, setTwitterImagePreview] = useState(
-        seo?.twitter_image ? `/storage/${seo.twitter_image}` : null
+        seo?.twitter_image ? buildS3UrlAlways(seo.twitter_image) : null
     );
 
     const { data, setData, post, processing, errors } = useForm({
@@ -333,7 +334,7 @@ export default function Edit({ book, auth, seo, langs }) {
                                                         <Text type="secondary">Current Image:</Text>
                                                         <div className="mt-2">
                                                             <img
-                                                                src={`/storage/${book.photo}`}
+                                                                src={buildS3UrlAlways(book.photo)}
                                                                 alt="Current Cover"
                                                                 style={{ maxWidth: '200px', maxHeight: '200px' }}
                                                                 className="rounded shadow"
@@ -525,7 +526,7 @@ export default function Edit({ book, auth, seo, langs }) {
                                                         <Text type="secondary">Current OG Image:</Text>
                                                         <div className="mt-2">
                                                             <img 
-                                                                src={`/storage/${seo.og_image}`} 
+                                                                src={buildS3UrlAlways(seo.og_image)} 
                                                                 alt="Current OG" 
                                                                 style={{ maxWidth: '200px', maxHeight: '105px' }}
                                                                 className="rounded shadow"
@@ -622,7 +623,7 @@ export default function Edit({ book, auth, seo, langs }) {
                                                         <Text type="secondary">Current Twitter Image:</Text>
                                                         <div className="mt-2">
                                                             <img 
-                                                                src={`/storage/${seo.twitter_image}`} 
+                                                                src={buildS3UrlAlways(seo.twitter_image)} 
                                                                 alt="Current Twitter" 
                                                                 style={{ maxWidth: '200px', maxHeight: '100px' }}
                                                                 className="rounded shadow"

@@ -47,6 +47,7 @@ import {
 
 import { useState } from "react";
 import { Link, router } from "@inertiajs/react";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -64,15 +65,17 @@ const getCommonImageUrl = (path) => {
         return path;
     }
 
+    // Legacy /storage/ values point at the local symlink, but media lives on
+    // S3 — strip the prefix and resolve the key instead.
     if (String(path).startsWith("/storage")) {
-        return path;
+        return buildS3UrlAlways(path);
     }
 
     if (String(path).startsWith("/")) {
         return path;
     }
 
-    return `/storage/${path}`;
+    return buildS3UrlAlways(path);
 };
 
 const getCardDateParts = (date) => {

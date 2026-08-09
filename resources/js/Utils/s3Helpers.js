@@ -54,6 +54,16 @@ export function getS3PublicUrl(path) {
         return path;
     }
 
+    // Local object URLs / inline data (edit-form previews of a not-yet-uploaded
+    // file) and bundled assets are already resolvable — never treat them as keys.
+    if (
+        path.startsWith("blob:") ||
+        path.startsWith("data:") ||
+        path.startsWith("/assets/")
+    ) {
+        return path;
+    }
+
     // Check if running locally
     if (
         typeof window !== "undefined" &&

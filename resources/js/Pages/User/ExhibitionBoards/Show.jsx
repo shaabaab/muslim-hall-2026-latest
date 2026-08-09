@@ -27,6 +27,7 @@ import {
     TeamOutlined,
     AppstoreOutlined,
 } from "@ant-design/icons";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -37,15 +38,8 @@ export default function Show({ auth, board }) {
         }
 
         if (typeof path === "string") {
-            if (path.startsWith("http")) {
-                return path;
-            }
-
-            if (path.startsWith("/storage")) {
-                return path;
-            }
-
-            return `/storage/${path}`;
+            // Media is on S3; resolve the key rather than using /storage/.
+            return buildS3UrlAlways(path);
         }
 
         if (typeof path === "object") {

@@ -30,6 +30,7 @@ import { Link } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -77,19 +78,9 @@ export default function Edit({ auth, exhibition, langs }) {
             return null;
         }
 
-        if (typeof path === "string" && path.startsWith("http")) {
-            return path;
-        }
-
-        if (typeof path === "string" && path.startsWith("/storage/")) {
-            return path;
-        }
-
-        if (typeof path === "string" && path.startsWith("storage/")) {
-            return `/${path}`;
-        }
-
-        return `/storage/${path}`;
+        // Media is on S3; resolve the key rather than pointing at /storage/.
+        // buildS3UrlAlways passes http/blob:/data: previews through untouched.
+        return buildS3UrlAlways(path);
     };
 
     const { data, setData, post, processing, errors } = useForm({
