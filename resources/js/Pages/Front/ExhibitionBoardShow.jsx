@@ -154,7 +154,24 @@ export default function ExhibitionBoardShow() {
                                                     }`}
                                                 >
                                                     <div className="slider-image">
+                                                        {/* Blurred copy fills
+                                                            the box behind the
+                                                            photo. */}
                                                         <img
+                                                            className="slide-photo-bg"
+                                                            src={getImageUrl(
+                                                                item.image_url,
+                                                                item.image,
+                                                            )}
+                                                            alt=""
+                                                            aria-hidden="true"
+                                                            onError={
+                                                                handleImageError
+                                                            }
+                                                        />
+
+                                                        <img
+                                                            className="slide-photo"
                                                             src={getImageUrl(
                                                                 item.image_url,
                                                                 item.image,
@@ -415,23 +432,37 @@ export default function ExhibitionBoardShow() {
                 }
 
                 .slider-image {
+                    position: relative;
                     background: #111827;
                     min-height: 520px;
                     overflow: hidden;
                 }
 
                 .slider-image img {
+                    position: absolute;
+                    inset: 0;
                     width: 100%;
                     height: 100%;
-                    /* contain, not cover: show the whole image instead of
-                       cropping whatever overflows the box. */
+                }
+
+                /* Wide or tall photos would otherwise sit in a slab of flat
+                   black: a blurred, cropped copy fills the box behind them. */
+                .slide-photo-bg {
+                    object-fit: cover;
+                    object-position: center;
+                    filter: blur(26px) brightness(0.55);
+                    transform: scale(1.2);
+                }
+
+                /* contain, not cover: the whole photo stays visible. */
+                .slide-photo {
                     object-fit: contain;
                     object-position: center;
                     transform: scale(1.04);
                     transition: transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
                 }
 
-                .slider-card.is-active .slider-image img {
+                .slider-card.is-active .slide-photo {
                     transform: scale(1);
                 }
 
@@ -727,7 +758,7 @@ export default function ExhibitionBoardShow() {
 
                 @media (prefers-reduced-motion: reduce) {
                     .slider-track,
-                    .slider-image img,
+                    .slide-photo,
                     .slider-content > *,
                     .thumb,
                     .slider-btn {
