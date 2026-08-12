@@ -57,6 +57,24 @@ export default function ExhibitionBoards() {
         );
     };
 
+    // An exhibition posted by the board's own creator is the owner's; anyone
+    // else posting into the board is a contributor.
+    const getCreator = (board, post) => {
+        const boardOwnerId = board?.user_id ?? board?.owner?.id;
+        const postCreatorId = post?.user_id ?? post?.user?.id;
+
+        const name = post?.user?.name || "Unknown";
+
+        if (!boardOwnerId || !postCreatorId) {
+            return { role: null, name };
+        }
+
+        return {
+            role: boardOwnerId === postCreatorId ? "Owner" : "Contributor",
+            name,
+        };
+    };
+
     const getPostImageUrl = (post) => {
         return getS3PublicUrl(
             post?.image_url ||
@@ -199,54 +217,77 @@ export default function ExhibitionBoards() {
 
                                                 {posts.length > 0 ? (
                                                     <div className="board-posts-list">
-                                                        {posts.map((post) => (
-                                                            // <Link
-                                                            //     href={`/exhibition-detail/${post.id}`}
-                                                            //     className="board-post-item"
-                                                            //     key={post.id}
-                                                            // >
-                                                            <div className="board-post-item">
-                                                                <img
-                                                                    src={getPostImageUrl(
-                                                                        post,
-                                                                    )}
-                                                                    alt={
-                                                                        stripHtml(
-                                                                            post.title,
-                                                                        ) ||
-                                                                        "Exhibition"
-                                                                    }
-                                                                    onError={(
-                                                                        e,
-                                                                    ) => {
-                                                                        e.currentTarget.src =
-                                                                            fallbackImage;
-                                                                    }}
-                                                                />
-                                                                <div className="board-post-content">
-                                                                    <h5>
-                                                                        {stripHtml(
-                                                                            post.title,
-                                                                        ) ||
-                                                                            "Untitled Exhibition"}
-                                                                    </h5>
-                                                                    <p>
-                                                                        {stripHtml(
-                                                                            post.description ||
-                                                                                post.content,
-                                                                        ).slice(
-                                                                            0,
-                                                                            95,
+                                                        {posts.map((post) => {
+                                                            const creator =
+                                                                getCreator(
+                                                                    board,
+                                                                    post,
+                                                                );
+
+                                                            return (
+                                                                // <Link
+                                                                //     href={`/exhibition-detail/${post.id}`}
+                                                                //     className="board-post-item"
+                                                                //     key={post.id}
+                                                                // >
+                                                                <div className="board-post-item">
+                                                                    <img
+                                                                        src={getPostImageUrl(
+                                                                            post,
                                                                         )}
-                                                                    </p>
-                                                                    <span>
-                                                                        {post.type ||
-                                                                            "Exhibition"}
-                                                                    </span>
+                                                                        alt={
+                                                                            stripHtml(
+                                                                                post.title,
+                                                                            ) ||
+                                                                            "Exhibition"
+                                                                        }
+                                                                        onError={(
+                                                                            e,
+                                                                        ) => {
+                                                                            e.currentTarget.src =
+                                                                                fallbackImage;
+                                                                        }}
+                                                                    />
+                                                                    <div className="board-post-content">
+                                                                        <h5>
+                                                                            {stripHtml(
+                                                                                post.title,
+                                                                            ) ||
+                                                                                "Untitled Exhibition"}
+                                                                        </h5>
+                                                                        <p>
+                                                                            {stripHtml(
+                                                                                post.description ||
+                                                                                    post.content,
+                                                                            ).slice(
+                                                                                0,
+                                                                                95,
+                                                                            )}
+                                                                        </p>
+                                                                        <span>
+                                                                            {post.type ||
+                                                                                "Exhibition"}
+                                                                        </span>
+
+                                                                        {creator.role && (
+                                                                            <span
+                                                                                className={`creator-chip ${creator.role.toLowerCase()}`}
+                                                                            >
+                                                                                {
+                                                                                    creator.role
+                                                                                }
+                                                                                <b>
+                                                                                    {
+                                                                                        creator.name
+                                                                                    }
+                                                                                </b>
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            // </Link>
-                                                        ))}
+                                                                // </Link>
+                                                            );
+                                                        })}
                                                     </div>
                                                 ) : (
                                                     <div className="empty-posts">
@@ -552,6 +593,41 @@ export default function ExhibitionBoards() {
                     color: #0f8022;
                     font-size: 12px;
                     font-weight: 900;
+                }
+
+                /* Owner = posted by the board's creator, contributor = anyone
+                   else who posted into the board. */
+                .creator-chip {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 5px;
+                    margin-top: 8px;
+                    padding: 5px 9px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    font-weight: 900;
+                    text-transform: lowercase;
+                    letter-spacing: .04em;
+                }
+
+                .creator-chip b {
+                    font-size: 12px;
+                    font-weight: 800;
+                    text-transform: none;
+                    letter-spacing: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .board-post-content .creator-chip.owner {
+                    background: #e8f8ed;
+                    color: #0f8022;
+                }
+
+                .board-post-content .creator-chip.contributor {
+                    background: #fff4e5;
+                    color: #b45309;
                 }
 
                 .empty-posts,

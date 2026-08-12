@@ -554,6 +554,9 @@ class FrontendController extends Controller
         // exhibitions under approved/active boards are visible.
         $exhibition = $this->publicExhibitionQuery([
             'board',
+            // Creator, so the page can label them owner (same person as the
+            // board's owner) or contributor.
+            'user',
             'comments.user',
             'comments.replies.user',
             'reactions.user',

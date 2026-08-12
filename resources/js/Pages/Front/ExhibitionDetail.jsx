@@ -217,6 +217,20 @@ const SvgIcon = {
             <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.11" />
         </svg>
     ),
+    Share: () => (
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
+        </svg>
+    ),
 };
 
 export default function ExhibitionDetail() {
@@ -311,6 +325,31 @@ export default function ExhibitionDetail() {
 
     const mainImage =
         selectedImage || exhibition?.image_url || exhibition?.image;
+
+    // An exhibition posted by the board's own creator is the owner's; anyone
+    // else posting into the board is a contributor.
+    const creator = useMemo(() => {
+        const boardOwnerId =
+            exhibition?.board?.user_id ?? exhibition?.board?.owner?.id;
+        const creatorId = exhibition?.user_id ?? exhibition?.user?.id;
+
+        const name = exhibition?.user?.name || "Unknown";
+
+        if (!boardOwnerId || !creatorId) {
+            return { role: null, name };
+        }
+
+        return {
+            role: boardOwnerId === creatorId ? "Owner" : "Contributor",
+            name,
+        };
+    }, [
+        exhibition?.board?.user_id,
+        exhibition?.board?.owner?.id,
+        exhibition?.user_id,
+        exhibition?.user?.id,
+        exhibition?.user?.name,
+    ]);
 
     // Re-sync when Inertia swaps the page to another exhibition.
     useEffect(() => {
@@ -672,6 +711,31 @@ export default function ExhibitionDetail() {
         ).toLocaleString()}`;
     };
 
+    // Native share sheet where the browser offers one (mostly mobile), copy the
+    // link everywhere else. No login needed either way.
+    const handleShare = async () => {
+        const url = window.location.href;
+        const title = stripHtml(exhibition?.title) || "Exhibition";
+
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, url });
+                return;
+            } catch (error) {
+                // Dismissing the sheet is not a failure worth reporting.
+                if (error?.name === "AbortError") return;
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(url);
+            message.success("Link copied to clipboard.");
+        } catch (error) {
+            console.error("Share error:", error);
+            message.error("Could not copy the link.");
+        }
+    };
+
     const reactionButtonClass = (type) => {
         return userReaction?.type === type
             ? `reaction-button active ${type}`
@@ -954,7 +1018,23 @@ export default function ExhibitionDetail() {
                                                                 "Untitled",
                                                         }}
                                                     />
-                                                    <div className="status-row">
+
+                                                    {creator.role && (
+                                                        <div className="creator-row">
+                                                            <span
+                                                                className={`creator-chip ${creator.role.toLowerCase()}`}
+                                                            >
+                                                                <SvgIcon.User />
+                                                                {creator.role}
+                                                                <b>
+                                                                    {
+                                                                        creator.name
+                                                                    }
+                                                                </b>
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {/* <div className="status-row">
                                                         <span className="status-chip green">
                                                             {exhibition.is_available
                                                                 ? "Available"
@@ -965,7 +1045,7 @@ export default function ExhibitionDetail() {
                                                             {exhibition.approval_status ||
                                                                 "Approved"}
                                                         </span>
-                                                    </div>
+                                                    </div> */}
 
                                                     <div className="stats-grid">
                                                         <div className="stat-card">
@@ -1069,7 +1149,7 @@ export default function ExhibitionDetail() {
                                                                 </strong>
                                                             </button>
 
-                                                            <button
+                                                            {/* <button
                                                                 type="button"
                                                                 className={reactionButtonClass(
                                                                     "love",
@@ -1091,7 +1171,7 @@ export default function ExhibitionDetail() {
                                                                     {reactionCounts.love ||
                                                                         0}
                                                                 </strong>
-                                                            </button>
+                                                            </button> */}
 
                                                             <button
                                                                 type="button"
@@ -1115,6 +1195,20 @@ export default function ExhibitionDetail() {
                                                                     {reactionCounts.dislike ||
                                                                         0}
                                                                 </strong>
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className="reaction-button share"
+                                                                onClick={
+                                                                    handleShare
+                                                                }
+                                                                aria-label="Share this exhibition"
+                                                            >
+                                                                <SvgIcon.Share />
+                                                                <span>
+                                                                    Share
+                                                                </span>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1903,6 +1997,46 @@ export default function ExhibitionDetail() {
                     color: #1d4ed8;
                 }
 
+                .creator-row {
+                    margin-bottom: 18px;
+                }
+
+                /* Owner = posted by the board's creator, contributor = anyone
+                   else who posted into the board. */
+                .creator-chip {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 7px;
+                    padding: 8px 14px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    font-weight: 900;
+                    text-transform: lowercase;
+                    letter-spacing: .05em;
+                }
+
+                .creator-chip .svg-icon {
+                    width: 16px;
+                    height: 16px;
+                }
+
+                .creator-chip b {
+                    font-size: 14px;
+                    font-weight: 900;
+                    text-transform: none;
+                    letter-spacing: -0.01em;
+                }
+
+                .creator-chip.owner {
+                    background: #dcfce7;
+                    color: #166534;
+                }
+
+                .creator-chip.contributor {
+                    background: #fef3c7;
+                    color: #92400e;
+                }
+
                 .detail-title {
                     margin: 0 0 22px;
                     color: #0f172a;
@@ -2080,6 +2214,19 @@ export default function ExhibitionDetail() {
                     background: #475569;
                     color: white;
                     border-color: #475569;
+                }
+
+                /* No count to show, so it carries the icon + label only. */
+                .reaction-button.share {
+                    color: #1d4ed8;
+                    background: #eff6ff;
+                    border-color: #dbeafe;
+                }
+
+                .reaction-button.share:hover {
+                    background: #2563eb;
+                    color: white;
+                    border-color: #2563eb;
                 }
 
                 .detail-actions {
