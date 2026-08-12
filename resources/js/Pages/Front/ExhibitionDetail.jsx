@@ -1797,7 +1797,10 @@ export default function ExhibitionDetail() {
                 .main-image-box img {
                     width: 100%;
                     height: 100%;
-                    object-fit: cover;
+                    /* contain, not cover: show the whole image instead of
+                       cropping whatever overflows the box. */
+                    object-fit: contain;
+                    object-position: center;
                     display: block;
                 }
 

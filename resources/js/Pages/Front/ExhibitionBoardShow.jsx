@@ -423,9 +423,11 @@ export default function ExhibitionBoardShow() {
                 .slider-image img {
                     width: 100%;
                     height: 100%;
-                    object-fit: cover;
+                    /* contain, not cover: show the whole image instead of
+                       cropping whatever overflows the box. */
+                    object-fit: contain;
                     object-position: center;
-                    transform: scale(1.08);
+                    transform: scale(1.04);
                     transition: transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
                 }
 
