@@ -31,6 +31,24 @@ export default function ExhibitionBoardShow() {
         return html.replace(/<[^>]+>/g, "");
     };
 
+    // An exhibition posted by the board's own creator is the owner's; anyone
+    // else posting into the board is a contributor.
+    const getCreator = (item) => {
+        const boardOwnerId = board?.user_id ?? board?.owner?.id;
+        const itemCreatorId = item?.user_id ?? item?.user?.id;
+
+        const name = item?.user?.name || "Unknown";
+
+        if (!boardOwnerId || !itemCreatorId) {
+            return { role: null, name };
+        }
+
+        return {
+            role: boardOwnerId === itemCreatorId ? "Owner" : "Contributor",
+            name,
+        };
+    };
+
     const nextSlide = useCallback(() => {
         if (exhibitions.length === 0) return;
         setCurrentIndex((prev) => (prev + 1) % exhibitions.length);
@@ -143,6 +161,7 @@ export default function ExhibitionBoardShow() {
                                         {exhibitions.map((item, index) => {
                                             const isActive =
                                                 index === currentIndex;
+                                            const creator = getCreator(item);
 
                                             return (
                                                 <div
@@ -186,9 +205,28 @@ export default function ExhibitionBoardShow() {
                                                     </div>
 
                                                     <div className="slider-content">
-                                                        <div className="slide-count">
-                                                            {index + 1} /{" "}
-                                                            {exhibitions.length}
+                                                        <div className="slide-meta">
+                                                            <span className="slide-count">
+                                                                {index + 1} /{" "}
+                                                                {
+                                                                    exhibitions.length
+                                                                }
+                                                            </span>
+
+                                                            {creator.role && (
+                                                                <span
+                                                                    className={`creator-chip ${creator.role.toLowerCase()}`}
+                                                                >
+                                                                    {
+                                                                        creator.role
+                                                                    }
+                                                                    <b>
+                                                                        {
+                                                                            creator.name
+                                                                        }
+                                                                    </b>
+                                                                </span>
+                                                            )}
                                                         </div>
 
                                                         <h2
@@ -208,7 +246,7 @@ export default function ExhibitionBoardShow() {
                                                             }}
                                                         />
 
-                                                        <div className="info-grid">
+                                                        {/* <div className="info-grid">
                                                             <div>
                                                                 <span>
                                                                     Type
@@ -241,7 +279,7 @@ export default function ExhibitionBoardShow() {
                                                                     }
                                                                 </strong>
                                                             </div>
-                                                        </div>
+                                                        </div> */}
 
                                                         {(item.sponsor_image_url ||
                                                             item.sponsor_image) && (
@@ -490,6 +528,14 @@ export default function ExhibitionBoardShow() {
                     position: relative;
                 }
 
+                .slide-meta {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                    margin-bottom: 20px;
+                }
+
                 .slide-count {
                     display: inline-flex;
                     padding: 7px 12px;
@@ -498,7 +544,37 @@ export default function ExhibitionBoardShow() {
                     color: #3730a3;
                     font-weight: 700;
                     font-size: 13px;
-                    margin-bottom: 20px;
+                }
+
+                /* Owner = posted by the board's creator, contributor = anyone
+                   else who posted into the board. */
+                .creator-chip {
+                    display: inline-flex;
+                    align-items: baseline;
+                    gap: 6px;
+                    padding: 7px 12px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    font-weight: 900;
+                    text-transform: lowercase;
+                    letter-spacing: .04em;
+                }
+
+                .creator-chip b {
+                    font-size: 13px;
+                    font-weight: 800;
+                    text-transform: none;
+                    letter-spacing: 0;
+                }
+
+                .creator-chip.owner {
+                    background: #e8f8ed;
+                    color: #0f8022;
+                }
+
+                .creator-chip.contributor {
+                    background: #fff4e5;
+                    color: #b45309;
                 }
 
                 .slider-content h2 {

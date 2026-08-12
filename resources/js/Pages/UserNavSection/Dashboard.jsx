@@ -465,8 +465,8 @@ export default function Dashboard({
                                 <div>
                                     <Title level={3}>
                                         Welcome to Muslim Hall, {user?.name}!
-                                        Please subscribe to a plan to get
-                                        started.
+                                        {/* Please subscribe to a plan to get
+                                        started. */}
                                     </Title>
 
                                     {defaultPlan ? (
@@ -489,7 +489,7 @@ export default function Dashboard({
 
                                             <br />
 
-                                            <Button
+                                            {/* <Button
                                                 type="primary"
                                                 size="large"
                                                 icon={<CreditCardOutlined />}
@@ -497,7 +497,7 @@ export default function Dashboard({
                                                 style={{ marginTop: 16 }}
                                             >
                                                 Pay With SSLCommerz
-                                            </Button>
+                                            </Button> */}
                                         </>
                                     ) : (
                                         <Text type="danger">
