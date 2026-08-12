@@ -1,5 +1,5 @@
 import { Link, usePage, router, Head } from "@inertiajs/react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
 import { buildS3UrlAlways } from "@/Utils/s3Helpers";
@@ -9,13 +9,25 @@ import { message } from "antd";
 
 const SvgIcon = {
     ArrowLeft: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M19 12H5" />
             <path d="M12 19l-7-7 7-7" />
         </svg>
     ),
     Grid: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <rect x="3" y="3" width="7" height="7" rx="1" />
             <rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -23,94 +35,184 @@ const SvgIcon = {
         </svg>
     ),
     Image: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <rect x="3" y="3" width="18" height="18" rx="2" />
             <circle cx="8.5" cy="8.5" r="1.5" />
             <path d="M21 15l-5-5L5 21" />
         </svg>
     ),
     Eye: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
             <circle cx="12" cy="12" r="3" />
         </svg>
     ),
     Calendar: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <path d="M16 2v4M8 2v4M3 10h18" />
         </svg>
     ),
     User: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
             <circle cx="12" cy="7" r="4" />
         </svg>
     ),
     Tag: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
             <path d="M7 7h.01" />
         </svg>
     ),
     Dollar: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M12 1v22" />
             <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
         </svg>
     ),
     Document: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
             <path d="M14 2v6h6" />
             <path d="M16 13H8M16 17H8M10 9H8" />
         </svg>
     ),
     External: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
             <path d="M15 3h6v6" />
             <path d="M10 14L21 3" />
         </svg>
     ),
     Like: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M14 9V5a3 3 0 00-6 0v4" />
             <path d="M5 22h12.28a2 2 0 001.98-1.72l1.38-10A2 2 0 0018.66 8H5v14z" />
             <path d="M5 8H2v14h3" />
         </svg>
     ),
     Heart: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
         </svg>
     ),
     Dislike: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M10 15v4a3 3 0 006 0v-4" />
             <path d="M19 2H6.72a2 2 0 00-1.98 1.72l-1.38 10A2 2 0 005.34 16H19V2z" />
             <path d="M19 16h3V2h-3" />
         </svg>
     ),
     Message: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4v8z" />
         </svg>
     ),
     Reply: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M9 17l-5-5 5-5" />
             <path d="M20 18v-2a4 4 0 00-4-4H4" />
         </svg>
     ),
     Send: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <path d="M22 2L11 13" />
             <path d="M22 2l-7 20-4-9-9-4 20-7z" />
         </svg>
     ),
     Award: () => (
-        <svg viewBox="0 0 24 24" className="svg-icon" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+            viewBox="0 0 24 24"
+            className="svg-icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+        >
             <circle cx="12" cy="8" r="7" />
             <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.11" />
         </svg>
@@ -118,9 +220,27 @@ const SvgIcon = {
 };
 
 export default function ExhibitionDetail() {
-    const { exhibition, auth } = usePage().props;
+    const { exhibition, boardExhibitions, auth } = usePage().props;
 
     const user = auth?.user || null;
+
+    // Sibling exhibitions of the same board, in the same order as the board
+    // page slider. Sliding to one of them navigates to its detail page.
+    const slides = useMemo(
+        () => (Array.isArray(boardExhibitions) ? boardExhibitions : []),
+        [boardExhibitions],
+    );
+
+    const activeIndex = useMemo(() => {
+        const found = slides.findIndex((item) => item.id === exhibition?.id);
+        return found === -1 ? 0 : found;
+    }, [slides, exhibition?.id]);
+
+    const [slideIndex, setSlideIndex] = useState(activeIndex);
+    const [navigating, setNavigating] = useState(false);
+    const boardSliderRef = useRef(null);
+    const boardThumbsRef = useRef(null);
+    const touchStartX = useRef(null);
 
     const [reactionCounts, setReactionCounts] = useState({
         like: 0,
@@ -168,7 +288,10 @@ export default function ExhibitionDetail() {
     const galleryImages = useMemo(() => {
         // gallery_urls is the appended accessor holding resolved URLs; fall back
         // to the raw gallery keys, which getImageUrl resolves the same way.
-        if (Array.isArray(exhibition?.gallery_urls) && exhibition.gallery_urls.length) {
+        if (
+            Array.isArray(exhibition?.gallery_urls) &&
+            exhibition.gallery_urls.length
+        ) {
             return exhibition.gallery_urls;
         }
 
@@ -189,6 +312,143 @@ export default function ExhibitionDetail() {
     const mainImage =
         selectedImage || exhibition?.image_url || exhibition?.image;
 
+    // Re-sync when Inertia swaps the page to another exhibition.
+    useEffect(() => {
+        setSlideIndex(activeIndex);
+        setNavigating(false);
+    }, [activeIndex]);
+
+    // Anything tied to the exhibition being viewed has to be dropped by hand:
+    // preserveState keeps this component mounted across the swap.
+    useEffect(() => {
+        setSelectedImage(null);
+        setCommentText("");
+        setReplyOpen({});
+        setReplyText({});
+    }, [exhibition?.id]);
+
+    const goToSlide = useCallback(
+        (index) => {
+            const target = slides[index];
+            if (!target || index === slideIndex) return;
+
+            // Start the slide first, then request while it is still moving.
+            setSlideIndex(index);
+
+            if (target.id === exhibition?.id) return;
+
+            setNavigating(true);
+
+            router.visit(route("exhibition-detail", target.id), {
+                // Partial visit: only these two props come back, the component
+                // stays mounted, and the card fills in behind the slide — no
+                // page reload and no remount of the layout.
+                only: ["exhibition", "boardExhibitions"],
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setNavigating(false),
+            });
+        },
+        [slides, slideIndex, exhibition?.id],
+    );
+
+    const nextSlide = useCallback(() => {
+        if (slides.length < 2) return;
+        goToSlide((slideIndex + 1) % slides.length);
+    }, [goToSlide, slideIndex, slides.length]);
+
+    const prevSlide = useCallback(() => {
+        if (slides.length < 2) return;
+        goToSlide(slideIndex === 0 ? slides.length - 1 : slideIndex - 1);
+    }, [goToSlide, slideIndex, slides.length]);
+
+    // Arrow keys drive the slider, unless the user is typing a comment.
+    useEffect(() => {
+        if (slides.length < 2) return;
+
+        const onKeyDown = (e) => {
+            const tag = e.target?.tagName;
+
+            if (
+                tag === "INPUT" ||
+                tag === "TEXTAREA" ||
+                e.target?.isContentEditable
+            ) {
+                return;
+            }
+
+            if (e.key === "ArrowRight") nextSlide();
+            else if (e.key === "ArrowLeft") prevSlide();
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [slides.length, nextSlide, prevSlide]);
+
+    // Keep the active thumbnail centered in the strip.
+    useEffect(() => {
+        const strip = boardThumbsRef.current;
+        const active = strip?.children[slideIndex];
+        if (!strip || !active) return;
+
+        strip.scrollTo({
+            left:
+                active.offsetLeft -
+                strip.clientWidth / 2 +
+                active.clientWidth / 2,
+            behavior: "smooth",
+        });
+    }, [slideIndex]);
+
+    // Keep the arrows centred on the image rather than on the card: once the
+    // card stacks, the card's midpoint falls in the text, and the title above
+    // the image shifts it down by an amount that depends on how the title wraps.
+    useEffect(() => {
+        const shell = boardSliderRef.current;
+        if (!shell) return;
+
+        const positionArrows = () => {
+            const image = shell.querySelector(
+                ".board-slide.is-active .main-image-box",
+            );
+
+            if (!image) return;
+
+            const shellTop = shell.getBoundingClientRect().top;
+            const box = image.getBoundingClientRect();
+
+            shell.style.setProperty(
+                "--arrow-top",
+                `${box.top - shellTop + box.height / 2}px`,
+            );
+        };
+
+        positionArrows();
+
+        const observer = new ResizeObserver(positionArrows);
+        observer.observe(shell);
+        window.addEventListener("resize", positionArrows);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener("resize", positionArrows);
+        };
+    }, [exhibition?.id, slides.length]);
+
+    const handleTouchStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e) => {
+        if (touchStartX.current === null) return;
+
+        const delta = e.changedTouches[0].clientX - touchStartX.current;
+        touchStartX.current = null;
+
+        if (Math.abs(delta) < 50) return;
+        delta < 0 ? nextSlide() : prevSlide();
+    };
+
     useEffect(() => {
         setComments(exhibition?.comments || []);
     }, [exhibition?.comments]);
@@ -202,7 +462,7 @@ export default function ExhibitionDetail() {
     const fetchReactions = async () => {
         try {
             const response = await axios.get(
-                route("exhibition.reactions.get", exhibition.id)
+                route("exhibition.reactions.get", exhibition.id),
             );
 
             setReactionCounts({
@@ -229,10 +489,13 @@ export default function ExhibitionDetail() {
         setReactionLoading(true);
 
         try {
-            const response = await axios.post(route("exhibition.reactions.toggle"), {
-                exhibition_id: exhibition.id,
-                type,
-            });
+            const response = await axios.post(
+                route("exhibition.reactions.toggle"),
+                {
+                    exhibition_id: exhibition.id,
+                    type,
+                },
+            );
 
             if (response.data?.success) {
                 setReactionCounts({
@@ -251,7 +514,9 @@ export default function ExhibitionDetail() {
                     message.success("Reaction added");
                 }
             } else {
-                message.error(response.data?.message || "Failed to update reaction");
+                message.error(
+                    response.data?.message || "Failed to update reaction",
+                );
             }
         } catch (error) {
             console.error("Reaction error:", error);
@@ -261,7 +526,8 @@ export default function ExhibitionDetail() {
                 router.visit(route("login"));
             } else {
                 message.error(
-                    error.response?.data?.message || "Failed to update reaction"
+                    error.response?.data?.message ||
+                        "Failed to update reaction",
                 );
             }
         } finally {
@@ -286,10 +552,13 @@ export default function ExhibitionDetail() {
         setCommentLoading(true);
 
         try {
-            const response = await axios.post(route("exhibition.comments.store"), {
-                exhibition_id: exhibition.id,
-                comment: commentText,
-            });
+            const response = await axios.post(
+                route("exhibition.comments.store"),
+                {
+                    exhibition_id: exhibition.id,
+                    comment: commentText,
+                },
+            );
 
             if (response.data?.success) {
                 setCommentText("");
@@ -302,11 +571,15 @@ export default function ExhibitionDetail() {
 
                 message.success("Comment added successfully.");
             } else {
-                message.error(response.data?.message || "Failed to add comment.");
+                message.error(
+                    response.data?.message || "Failed to add comment.",
+                );
             }
         } catch (error) {
             console.error("Comment error:", error);
-            message.error(error.response?.data?.message || "Failed to add comment.");
+            message.error(
+                error.response?.data?.message || "Failed to add comment.",
+            );
         } finally {
             setCommentLoading(false);
         }
@@ -334,11 +607,14 @@ export default function ExhibitionDetail() {
         }));
 
         try {
-            const response = await axios.post(route("exhibition.comments.reply"), {
-                exhibition_id: exhibition.id,
-                parent_id: commentId,
-                comment: text,
-            });
+            const response = await axios.post(
+                route("exhibition.comments.reply"),
+                {
+                    exhibition_id: exhibition.id,
+                    parent_id: commentId,
+                    comment: text,
+                },
+            );
 
             if (response.data?.success) {
                 setReplyText((prev) => ({
@@ -365,7 +641,7 @@ export default function ExhibitionDetail() {
                                     response.data.reply,
                                 ],
                             };
-                        })
+                        }),
                     );
                 } else {
                     router.reload({ only: ["exhibition"] });
@@ -377,7 +653,9 @@ export default function ExhibitionDetail() {
             }
         } catch (error) {
             console.error("Reply error:", error);
-            message.error(error.response?.data?.message || "Failed to add reply.");
+            message.error(
+                error.response?.data?.message || "Failed to add reply.",
+            );
         } finally {
             setReplyLoading((prev) => ({
                 ...prev,
@@ -390,7 +668,7 @@ export default function ExhibitionDetail() {
         if (!exhibition?.price) return "Free";
 
         return `${exhibition?.currency || "USD"} ${parseFloat(
-            exhibition.price
+            exhibition.price,
         ).toLocaleString()}`;
     };
 
@@ -400,6 +678,78 @@ export default function ExhibitionDetail() {
             : `reaction-button ${type}`;
     };
 
+    const formatSlidePrice = (item) => {
+        if (!item?.price) return "Free";
+
+        return `${item.currency || "USD"} ${parseFloat(
+            item.price,
+        ).toLocaleString()}`;
+    };
+
+    // Neighbouring exhibitions are rendered as light previews — the full detail
+    // arrives with the page once the slide lands on them.
+    const renderPreviewSlide = (item) => (
+        <div key={item.id} className="board-slide">
+            <div className="main-card preview-card">
+                {/* Stacked layout only — the info-column copy is hidden there. */}
+                <h1
+                    className="detail-title mobile-title"
+                    dangerouslySetInnerHTML={{
+                        __html: item.title || "Untitled",
+                    }}
+                />
+
+                <div className="media-column">
+                    <div className="main-image-box">
+                        <img
+                            src={getImageUrl(item.image)}
+                            alt={stripHtml(item.title)}
+                        />
+
+                        <div className="floating-badges">
+                            <span className="badge type">
+                                {item.type || "Exhibition"}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="info-column">
+                    <div className="status-row">
+                        <span className="status-chip blue">
+                            {item.status || "Exhibition"}
+                        </span>
+                    </div>
+
+                    <h1
+                        className="detail-title"
+                        dangerouslySetInnerHTML={{
+                            __html: item.title || "Untitled",
+                        }}
+                    />
+
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <SvgIcon.Dollar />
+                            <span>Price</span>
+                            <strong>{formatSlidePrice(item)}</strong>
+                        </div>
+
+                        <div className="stat-card">
+                            <SvgIcon.Tag />
+                            <span>Type</span>
+                            <strong>{item.type || "N/A"}</strong>
+                        </div>
+                    </div>
+
+                    <span className="preview-hint">
+                        {navigating ? "Opening…" : "Slide to open"}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+
     if (!exhibition) {
         return (
             <FrontAuthenticatedLayout>
@@ -408,7 +758,10 @@ export default function ExhibitionDetail() {
 
                 <div className="empty-wrapper">
                     <h1>Exhibition not found</h1>
-                    <Link href={route("exhibition-details")} className="primary-link">
+                    <Link
+                        href={route("exhibition-details")}
+                        className="primary-link"
+                    >
                         Back to Exhibitions
                     </Link>
                 </div>
@@ -429,7 +782,10 @@ export default function ExhibitionDetail() {
                     <section className="top-section">
                         <div className="container mt-4">
                             <div className="top-actions">
-                                <Link href={route("exhibition-details")} className="back-link">
+                                <Link
+                                    href={route("exhibition-details")}
+                                    className="back-link"
+                                >
                                     <SvgIcon.ArrowLeft />
                                     Back to Boards
                                 </Link>
@@ -438,7 +794,7 @@ export default function ExhibitionDetail() {
                                     <Link
                                         href={route(
                                             "exhibition-board.show",
-                                            exhibition.board.id
+                                            exhibition.board.id,
                                         )}
                                         className="board-link"
                                     >
@@ -448,216 +804,371 @@ export default function ExhibitionDetail() {
                                 )}
                             </div>
 
-                            <div className="main-card">
-                                <div className="media-column">
-                                    <div className="main-image-box">
-                                        <img
-                                            src={getImageUrl(mainImage)}
-                                            alt={stripHtml(exhibition.title)}
-                                        />
+                            <div
+                                ref={boardSliderRef}
+                                className={`board-slider ${
+                                    navigating ? "is-navigating" : ""
+                                }`}
+                            >
+                                {slides.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="board-nav-btn prev"
+                                        onClick={prevSlide}
+                                        aria-label="Previous exhibition"
+                                    >
+                                        ‹
+                                    </button>
+                                )}
 
-                                        <div className="floating-badges">
-                                            <span className="badge type">
-                                                {exhibition.type || "Exhibition"}
-                                            </span>
-
-                                            {exhibition.is_featured && (
-                                                <span className="badge featured">
-                                                    Featured
-                                                </span>
-                                            )}
-
-                                            {exhibition.status === "sold" && (
-                                                <span className="badge sold">
-                                                    Sold
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {galleryImages.length > 0 && (
-                                        <div className="gallery-strip">
-                                            <button
-                                                type="button"
-                                                className={`gallery-item ${
-                                                    selectedImage === null ? "active" : ""
-                                                }`}
-                                                onClick={() => setSelectedImage(null)}
-                                            >
-                                                <img
-                                                    src={getImageUrl(
-                                                        exhibition.image_url ||
-                                                            exhibition.image,
-                                                    )}
-                                                    alt="Main"
-                                                />
-                                            </button>
-
-                                            {galleryImages.map((image, index) => (
-                                                <button
-                                                    key={index}
-                                                    type="button"
-                                                    className={`gallery-item ${
-                                                        selectedImage === image
-                                                            ? "active"
-                                                            : ""
-                                                    }`}
-                                                    onClick={() => setSelectedImage(image)}
-                                                >
-                                                    <img
-                                                        src={getImageUrl(image)}
-                                                        alt={`Gallery ${index + 1}`}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="info-column">
-                                    <div className="status-row">
-                                        <span className="status-chip green">
-                                            {exhibition.is_available
-                                                ? "Available"
-                                                : "Not Available"}
-                                        </span>
-
-                                        <span className="status-chip blue">
-                                            {exhibition.approval_status || "Approved"}
-                                        </span>
-                                    </div>
-
-                                    <h1
-                                        className="detail-title"
-                                        dangerouslySetInnerHTML={{
-                                            __html: exhibition.title || "Untitled",
+                                <div
+                                    className="board-slider-viewport"
+                                    onTouchStart={handleTouchStart}
+                                    onTouchEnd={handleTouchEnd}
+                                >
+                                    <div
+                                        className="board-slider-track"
+                                        style={{
+                                            transform: `translateX(-${
+                                                slideIndex * 100
+                                            }%)`,
                                         }}
-                                    />
+                                    >
+                                        {slides
+                                            .slice(0, activeIndex)
+                                            .map(renderPreviewSlide)}
 
-                                    <div className="stats-grid">
-                                        <div className="stat-card">
-                                            <SvgIcon.Dollar />
-                                            <span>Price</span>
-                                            <strong>{formatPrice()}</strong>
-                                        </div>
+                                        <div className="board-slide is-active">
+                                            <div className="main-card">
+                                                {/* Stacked layout only — the
+                                                    info-column copy is hidden
+                                                    there. */}
+                                                <h1
+                                                    className="detail-title mobile-title"
+                                                    dangerouslySetInnerHTML={{
+                                                        __html:
+                                                            exhibition.title ||
+                                                            "Untitled",
+                                                    }}
+                                                />
 
-                                        <div className="stat-card">
-                                            <SvgIcon.Eye />
-                                            <span>Views</span>
-                                            <strong>{exhibition.views || 0}</strong>
-                                        </div>
+                                                <div className="media-column">
+                                                    <div className="main-image-box">
+                                                        <img
+                                                            src={getImageUrl(
+                                                                mainImage,
+                                                            )}
+                                                            alt={stripHtml(
+                                                                exhibition.title,
+                                                            )}
+                                                        />
 
-                                        <div className="stat-card">
-                                            <SvgIcon.Calendar />
-                                            <span>Published</span>
-                                            <strong>
-                                                {formatDate(
-                                                    exhibition.published_at ||
-                                                        exhibition.created_at
-                                                )}
-                                            </strong>
-                                        </div>
+                                                        <div className="floating-badges">
+                                                            <span className="badge type">
+                                                                {exhibition.type ||
+                                                                    "Exhibition"}
+                                                            </span>
 
-                                        {/* <div className="stat-card">
+                                                            {exhibition.is_featured && (
+                                                                <span className="badge featured">
+                                                                    Featured
+                                                                </span>
+                                                            )}
+
+                                                            {exhibition.status ===
+                                                                "sold" && (
+                                                                <span className="badge sold">
+                                                                    Sold
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {galleryImages.length >
+                                                        0 && (
+                                                        <div className="gallery-strip">
+                                                            <button
+                                                                type="button"
+                                                                className={`gallery-item ${
+                                                                    selectedImage ===
+                                                                    null
+                                                                        ? "active"
+                                                                        : ""
+                                                                }`}
+                                                                onClick={() =>
+                                                                    setSelectedImage(
+                                                                        null,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <img
+                                                                    src={getImageUrl(
+                                                                        exhibition.image_url ||
+                                                                            exhibition.image,
+                                                                    )}
+                                                                    alt="Main"
+                                                                />
+                                                            </button>
+
+                                                            {galleryImages.map(
+                                                                (
+                                                                    image,
+                                                                    index,
+                                                                ) => (
+                                                                    <button
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        type="button"
+                                                                        className={`gallery-item ${
+                                                                            selectedImage ===
+                                                                            image
+                                                                                ? "active"
+                                                                                : ""
+                                                                        }`}
+                                                                        onClick={() =>
+                                                                            setSelectedImage(
+                                                                                image,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <img
+                                                                            src={getImageUrl(
+                                                                                image,
+                                                                            )}
+                                                                            alt={`Gallery ${index + 1}`}
+                                                                        />
+                                                                    </button>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="info-column">
+                                                    <h1
+                                                        className="detail-title"
+                                                        dangerouslySetInnerHTML={{
+                                                            __html:
+                                                                exhibition.title ||
+                                                                "Untitled",
+                                                        }}
+                                                    />
+                                                    <div className="status-row">
+                                                        <span className="status-chip green">
+                                                            {exhibition.is_available
+                                                                ? "Available"
+                                                                : "Not Available"}
+                                                        </span>
+
+                                                        <span className="status-chip blue">
+                                                            {exhibition.approval_status ||
+                                                                "Approved"}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="stats-grid">
+                                                        <div className="stat-card">
+                                                            <SvgIcon.Dollar />
+                                                            <span>Price</span>
+                                                            <strong>
+                                                                {formatPrice()}
+                                                            </strong>
+                                                        </div>
+
+                                                        <div className="stat-card">
+                                                            <SvgIcon.Eye />
+                                                            <span>Views</span>
+                                                            <strong>
+                                                                {exhibition.views ||
+                                                                    0}
+                                                            </strong>
+                                                        </div>
+
+                                                        <div className="text-xs">
+                                                            {/* <SvgIcon.Calendar /> */}
+                                                            <span className="mr-2">
+                                                                Published:
+                                                            </span>
+                                                            <strong>
+                                                                {formatDate(
+                                                                    exhibition.published_at ||
+                                                                        exhibition.created_at,
+                                                                )}
+                                                            </strong>
+                                                        </div>
+
+                                                        {/* <div className="stat-card">
                                             <SvgIcon.User />
                                             <span>Creator</span>
                                             <strong>
                                                 {exhibition.user?.name || "Unknown"}
                                             </strong>
                                         </div> */}
-                                    </div>
+                                                    </div>
 
-                                    {(exhibition.dimensions || exhibition.material) && (
-                                        <div className="mini-info-grid">
-                                            {exhibition.dimensions && (
-                                                <div>
-                                                    <span>Dimensions</span>
-                                                    <strong>{exhibition.dimensions}</strong>
+                                                    {(exhibition.dimensions ||
+                                                        exhibition.material) && (
+                                                        <div className="mini-info-grid">
+                                                            {exhibition.dimensions && (
+                                                                <div>
+                                                                    <span>
+                                                                        Dimensions
+                                                                    </span>
+                                                                    <strong>
+                                                                        {
+                                                                            exhibition.dimensions
+                                                                        }
+                                                                    </strong>
+                                                                </div>
+                                                            )}
+
+                                                            {exhibition.material && (
+                                                                <div>
+                                                                    <span>
+                                                                        Material
+                                                                    </span>
+                                                                    <strong>
+                                                                        {
+                                                                            exhibition.material
+                                                                        }
+                                                                    </strong>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="reaction-box">
+                                                        <div className="box-heading">
+                                                            <SvgIcon.Award />
+                                                            <h3>Reaction</h3>
+                                                        </div>
+
+                                                        <div className="reaction-list">
+                                                            <button
+                                                                type="button"
+                                                                className={reactionButtonClass(
+                                                                    "like",
+                                                                )}
+                                                                onClick={() =>
+                                                                    handleReaction(
+                                                                        "like",
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    reactionLoading
+                                                                }
+                                                            >
+                                                                <SvgIcon.Like />
+                                                                <span>
+                                                                    Like
+                                                                </span>
+                                                                <strong>
+                                                                    {reactionCounts.like ||
+                                                                        0}
+                                                                </strong>
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className={reactionButtonClass(
+                                                                    "love",
+                                                                )}
+                                                                onClick={() =>
+                                                                    handleReaction(
+                                                                        "love",
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    reactionLoading
+                                                                }
+                                                            >
+                                                                <SvgIcon.Heart />
+                                                                <span>
+                                                                    Love
+                                                                </span>
+                                                                <strong>
+                                                                    {reactionCounts.love ||
+                                                                        0}
+                                                                </strong>
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                className={reactionButtonClass(
+                                                                    "dislike",
+                                                                )}
+                                                                onClick={() =>
+                                                                    handleReaction(
+                                                                        "dislike",
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    reactionLoading
+                                                                }
+                                                            >
+                                                                <SvgIcon.Dislike />
+                                                                <span>
+                                                                    Dislike
+                                                                </span>
+                                                                <strong>
+                                                                    {reactionCounts.dislike ||
+                                                                        0}
+                                                                </strong>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="detail-actions">
+                                                        {exhibition.link && (
+                                                            <a
+                                                                href={
+                                                                    exhibition.link
+                                                                }
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="action-btn primary"
+                                                            >
+                                                                <SvgIcon.External />
+                                                                Visit Link
+                                                            </a>
+                                                        )}
+
+                                                        {exhibition.document_file && (
+                                                            <a
+                                                                href={getImageUrl(
+                                                                    exhibition.document_url ||
+                                                                        exhibition.document_file,
+                                                                )}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="action-btn secondary"
+                                                            >
+                                                                <SvgIcon.Document />
+                                                                View Document
+                                                            </a>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
-
-                                            {exhibition.material && (
-                                                <div>
-                                                    <span>Material</span>
-                                                    <strong>{exhibition.material}</strong>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <div className="reaction-box">
-                                        <div className="box-heading">
-                                            <SvgIcon.Award />
-                                            <h3>Reaction</h3>
+                                            </div>
                                         </div>
 
-                                        <div className="reaction-list">
-                                            <button
-                                                type="button"
-                                                className={reactionButtonClass("like")}
-                                                onClick={() => handleReaction("like")}
-                                                disabled={reactionLoading}
-                                            >
-                                                <SvgIcon.Like />
-                                                <span>Like</span>
-                                                <strong>{reactionCounts.like || 0}</strong>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                className={reactionButtonClass("love")}
-                                                onClick={() => handleReaction("love")}
-                                                disabled={reactionLoading}
-                                            >
-                                                <SvgIcon.Heart />
-                                                <span>Love</span>
-                                                <strong>{reactionCounts.love || 0}</strong>
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                className={reactionButtonClass("dislike")}
-                                                onClick={() => handleReaction("dislike")}
-                                                disabled={reactionLoading}
-                                            >
-                                                <SvgIcon.Dislike />
-                                                <span>Dislike</span>
-                                                <strong>
-                                                    {reactionCounts.dislike || 0}
-                                                </strong>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="detail-actions">
-                                        {exhibition.link && (
-                                            <a
-                                                href={exhibition.link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="action-btn primary"
-                                            >
-                                                <SvgIcon.External />
-                                                Visit Link
-                                            </a>
-                                        )}
-
-                                        {exhibition.document_file && (
-                                            <a
-                                                href={getImageUrl(
-                                                    exhibition.document_url ||
-                                                        exhibition.document_file
-                                                )}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="action-btn secondary"
-                                            >
-                                                <SvgIcon.Document />
-                                                View Document
-                                            </a>
-                                        )}
+                                        {slides
+                                            .slice(activeIndex + 1)
+                                            .map(renderPreviewSlide)}
                                     </div>
                                 </div>
+
+                                {slides.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="board-nav-btn next"
+                                        onClick={nextSlide}
+                                        aria-label="Next exhibition"
+                                    >
+                                        ›
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </section>
@@ -695,21 +1206,26 @@ export default function ExhibitionDetail() {
                                             <textarea
                                                 value={commentText}
                                                 onChange={(e) =>
-                                                    setCommentText(e.target.value)
+                                                    setCommentText(
+                                                        e.target.value,
+                                                    )
                                                 }
                                                 placeholder={
                                                     user
                                                         ? "Write your comment..."
                                                         : "Please login to comment..."
                                                 }
-                                                disabled={!user || commentLoading}
+                                                disabled={
+                                                    !user || commentLoading
+                                                }
                                                 rows={4}
                                             />
 
                                             <div className="form-footer">
                                                 {!user && (
                                                     <span>
-                                                        Login required for comment.
+                                                        Login required for
+                                                        comment.
                                                     </span>
                                                 )}
 
@@ -747,13 +1263,14 @@ export default function ExhibitionDetail() {
                                                             <div className="comment-top">
                                                                 <div>
                                                                     <strong>
-                                                                        {comment.user
+                                                                        {comment
+                                                                            .user
                                                                             ?.name ||
                                                                             "Unknown"}
                                                                     </strong>
                                                                     <span>
                                                                         {formatDate(
-                                                                            comment.created_at
+                                                                            comment.created_at,
                                                                         )}
                                                                     </span>
                                                                 </div>
@@ -763,31 +1280,43 @@ export default function ExhibitionDetail() {
                                                                     className="reply-toggle"
                                                                     onClick={() =>
                                                                         setReplyOpen(
-                                                                            (prev) => ({
+                                                                            (
+                                                                                prev,
+                                                                            ) => ({
                                                                                 ...prev,
                                                                                 [comment.id]:
                                                                                     !prev[
                                                                                         comment
                                                                                             .id
                                                                                     ],
-                                                                            })
+                                                                            }),
                                                                         )
                                                                     }
-                                                                    disabled={!user}
+                                                                    disabled={
+                                                                        !user
+                                                                    }
                                                                 >
                                                                     <SvgIcon.Reply />
                                                                     Reply
                                                                 </button>
                                                             </div>
 
-                                                            <p>{comment.comment}</p>
+                                                            <p>
+                                                                {
+                                                                    comment.comment
+                                                                }
+                                                            </p>
 
-                                                            {replyOpen[comment.id] && (
+                                                            {replyOpen[
+                                                                comment.id
+                                                            ] && (
                                                                 <form
-                                                                    onSubmit={(e) =>
+                                                                    onSubmit={(
+                                                                        e,
+                                                                    ) =>
                                                                         handleReplySubmit(
                                                                             e,
-                                                                            comment.id
+                                                                            comment.id,
                                                                         )
                                                                     }
                                                                     className="reply-form"
@@ -795,27 +1324,32 @@ export default function ExhibitionDetail() {
                                                                     <textarea
                                                                         value={
                                                                             replyText[
-                                                                                comment.id
-                                                                            ] || ""
+                                                                                comment
+                                                                                    .id
+                                                                            ] ||
+                                                                            ""
                                                                         }
-                                                                        onChange={(e) =>
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
                                                                             setReplyText(
                                                                                 (
-                                                                                    prev
+                                                                                    prev,
                                                                                 ) => ({
                                                                                     ...prev,
                                                                                     [comment.id]:
                                                                                         e
                                                                                             .target
                                                                                             .value,
-                                                                                })
+                                                                                }),
                                                                             )
                                                                         }
                                                                         placeholder="Write your reply..."
                                                                         rows={3}
                                                                         disabled={
                                                                             replyLoading[
-                                                                                comment.id
+                                                                                comment
+                                                                                    .id
                                                                             ]
                                                                         }
                                                                     />
@@ -827,12 +1361,11 @@ export default function ExhibitionDetail() {
                                                                             onClick={() =>
                                                                                 setReplyOpen(
                                                                                     (
-                                                                                        prev
+                                                                                        prev,
                                                                                     ) => ({
                                                                                         ...prev,
-                                                                                        [comment.id]:
-                                                                                            false,
-                                                                                    })
+                                                                                        [comment.id]: false,
+                                                                                    }),
                                                                                 )
                                                                             }
                                                                         >
@@ -843,13 +1376,15 @@ export default function ExhibitionDetail() {
                                                                             type="submit"
                                                                             disabled={
                                                                                 replyLoading[
-                                                                                    comment.id
+                                                                                    comment
+                                                                                        .id
                                                                                 ] ||
                                                                                 !(
                                                                                     replyText[
                                                                                         comment
                                                                                             .id
-                                                                                    ] || ""
+                                                                                    ] ||
+                                                                                    ""
                                                                                 ).trim()
                                                                             }
                                                                         >
@@ -867,11 +1402,12 @@ export default function ExhibitionDetail() {
 
                                                             {comment.replies &&
                                                                 comment.replies
-                                                                    .length > 0 && (
+                                                                    .length >
+                                                                    0 && (
                                                                     <div className="reply-list">
                                                                         {comment.replies.map(
                                                                             (
-                                                                                reply
+                                                                                reply,
                                                                             ) => (
                                                                                 <div
                                                                                     key={
@@ -882,7 +1418,7 @@ export default function ExhibitionDetail() {
                                                                                     <div className="reply-avatar">
                                                                                         {reply.user?.name
                                                                                             ?.charAt(
-                                                                                                0
+                                                                                                0,
                                                                                             )
                                                                                             ?.toUpperCase() ||
                                                                                             "U"}
@@ -898,7 +1434,7 @@ export default function ExhibitionDetail() {
                                                                                             </strong>
                                                                                             <span>
                                                                                                 {formatDate(
-                                                                                                    reply.created_at
+                                                                                                    reply.created_at,
                                                                                                 )}
                                                                                             </span>
                                                                                         </div>
@@ -910,7 +1446,7 @@ export default function ExhibitionDetail() {
                                                                                         </p>
                                                                                     </div>
                                                                                 </div>
-                                                                            )
+                                                                            ),
                                                                         )}
                                                                     </div>
                                                                 )}
@@ -921,7 +1457,9 @@ export default function ExhibitionDetail() {
                                                 <div className="empty-comments">
                                                     <SvgIcon.Message />
                                                     <h4>No comments yet</h4>
-                                                    <p>Be the first to comment.</p>
+                                                    <p>
+                                                        Be the first to comment.
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
@@ -980,7 +1518,7 @@ export default function ExhibitionDetail() {
                                             <img
                                                 src={getImageUrl(
                                                     exhibition.sponsor_image_url ||
-                                                        exhibition.sponsor_image
+                                                        exhibition.sponsor_image,
                                                 )}
                                                 alt="Sponsor"
                                                 className="sponsor-image"
@@ -1065,6 +1603,182 @@ export default function ExhibitionDetail() {
                     grid-template-columns: minmax(0, 1.05fr) minmax(380px, .95fr);
                     gap: 24px;
                     box-shadow: 0 24px 70px rgba(15,23,42,.09);
+                }
+
+                .board-slider {
+                    position: relative;
+                    /* Gutter so the arrows sit outside the card on desktop. */
+                    padding: 0 64px;
+                }
+
+                .board-slider-viewport {
+                    overflow: hidden;
+                    border-radius: 28px;
+                    touch-action: pan-y;
+                }
+
+                .board-slider-track {
+                    display: flex;
+                    align-items: stretch;
+                    will-change: transform;
+                    transition: transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
+                }
+
+                .board-slide {
+                    flex: 0 0 100%;
+                    min-width: 100%;
+                }
+
+                .board-slide .main-card {
+                    height: 100%;
+                }
+
+                /* Neighbour previews sit back a little until they land. */
+                .board-slide:not(.is-active) .main-card {
+                    opacity: .75;
+                    transform: scale(.985);
+                    transition: opacity .5s ease, transform .5s ease;
+                }
+
+                .preview-hint {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 9px 14px;
+                    border-radius: 999px;
+                    background: #eff6ff;
+                    color: #1d4ed8;
+                    font-weight: 900;
+                    font-size: 13px;
+                }
+
+                .board-nav-btn {
+                    position: absolute;
+                    /* Measured from the active slide's image; 50% until then. */
+                    top: var(--arrow-top, 50%);
+                    transform: translateY(-50%);
+                    z-index: 4;
+                    width: 52px;
+                    height: 52px;
+                    border-radius: 50%;
+                    border: none;
+                    background: rgba(15,23,42,.35);
+                    color: white;
+                    font-size: 34px;
+                    line-height: 1;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding-bottom: 4px;
+                    box-shadow: 0 10px 24px rgba(15,23,42,.28);
+                    transition: background .25s ease, transform .25s ease;
+                }
+
+                .board-nav-btn:hover:not(:disabled) {
+                    background: #2563eb;
+                    transform: translateY(-50%) scale(1.08);
+                }
+
+                .board-nav-btn:disabled {
+                    opacity: .5;
+                    cursor: progress;
+                }
+
+                .board-nav-btn.prev {
+                    left: 0;
+                }
+
+                .board-nav-btn.next {
+                    right: 0;
+                }
+
+                .board-slider.is-navigating .board-slider-viewport {
+                    cursor: progress;
+                }
+
+                .board-thumbs-wrap {
+                    margin-top: 6px;
+                }
+
+                .board-thumbs-head {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #64748b;
+                    font-size: 13px;
+                    font-weight: 800;
+                    padding: 0 4px;
+                }
+
+                .board-thumbs-head .svg-icon {
+                    width: 16px;
+                    height: 16px;
+                    color: #2563eb;
+                }
+
+                .board-thumbs {
+                    /* offsetLeft of the thumbs is read against this box when
+                       centering the active one. */
+                    position: relative;
+                    display: flex;
+                    gap: 12px;
+                    overflow-x: auto;
+                    /* overflow-x:auto also clips vertically — this padding
+                       keeps the active thumb's lift + ring visible. */
+                    padding: 12px 6px 14px;
+                    scroll-behavior: smooth;
+                }
+
+                .board-thumb {
+                    position: relative;
+                    width: 104px;
+                    height: 72px;
+                    border-radius: 14px;
+                    overflow: hidden;
+                    padding: 0;
+                    border: 3px solid transparent;
+                    background: white;
+                    cursor: pointer;
+                    flex: 0 0 auto;
+                    opacity: .6;
+                    transition: opacity .3s ease, transform .3s ease,
+                        border-color .3s ease, box-shadow .3s ease;
+                }
+
+                .board-thumb:hover:not(:disabled) {
+                    opacity: 1;
+                }
+
+                .board-thumb.active {
+                    border-color: #2563eb;
+                    opacity: 1;
+                    transform: translateY(-4px) scale(1.06);
+                    box-shadow: 0 12px 26px rgba(37,99,235,.3);
+                }
+
+                .board-thumb img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                }
+
+                .board-thumb-index {
+                    position: absolute;
+                    left: 6px;
+                    bottom: 6px;
+                    min-width: 20px;
+                    padding: 1px 6px;
+                    border-radius: 999px;
+                    background: rgba(15,23,42,.75);
+                    color: white;
+                    font-size: 11px;
+                    font-weight: 900;
+                    line-height: 1.6;
+                }
+
+                .board-thumb.active .board-thumb-index {
+                    background: #2563eb;
                 }
 
                 .media-column {
@@ -1197,6 +1911,11 @@ export default function ExhibitionDetail() {
 
                 .detail-title * {
                     color: inherit;
+                }
+
+                /* Only in play once .main-card stacks — see the 992px block. */
+                .mobile-title {
+                    display: none;
                 }
 
                 .stats-grid {
@@ -1706,6 +2425,21 @@ export default function ExhibitionDetail() {
                     font-weight: 900;
                 }
 
+                @media (max-width: 1200px) {
+                    /* No room for a gutter — overlay the arrows on the card. */
+                    .board-slider {
+                        padding: 0;
+                    }
+
+                    .board-nav-btn.prev {
+                        left: 14px;
+                    }
+
+                    .board-nav-btn.next {
+                        right: 14px;
+                    }
+                }
+
                 @media (max-width: 992px) {
                     .main-card,
                     .content-grid {
@@ -1718,6 +2452,19 @@ export default function ExhibitionDetail() {
 
                     .main-image-box {
                         height: 390px;
+                    }
+
+                    /* Stacked: title moves above the image, so the copy inside
+                       the info column steps aside. */
+                    .mobile-title {
+                        display: block;
+                        font-size: 32px;
+                        margin-bottom: 8px;
+                        padding: 0 4px;
+                    }
+
+                    .info-column .detail-title {
+                        display: none;
                     }
                 }
 
@@ -1766,6 +2513,40 @@ export default function ExhibitionDetail() {
                     .form-footer button,
                     .reply-actions button[type="submit"] {
                         justify-content: center;
+                    }
+
+                    .board-nav-btn {
+                        width: 42px;
+                        height: 42px;
+                        font-size: 26px;
+                    }
+
+                    .board-nav-btn.prev {
+                        left: 8px;
+                    }
+
+                    .board-nav-btn.next {
+                        right: 8px;
+                    }
+
+                    .gallery-strip {
+                        gap: 8px;
+                        margin-top: 10px;
+                    }
+
+                    .gallery-item {
+                        width: 62px;
+                        height: 48px;
+                        border-radius: 10px;
+                    }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .board-slider-track,
+                    .board-slide:not(.is-active) .main-card,
+                    .board-thumb,
+                    .board-nav-btn {
+                        transition: none !important;
                     }
                 }
             `}</style>

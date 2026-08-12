@@ -202,18 +202,22 @@ export default function Dashboard({
                         Accept: "application/json",
                         "X-Requested-With": "XMLHttpRequest",
                     },
-                }
+                },
             )
             .then((response) => {
                 console.log("SSLCommerz Response:", response.data);
 
-                if (response.data?.status === true && response.data?.redirect_url) {
+                if (
+                    response.data?.status === true &&
+                    response.data?.redirect_url
+                ) {
                     window.location.href = response.data.redirect_url;
                     return;
                 }
 
                 message.error(
-                    response.data?.message || "SSLCommerz redirect URL not found."
+                    response.data?.message ||
+                        "SSLCommerz redirect URL not found.",
                 );
             })
             .catch((error) => {
@@ -221,7 +225,9 @@ export default function Dashboard({
                 console.log("SSLCommerz Error Response:", error.response?.data);
 
                 if (error.response?.status === 419) {
-                    message.error("Session expired. Please refresh and login again.");
+                    message.error(
+                        "Session expired. Please refresh and login again.",
+                    );
                     return;
                 }
 
@@ -233,15 +239,15 @@ export default function Dashboard({
                 if (error.response?.status === 422) {
                     message.error(
                         error.response?.data?.message ||
-                        error.response?.data?.errors?.plan_id?.[0] ||
-                        "Validation failed."
+                            error.response?.data?.errors?.plan_id?.[0] ||
+                            "Validation failed.",
                     );
                     return;
                 }
 
                 message.error(
                     error.response?.data?.message ||
-                    "Failed to start SSLCommerz payment."
+                        "Failed to start SSLCommerz payment.",
                 );
             });
     };
@@ -347,9 +353,7 @@ export default function Dashboard({
                     ? Math.round((totalStats.viewer_count / total) * 100)
                     : 0,
             comments:
-                total > 0
-                    ? Math.round((totalStats.comments / total) * 100)
-                    : 0,
+                total > 0 ? Math.round((totalStats.comments / total) * 100) : 0,
             reactions:
                 total > 0
                     ? Math.round((totalStats.reactions / total) * 100)
@@ -381,18 +385,18 @@ export default function Dashboard({
                                     </Link>{" "}
                                 </Text>{" "}
                                 <br />
-
                                 <Text
                                     strong
                                     type={!isMember ? "secondary" : undefined}
                                 >
-                                    {isMember ? (
+                                    {!isMember ? (
                                         <Link
                                             href={route(
-                                                "user.contests.create",
+                                                "user.exhibitions.create",
                                             )}
                                         >
-                                            <PlusCircleFilled /> Create Contest
+                                            <PlusCircleFilled /> Create
+                                            Exhibition
                                         </Link>
                                     ) : (
                                         <span style={{ cursor: "not-allowed" }}>
@@ -409,7 +413,9 @@ export default function Dashboard({
                                             Wallet Balance
                                         </span>
                                     }
-                                    value={Number(user?.deposit || 0).toFixed(2)}
+                                    value={Number(user?.deposit || 0).toFixed(
+                                        2,
+                                    )}
                                     suffix="TK"
                                     prefix={<WalletOutlined />}
                                     valueStyle={{
@@ -510,8 +516,8 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                            (window.location.href =
-                                route("user.posts.index"))
+                                (window.location.href =
+                                    route("user.posts.index"))
                             }
                         >
                             <Statistic
@@ -534,9 +540,9 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                            (window.location.href = route(
-                                "user.communities.index",
-                            ))
+                                (window.location.href = route(
+                                    "user.communities.index",
+                                ))
                             }
                         >
                             <Statistic
@@ -556,9 +562,9 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                            (window.location.href = route(
-                                "user.contests.index",
-                            ))
+                                (window.location.href = route(
+                                    "user.contests.index",
+                                ))
                             }
                         >
                             <Statistic
@@ -578,9 +584,9 @@ export default function Dashboard({
                         <Card
                             hoverable
                             onClick={() =>
-                            (window.location.href = route(
-                                "user.exhibitions.index",
-                            ))
+                                (window.location.href = route(
+                                    "user.exhibitions.index",
+                                ))
                             }
                         >
                             <Statistic
@@ -766,11 +772,13 @@ export default function Dashboard({
                                         {posts.length > 0 ? (
                                             <div className="profile-card-grid">
                                                 {posts.map((post) => {
-                                                    const dateParts = getCardDateParts(
-                                                        post.created_at,
-                                                    );
+                                                    const dateParts =
+                                                        getCardDateParts(
+                                                            post.created_at,
+                                                        );
 
-                                                    const imageUrl = getPostImage(post);
+                                                    const imageUrl =
+                                                        getPostImage(post);
 
                                                     return (
                                                         <Link
@@ -783,14 +791,24 @@ export default function Dashboard({
                                                             className="profile-same-card"
                                                         >
                                                             <div className="profile-same-date">
-                                                                <strong>{dateParts.day}</strong>
-                                                                <span>{dateParts.month}</span>
+                                                                <strong>
+                                                                    {
+                                                                        dateParts.day
+                                                                    }
+                                                                </strong>
+                                                                <span>
+                                                                    {
+                                                                        dateParts.month
+                                                                    }
+                                                                </span>
                                                             </div>
 
                                                             <div className="profile-same-image-wrap">
                                                                 {imageUrl ? (
                                                                     <img
-                                                                        src={imageUrl}
+                                                                        src={
+                                                                            imageUrl
+                                                                        }
                                                                         alt={stripHtml(
                                                                             post.title,
                                                                         )}
@@ -847,20 +865,26 @@ export default function Dashboard({
                                         {contests.length > 0 ? (
                                             <div className="profile-card-grid">
                                                 {contests.map((contest) => {
-                                                    const dateParts = getCardDateParts(
-                                                        contest.created_at,
-                                                    );
+                                                    const dateParts =
+                                                        getCardDateParts(
+                                                            contest.created_at,
+                                                        );
 
-                                                    const imageUrl = getContestImage(contest);
+                                                    const imageUrl =
+                                                        getContestImage(
+                                                            contest,
+                                                        );
 
                                                     const contestTitle =
-                                                        contest.contest?.title ||
+                                                        contest.contest
+                                                            ?.title ||
                                                         contest.title ||
                                                         "Untitled";
 
-                                                    const winnerText = contest.winner
-                                                        ? `${contest.winner.position} Positions`
-                                                        : "Participated";
+                                                    const winnerText =
+                                                        contest.winner
+                                                            ? `${contest.winner.position} Positions`
+                                                            : "Participated";
 
                                                     return (
                                                         <div
@@ -868,14 +892,24 @@ export default function Dashboard({
                                                             className="profile-same-card"
                                                         >
                                                             <div className="profile-same-date">
-                                                                <strong>{dateParts.day}</strong>
-                                                                <span>{dateParts.month}</span>
+                                                                <strong>
+                                                                    {
+                                                                        dateParts.day
+                                                                    }
+                                                                </strong>
+                                                                <span>
+                                                                    {
+                                                                        dateParts.month
+                                                                    }
+                                                                </span>
                                                             </div>
 
                                                             <div className="profile-same-image-wrap">
                                                                 {imageUrl ? (
                                                                     <img
-                                                                        src={imageUrl}
+                                                                        src={
+                                                                            imageUrl
+                                                                        }
                                                                         alt={stripHtml(
                                                                             contestTitle,
                                                                         )}
@@ -897,10 +931,13 @@ export default function Dashboard({
                                                                 />
 
                                                                 <p className="profile-same-desc">
-                                                                    {winnerText} • Review:{" "}
+                                                                    {winnerText}{" "}
+                                                                    • Review:{" "}
                                                                     {contest.review
-                                                                        ? contest.review
-                                                                            .length || 0
+                                                                        ? contest
+                                                                              .review
+                                                                              .length ||
+                                                                          0
                                                                         : 0}
                                                                 </p>
                                                             </div>
@@ -911,7 +948,8 @@ export default function Dashboard({
                                         ) : (
                                             <div className="profile-same-empty">
                                                 <Text>
-                                                    Contest participations will be displayed here
+                                                    Contest participations will
+                                                    be displayed here
                                                 </Text>
                                             </div>
                                         )}
@@ -932,12 +970,15 @@ export default function Dashboard({
                                             {communitys.length > 0 ? (
                                                 <div className="profile-card-grid">
                                                     {communitys.map((item) => {
-                                                        const dateParts = getCardDateParts(
-                                                            item.created_at,
-                                                        );
+                                                        const dateParts =
+                                                            getCardDateParts(
+                                                                item.created_at,
+                                                            );
 
                                                         const imageUrl =
-                                                            getCommunityImage(item);
+                                                            getCommunityImage(
+                                                                item,
+                                                            );
 
                                                         return (
                                                             <Link
@@ -950,17 +991,23 @@ export default function Dashboard({
                                                             >
                                                                 <div className="profile-same-date">
                                                                     <strong>
-                                                                        {dateParts.day}
+                                                                        {
+                                                                            dateParts.day
+                                                                        }
                                                                     </strong>
                                                                     <span>
-                                                                        {dateParts.month}
+                                                                        {
+                                                                            dateParts.month
+                                                                        }
                                                                     </span>
                                                                 </div>
 
                                                                 <div className="profile-same-image-wrap">
                                                                     {imageUrl ? (
                                                                         <img
-                                                                            src={imageUrl}
+                                                                            src={
+                                                                                imageUrl
+                                                                            }
                                                                             alt={stripHtml(
                                                                                 item.title,
                                                                             )}
@@ -984,21 +1031,27 @@ export default function Dashboard({
                                                                     />
 
                                                                     <p className="profile-same-desc">
-                                                                        Total Comment:{" "}
+                                                                        Total
+                                                                        Comment:{" "}
                                                                         {item.comments_count ||
                                                                             0}{" "}
-                                                                        • Total Reaction:{" "}
-                                                                        {item.likes_count || 0}
+                                                                        • Total
+                                                                        Reaction:{" "}
+                                                                        {item.likes_count ||
+                                                                            0}
                                                                     </p>
 
                                                                     <p
-                                                                        className={`profile-same-status ${item.status ==
+                                                                        className={`profile-same-status ${
+                                                                            item.status ==
                                                                             "published"
-                                                                            ? "published"
-                                                                            : "unpublished"
-                                                                            }`}
+                                                                                ? "published"
+                                                                                : "unpublished"
+                                                                        }`}
                                                                     >
-                                                                        {item.status}
+                                                                        {
+                                                                            item.status
+                                                                        }
                                                                     </p>
                                                                 </div>
                                                             </Link>
@@ -1008,7 +1061,8 @@ export default function Dashboard({
                                             ) : (
                                                 <div className="profile-same-empty">
                                                     <Text>
-                                                        Community content will be displayed here
+                                                        Community content will
+                                                        be displayed here
                                                     </Text>
                                                 </div>
                                             )}
@@ -1023,8 +1077,8 @@ export default function Dashboard({
                                             }}
                                         >
                                             <Text>
-                                                You need to be a member to view community
-                                                content.
+                                                You need to be a member to view
+                                                community content.
                                             </Text>
                                         </div>
                                     )}
@@ -1044,12 +1098,15 @@ export default function Dashboard({
                                             {exhibitions.length > 0 ? (
                                                 <div className="profile-card-grid">
                                                     {exhibitions.map((item) => {
-                                                        const dateParts = getCardDateParts(
-                                                            item.created_at,
-                                                        );
+                                                        const dateParts =
+                                                            getCardDateParts(
+                                                                item.created_at,
+                                                            );
 
                                                         const imageUrl =
-                                                            getExhibitionImage(item);
+                                                            getExhibitionImage(
+                                                                item,
+                                                            );
 
                                                         return (
                                                             <Link
@@ -1062,17 +1119,23 @@ export default function Dashboard({
                                                             >
                                                                 <div className="profile-same-date">
                                                                     <strong>
-                                                                        {dateParts.day}
+                                                                        {
+                                                                            dateParts.day
+                                                                        }
                                                                     </strong>
                                                                     <span>
-                                                                        {dateParts.month}
+                                                                        {
+                                                                            dateParts.month
+                                                                        }
                                                                     </span>
                                                                 </div>
 
                                                                 <div className="profile-same-image-wrap">
                                                                     {imageUrl ? (
                                                                         <img
-                                                                            src={imageUrl}
+                                                                            src={
+                                                                                imageUrl
+                                                                            }
                                                                             alt={stripHtml(
                                                                                 item.title,
                                                                             )}
@@ -1098,20 +1161,23 @@ export default function Dashboard({
                                                                     <p className="profile-same-desc">
                                                                         {getShortText(
                                                                             item.short_description ||
-                                                                            item.description ||
-                                                                            item.excerpt ||
-                                                                            "",
+                                                                                item.description ||
+                                                                                item.excerpt ||
+                                                                                "",
                                                                         )}
                                                                     </p>
 
                                                                     <p
-                                                                        className={`profile-same-status ${item.status ==
+                                                                        className={`profile-same-status ${
+                                                                            item.status ==
                                                                             "published"
-                                                                            ? "published"
-                                                                            : "unpublished"
-                                                                            }`}
+                                                                                ? "published"
+                                                                                : "unpublished"
+                                                                        }`}
                                                                     >
-                                                                        {item.status}
+                                                                        {
+                                                                            item.status
+                                                                        }
                                                                     </p>
                                                                 </div>
                                                             </Link>
@@ -1121,7 +1187,8 @@ export default function Dashboard({
                                             ) : (
                                                 <div className="profile-same-empty">
                                                     <Text>
-                                                        Not Available exhibition content will be
+                                                        Not Available exhibition
+                                                        content will be
                                                         displayed here
                                                     </Text>
                                                 </div>
@@ -1137,8 +1204,8 @@ export default function Dashboard({
                                             }}
                                         >
                                             <Text>
-                                                You need to be a member to view exhibition
-                                                content.
+                                                You need to be a member to view
+                                                exhibition content.
                                             </Text>
                                         </div>
                                     )}
@@ -1146,220 +1213,230 @@ export default function Dashboard({
                             </Tabs>
 
                             <style jsx>{`
-                .profile-card-section {
-                    padding: 20px 0;
-                    width: 100%;
-                }
+                                .profile-card-section {
+                                    padding: 20px 0;
+                                    width: 100%;
+                                }
 
-                .profile-card-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, minmax(0, 1fr));
-                    gap: 28px;
-                    width: 100%;
-                }
+                                .profile-card-grid {
+                                    display: grid;
+                                    grid-template-columns: repeat(
+                                        3,
+                                        minmax(0, 1fr)
+                                    );
+                                    gap: 28px;
+                                    width: 100%;
+                                }
 
-                .profile-same-card {
-                    position: relative;
-                    display: flex;
-                    flex-direction: column;
-                    min-height: 420px;
-                    background: #ffffff;
-                    border: 1.5px solid #55b86d;
-                    border-radius: 14px;
-                    overflow: hidden;
-                    text-decoration: none;
-                    color: inherit;
-                    transition:
-                        transform 0.18s ease,
-                        box-shadow 0.18s ease;
-                }
+                                .profile-same-card {
+                                    position: relative;
+                                    display: flex;
+                                    flex-direction: column;
+                                    min-height: 420px;
+                                    background: #ffffff;
+                                    border: 1.5px solid #55b86d;
+                                    border-radius: 14px;
+                                    overflow: hidden;
+                                    text-decoration: none;
+                                    color: inherit;
+                                    transition:
+                                        transform 0.18s ease,
+                                        box-shadow 0.18s ease;
+                                }
 
-                .profile-same-card:hover {
-                    color: inherit;
-                    transform: translateY(-2px);
-                    box-shadow: 0 12px 26px rgba(27, 122, 58, 0.13);
-                }
+                                .profile-same-card:hover {
+                                    color: inherit;
+                                    transform: translateY(-2px);
+                                    box-shadow: 0 12px 26px
+                                        rgba(27, 122, 58, 0.13);
+                                }
 
-                .profile-same-date {
-                    position: absolute;
-                    top: 0;
-                    left: 34px;
-                    width: 64px;
-                    min-height: 74px;
-                    background: #ffffff;
-                    border-radius: 0 0 18px 18px;
-                    z-index: 3;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
-                }
+                                .profile-same-date {
+                                    position: absolute;
+                                    top: 0;
+                                    left: 34px;
+                                    width: 64px;
+                                    min-height: 74px;
+                                    background: #ffffff;
+                                    border-radius: 0 0 18px 18px;
+                                    z-index: 3;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    justify-content: center;
+                                    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+                                }
 
-                .profile-same-date strong {
-                    display: block;
-                    color: #14833a;
-                    font-size: 24px;
-                    line-height: 1;
-                    font-weight: 900;
-                    letter-spacing: -0.5px;
-                }
+                                .profile-same-date strong {
+                                    display: block;
+                                    color: #14833a;
+                                    font-size: 24px;
+                                    line-height: 1;
+                                    font-weight: 900;
+                                    letter-spacing: -0.5px;
+                                }
 
-                .profile-same-date span {
-                    display: block;
-                    color: #8c8c8c;
-                    font-size: 14px;
-                    line-height: 1;
-                    font-weight: 800;
-                    margin-top: 8px;
-                }
+                                .profile-same-date span {
+                                    display: block;
+                                    color: #8c8c8c;
+                                    font-size: 14px;
+                                    line-height: 1;
+                                    font-weight: 800;
+                                    margin-top: 8px;
+                                }
 
-                .profile-same-image-wrap {
-                    height: 260px;
-                    width: 100%;
-                    background: #ffffff;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                }
+                                .profile-same-image-wrap {
+                                    height: 260px;
+                                    width: 100%;
+                                    background: #ffffff;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    overflow: hidden;
+                                }
 
-                .profile-same-image {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    display: block;
-                }
+                                .profile-same-image {
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: cover;
+                                    display: block;
+                                }
 
-                .profile-same-placeholder {
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #ffffff;
-                }
+                                .profile-same-placeholder {
+                                    width: 100%;
+                                    height: 100%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    background: #ffffff;
+                                }
 
-                .profile-same-placeholder i {
-                    font-size: 150px;
-                    line-height: 1;
-                    color: #0f842e;
-                }
+                                .profile-same-placeholder i {
+                                    font-size: 150px;
+                                    line-height: 1;
+                                    color: #0f842e;
+                                }
 
-                .profile-same-content {
-                    flex: 1;
-                    padding: 28px 20px 22px;
-                    background: #ffffff;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: flex-start;
-                }
+                                .profile-same-content {
+                                    flex: 1;
+                                    padding: 28px 20px 22px;
+                                    background: #ffffff;
+                                    display: flex;
+                                    flex-direction: column;
+                                    justify-content: flex-start;
+                                }
 
-                .profile-same-title {
-                    margin: 0 0 22px;
-                    color: #171717;
-                    font-size: 24px;
-                    line-height: 1.2;
-                    font-weight: 900;
-                    letter-spacing: -0.7px;
-                    word-break: break-word;
-                }
+                                .profile-same-title {
+                                    margin: 0 0 22px;
+                                    color: #171717;
+                                    font-size: 24px;
+                                    line-height: 1.2;
+                                    font-weight: 900;
+                                    letter-spacing: -0.7px;
+                                    word-break: break-word;
+                                }
 
-                .profile-same-title * {
-                    margin: 0;
-                    color: inherit;
-                    font-size: inherit;
-                    line-height: inherit;
-                    font-weight: inherit;
-                    letter-spacing: inherit;
-                }
+                                .profile-same-title * {
+                                    margin: 0;
+                                    color: inherit;
+                                    font-size: inherit;
+                                    line-height: inherit;
+                                    font-weight: inherit;
+                                    letter-spacing: inherit;
+                                }
 
-                .profile-same-desc {
-                    margin: 0;
-                    color: #777777;
-                    font-size: 18px;
-                    line-height: 1.45;
-                    font-weight: 500;
-                    word-break: break-word;
-                }
+                                .profile-same-desc {
+                                    margin: 0;
+                                    color: #777777;
+                                    font-size: 18px;
+                                    line-height: 1.45;
+                                    font-weight: 500;
+                                    word-break: break-word;
+                                }
 
-                .profile-same-status {
-                    margin: 12px 0 0;
-                    font-size: 14px;
-                    line-height: 1;
-                    font-weight: 800;
-                    text-transform: capitalize;
-                }
+                                .profile-same-status {
+                                    margin: 12px 0 0;
+                                    font-size: 14px;
+                                    line-height: 1;
+                                    font-weight: 800;
+                                    text-transform: capitalize;
+                                }
 
-                .profile-same-status.published {
-                    color: green;
-                }
+                                .profile-same-status.published {
+                                    color: green;
+                                }
 
-                .profile-same-status.unpublished {
-                    color: red;
-                }
+                                .profile-same-status.unpublished {
+                                    color: red;
+                                }
 
-                .profile-same-empty {
-                    text-align: center;
-                    padding: 20px;
-                }
+                                .profile-same-empty {
+                                    text-align: center;
+                                    padding: 20px;
+                                }
 
-                @media (max-width: 1199px) {
-                    .profile-card-grid {
-                        grid-template-columns: repeat(3, minmax(0, 1fr));
-                        gap: 24px;
-                    }
-                }
+                                @media (max-width: 1199px) {
+                                    .profile-card-grid {
+                                        grid-template-columns: repeat(
+                                            3,
+                                            minmax(0, 1fr)
+                                        );
+                                        gap: 24px;
+                                    }
+                                }
 
-                @media (max-width: 991px) {
-                    .profile-card-grid {
-                        grid-template-columns: repeat(2, minmax(0, 1fr));
-                        gap: 22px;
-                    }
+                                @media (max-width: 991px) {
+                                    .profile-card-grid {
+                                        grid-template-columns: repeat(
+                                            2,
+                                            minmax(0, 1fr)
+                                        );
+                                        gap: 22px;
+                                    }
 
-                    .profile-same-card {
-                        min-height: 400px;
-                    }
+                                    .profile-same-card {
+                                        min-height: 400px;
+                                    }
 
-                    .profile-same-image-wrap {
-                        height: 245px;
-                    }
-                }
+                                    .profile-same-image-wrap {
+                                        height: 245px;
+                                    }
+                                }
 
-                @media (max-width: 575px) {
-                    .profile-card-section {
-                        padding: 16px 0;
-                    }
+                                @media (max-width: 575px) {
+                                    .profile-card-section {
+                                        padding: 16px 0;
+                                    }
 
-                    .profile-card-grid {
-                        grid-template-columns: 1fr;
-                        gap: 20px;
-                    }
+                                    .profile-card-grid {
+                                        grid-template-columns: 1fr;
+                                        gap: 20px;
+                                    }
 
-                    .profile-same-card {
-                        min-height: 410px;
-                        border-radius: 14px;
-                    }
+                                    .profile-same-card {
+                                        min-height: 410px;
+                                        border-radius: 14px;
+                                    }
 
-                    .profile-same-image-wrap {
-                        height: 260px;
-                    }
+                                    .profile-same-image-wrap {
+                                        height: 260px;
+                                    }
 
-                    .profile-same-date {
-                        left: 32px;
-                        width: 64px;
-                        min-height: 74px;
-                    }
+                                    .profile-same-date {
+                                        left: 32px;
+                                        width: 64px;
+                                        min-height: 74px;
+                                    }
 
-                    .profile-same-title {
-                        font-size: 24px;
-                    }
+                                    .profile-same-title {
+                                        font-size: 24px;
+                                    }
 
-                    .profile-same-desc {
-                        font-size: 18px;
-                    }
-                }
-            `}</style>
+                                    .profile-same-desc {
+                                        font-size: 18px;
+                                    }
+                                }
+                            `}</style>
                         </Card>
                     </Col>
                 </Row>

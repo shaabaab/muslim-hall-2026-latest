@@ -75,8 +75,11 @@ export default function ExhibitionBoards() {
                 <section className="board-hero">
                     <div className="container">
                         <h1>Exhibition Boards</h1>
-                        <p>Browse public boards and their latest exhibition posts.</p>
-
+                        <p>
+                            Browse public boards and their latest exhibition
+                            posts.
+                        </p>
+                        {/* Search Box */}
                         <div className="search-box">
                             <i className="fas fa-search"></i>
                             <input
@@ -93,7 +96,7 @@ export default function ExhibitionBoards() {
                         </div>
                     </div>
                 </section>
-
+                {/* Board Section */}
                 <section className="boards-section">
                     <div className="container-md">
                         {boards?.data?.length > 0 ? (
@@ -102,7 +105,10 @@ export default function ExhibitionBoards() {
                                     const posts = getBoardPosts(board);
 
                                     return (
-                                        <article className="board-row-card" key={board.id}>
+                                        <article
+                                            className="board-row-card"
+                                            key={board.id}
+                                        >
                                             <div className="board-main-row">
                                                 <Link
                                                     href={route(
@@ -112,22 +118,39 @@ export default function ExhibitionBoards() {
                                                     className="board-image-wrap"
                                                 >
                                                     <img
-                                                        src={getBoardImageUrl(board)}
-                                                        alt={stripHtml(board.title) || "Exhibition Board"}
+                                                        src={getBoardImageUrl(
+                                                            board,
+                                                        )}
+                                                        alt={
+                                                            stripHtml(
+                                                                board.title,
+                                                            ) ||
+                                                            "Exhibition Board"
+                                                        }
                                                         onError={(e) => {
-                                                            e.currentTarget.src = fallbackImage;
+                                                            e.currentTarget.src =
+                                                                fallbackImage;
                                                         }}
                                                     />
                                                     <span className="board-count">
-                                                        {board.exhibitions_count || posts.length || 0} Exhibitions
+                                                        {board.exhibitions_count ||
+                                                            posts.length ||
+                                                            0}{" "}
+                                                        Exhibitions
                                                     </span>
                                                 </Link>
 
                                                 <div className="board-body">
                                                     <div className="board-topline">
-                                                        <span className="board-label">Board</span>
+                                                        <span className="board-label">
+                                                            Board
+                                                        </span>
                                                         <span className="board-views">
-                                                            {Number(board.views_count || 0).toLocaleString()} views
+                                                            {Number(
+                                                                board.views_count ||
+                                                                    0,
+                                                            ).toLocaleString()}{" "}
+                                                            views
                                                         </span>
                                                     </div>
 
@@ -138,65 +161,98 @@ export default function ExhibitionBoards() {
                                                         )}
                                                         className="board-title-link"
                                                     >
-                                                        {stripHtml(board.title) || "Untitled Board"}
+                                                        {stripHtml(
+                                                            board.title,
+                                                        ) || "Untitled Board"}
                                                     </Link>
 
                                                     <p className="board-description">
-                                                        {stripHtml(board.description).slice(0, 180) ||
+                                                        {stripHtml(
+                                                            board.description,
+                                                        ).slice(0, 180) ||
                                                             "Explore exhibitions shared under this board."}
                                                     </p>
 
                                                     <div className="board-owner">
-                                                        <span>Owner:</span> {board.owner?.name || "Unknown"}
+                                                        <span>Owner:</span>{" "}
+                                                        {board.owner?.name ||
+                                                            "Unknown"}
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="board-posts-wrap">
                                                 <div className="board-posts-header">
-                                                    <h4>Latest Exhibition Posts</h4>
+                                                    <h4>
+                                                        Latest Exhibition Posts
+                                                    </h4>
                                                     <Link
                                                         href={route(
                                                             "exhibition-board.show",
                                                             board.id,
                                                         )}
                                                     >
-                                                        View board <i className="fas fa-arrow-right"></i>
+                                                        View board{" "}
+                                                        <i className="fas fa-arrow-right"></i>
                                                     </Link>
                                                 </div>
 
                                                 {posts.length > 0 ? (
                                                     <div className="board-posts-list">
                                                         {posts.map((post) => (
-                                                            <Link
-                                                                href={`/exhibition-detail/${post.id}`}
-                                                                className="board-post-item"
-                                                                key={post.id}
-                                                            >
+                                                            // <Link
+                                                            //     href={`/exhibition-detail/${post.id}`}
+                                                            //     className="board-post-item"
+                                                            //     key={post.id}
+                                                            // >
+                                                            <div className="board-post-item">
                                                                 <img
-                                                                    src={getPostImageUrl(post)}
-                                                                    alt={stripHtml(post.title) || "Exhibition"}
-                                                                    onError={(e) => {
-                                                                        e.currentTarget.src = fallbackImage;
+                                                                    src={getPostImageUrl(
+                                                                        post,
+                                                                    )}
+                                                                    alt={
+                                                                        stripHtml(
+                                                                            post.title,
+                                                                        ) ||
+                                                                        "Exhibition"
+                                                                    }
+                                                                    onError={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.currentTarget.src =
+                                                                            fallbackImage;
                                                                     }}
                                                                 />
                                                                 <div className="board-post-content">
-                                                                    <h5>{stripHtml(post.title) || "Untitled Exhibition"}</h5>
+                                                                    <h5>
+                                                                        {stripHtml(
+                                                                            post.title,
+                                                                        ) ||
+                                                                            "Untitled Exhibition"}
+                                                                    </h5>
                                                                     <p>
                                                                         {stripHtml(
-                                                                            post.description || post.content,
-                                                                        ).slice(0, 95)}
+                                                                            post.description ||
+                                                                                post.content,
+                                                                        ).slice(
+                                                                            0,
+                                                                            95,
+                                                                        )}
                                                                     </p>
                                                                     <span>
-                                                                        {post.type || "Exhibition"}
+                                                                        {post.type ||
+                                                                            "Exhibition"}
                                                                     </span>
                                                                 </div>
-                                                            </Link>
+                                                            </div>
+                                                            // </Link>
                                                         ))}
                                                     </div>
                                                 ) : (
                                                     <div className="empty-posts">
-                                                        No approved exhibition post found in this board.
+                                                        No approved exhibition
+                                                        post found in this
+                                                        board.
                                                     </div>
                                                 )}
                                             </div>
@@ -219,7 +275,9 @@ export default function ExhibitionBoards() {
                                         type="button"
                                         disabled={!link.url}
                                         className={`pagination-btn ${link.active ? "active" : ""}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: link.label,
+                                        }}
                                         onClick={() => {
                                             if (link.url) {
                                                 router.visit(link.url, {

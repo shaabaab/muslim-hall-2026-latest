@@ -45,12 +45,12 @@ export default function Header() {
                 icon: "fa-images",
                 restricted: false,
             },
-            {
-                href: "/contests-details",
-                label: "Contest",
-                icon: "fa-trophy",
-                restricted: false,
-            },
+            // {
+            //     href: "/contests-details",
+            //     label: "Contest",
+            //     icon: "fa-trophy",
+            //     restricted: false,
+            // },
         ],
         [],
     );
@@ -255,7 +255,7 @@ export default function Header() {
                     max-width: 100%;
                 }
                 body {
-                  padding-top: 72px; 
+                    padding-top: 72px;
                     scrollbar-gutter: stable;
                     width: 100%;
                     max-width: 100%;
@@ -722,7 +722,13 @@ export default function Header() {
                                 {/* Islamic Zone */}
                                 <li className="mobile-nav-item mobile-dropdown">
                                     <div className="d-flex align-items-center justify-content-between">
-                                        <Link href="/islamic-zone" className="mobile-nav-link text-decoration-none flex-grow-1" onClick={() => updateState("mobile", false)}>
+                                        <Link
+                                            href="/islamic-zone"
+                                            className="mobile-nav-link text-decoration-none flex-grow-1"
+                                            onClick={() =>
+                                                updateState("mobile", false)
+                                            }
+                                        >
                                             <i className="fas fa-star-and-crescent mr-2"></i>
                                             Islamic Zone
                                         </Link>
@@ -732,14 +738,17 @@ export default function Header() {
                                             onClick={() =>
                                                 setState((p) => ({
                                                     ...p,
-                                                    mobileIslamicOpen: !p.mobileIslamicOpen,
+                                                    mobileIslamicOpen:
+                                                        !p.mobileIslamicOpen,
                                                     mobileCalendarOpen: false,
                                                 }))
                                             }
                                         >
                                             <i
                                                 className={`fas fa-chevron-down ${
-                                                    state.mobileIslamicOpen ? "rot" : ""
+                                                    state.mobileIslamicOpen
+                                                        ? "rot"
+                                                        : ""
                                                 }`}
                                             ></i>
                                         </button>

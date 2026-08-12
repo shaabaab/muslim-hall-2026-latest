@@ -168,8 +168,8 @@ class ExhibitionController extends Controller
             'new_board_description' => 'nullable|string|max:10000',
             'new_board_image' => UploadRules::image(),
             'board_request_message' => 'nullable|string|max:1000',
-            'title' => 'required|string|max:5000',
-            'description' => 'required|string',
+            'title' => 'nullable|string|max:5000',
+            'description' => 'nullable|string',
             'type' => 'required|in:product,document,art,photography,craft',
             'image' => UploadRules::image(true),
             'sponsor_image' => UploadRules::image(),
@@ -203,7 +203,8 @@ class ExhibitionController extends Controller
         $validated['title'] = $this->cleanHtml($validated['title']);
         $validated['description'] = $this->cleanHtml($validated['description']);
         $validated['exhibition_board_id'] = $board->id;
-        $validated['slug'] = $this->generateUniqueSlug(strip_tags($request->title));
+        // $validated['slug'] = $this->generateUniqueSlug(strip_tags($request->title));
+        $validated['slug'] = $this->generateUniqueSlug(strip_tags($validated['title'] ?? ''));
         $validated['user_id'] = $user->id;
         $validated['status'] = Exhibition::STATUS_DRAFT;
         $validated['approval_status'] = Exhibition::APPROVAL_PENDING;
