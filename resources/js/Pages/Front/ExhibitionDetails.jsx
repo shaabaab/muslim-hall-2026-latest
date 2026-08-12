@@ -1,9 +1,9 @@
 import { Link, usePage, useForm, router } from "@inertiajs/react";
 import Footer from "./Footer";
 import Header from "./Header";
-import FrontAuthenticatedLayout from '@/Layouts/FrontEndLayout';
-import { buildS3UrlAlways } from '@/Utils/s3Helpers';
-import { useState, useEffect, useMemo } from 'react';
+import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
+import { buildS3UrlAlways } from "@/Utils/s3Helpers";
+import { useState, useEffect, useMemo } from "react";
 import {
     Modal,
     Form,
@@ -16,8 +16,8 @@ import {
     Switch,
     InputNumber,
     Space,
-    message
-} from 'antd';
+    message,
+} from "antd";
 import {
     SaveOutlined,
     UploadOutlined,
@@ -25,18 +25,25 @@ import {
     FileTextOutlined,
     ShoppingOutlined,
     PictureOutlined,
-    EditOutlined
-} from '@ant-design/icons';
+    EditOutlined,
+} from "@ant-design/icons";
 
 const { TextArea } = Input;
 const { Option } = Select;
 
 export default function ExhibitionDetail() {
-    const { exhibition, langs, currencyOptions, filters: initialFilters, member, auth } = usePage().props;
-    
+    const {
+        exhibition,
+        langs,
+        currencyOptions,
+        filters: initialFilters,
+        member,
+        auth,
+    } = usePage().props;
+
     // Ensure exhibition is always an array
     const exhibitions = Array.isArray(exhibition) ? exhibition : [];
-    
+
     const [showMobileFilter, setShowMobileFilter] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportReason, setReportReason] = useState("");
@@ -45,21 +52,21 @@ export default function ExhibitionDetail() {
     const [reportSuccess, setReportSuccess] = useState("");
     const [currentExhibitionId, setCurrentExhibitionId] = useState(null);
     const [createModalVisible, setCreateModalVisible] = useState(false);
-    
+
     const [filters, setFilters] = useState({
-        search: initialFilters?.search || '',
-        sort: initialFilters?.sort || 'newest',
-        status: initialFilters?.status ,
-        type: initialFilters?.type 
+        search: initialFilters?.search || "",
+        sort: initialFilters?.sort || "newest",
+        status: initialFilters?.status,
+        type: initialFilters?.type,
     });
 
     // Debounced filter updates
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            router.get(route('exhibition-details'), filters, {
+            router.get(route("exhibition-details"), filters, {
                 preserveState: true,
                 replace: true,
-                only: ['exhibition', 'filters']
+                only: ["exhibition", "filters"],
             });
         }, 300);
 
@@ -67,21 +74,21 @@ export default function ExhibitionDetail() {
     }, [filters]);
 
     const handleFilterChange = (key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
+        setFilters((prev) => ({ ...prev, [key]: value }));
     };
 
     const clearFilters = () => {
         const clearedFilters = {
-            search: '',
-            sort: 'newest',
-            status: 'all',
-            type: 'all'
+            search: "",
+            sort: "newest",
+            status: "all",
+            type: "all",
         };
         setFilters(clearedFilters);
-        router.get(route('exhibition-details'), clearedFilters, {
+        router.get(route("exhibition-details"), clearedFilters, {
             preserveState: true,
             replace: true,
-            only: ['exhibition', 'filters']
+            only: ["exhibition", "filters"],
         });
     };
 
@@ -162,20 +169,26 @@ export default function ExhibitionDetail() {
     // Helper to get image. Media is on S3, not storage/app/public — resolve the
     // key via the shared helper instead of building a /storage/ path by hand.
     const getImageUrl = (imagePath) => {
-        if (!imagePath) return 'https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png';
+        if (!imagePath)
+            return "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
         return buildS3UrlAlways(imagePath);
     };
 
     // Derived Data for Filters
-    const statuses = [...new Set(exhibitions.map(item => item.status).filter(Boolean))];
-    const types = [...new Set(exhibitions.map(item => item.type).filter(Boolean))];
+    const statuses = [
+        ...new Set(exhibitions.map((item) => item.status).filter(Boolean)),
+    ];
+    const types = [
+        ...new Set(exhibitions.map((item) => item.type).filter(Boolean)),
+    ];
 
     // Stats Calculation
     const stats = useMemo(() => {
         return {
             total: exhibitions.length,
-            featured: exhibitions.filter(i => i.is_featured).length,
-            forSale: exhibitions.filter(i => i.is_available && i.price > 0).length
+            featured: exhibitions.filter((i) => i.is_featured).length,
+            forSale: exhibitions.filter((i) => i.is_available && i.price > 0)
+                .length,
         };
     }, [exhibitions]);
 
@@ -264,7 +277,6 @@ export default function ExhibitionDetail() {
                 {/* Main Content */}
                 <div className="content-section" id="exhibitions">
                     <div className="container-md">
-                        
                         {/* Mobile Filter Toggle */}
                         <div className="mobile-actions">
                             <button
@@ -285,17 +297,24 @@ export default function ExhibitionDetail() {
 
                         <div className="content-grid">
                             {/* Filter Sidebar */}
-                            <aside className={`sidebar ${showMobileFilter ? "open" : ""}`}>
+                            <aside
+                                className={`sidebar ${showMobileFilter ? "open" : ""}`}
+                            >
                                 <div className="sidebar-inner">
                                     <div className="sidebar-header">
                                         <h3>Filters</h3>
                                         <div className="sidebar-header-actions">
-                                            <button onClick={clearFilters} className="btn-text">
+                                            <button
+                                                onClick={clearFilters}
+                                                className="btn-text"
+                                            >
                                                 Reset
                                             </button>
                                             <button
                                                 className="btn-icon mobile-only"
-                                                onClick={() => setShowMobileFilter(false)}
+                                                onClick={() =>
+                                                    setShowMobileFilter(false)
+                                                }
                                             >
                                                 <i className="fas fa-times"></i>
                                             </button>
@@ -310,25 +329,49 @@ export default function ExhibitionDetail() {
                                                 type="text"
                                                 placeholder="Search exhibitions..."
                                                 value={filters.search}
-                                                onChange={(e) => handleFilterChange("search", e.target.value)}
+                                                onChange={(e) =>
+                                                    handleFilterChange(
+                                                        "search",
+                                                        e.target.value,
+                                                    )
+                                                }
                                             />
                                         </div>
                                     </div>
 
                                     {/* Sort */}
                                     <div className="filter-block">
-                                        <h4 className="filter-title">Sort By</h4>
+                                        <h4 className="filter-title">
+                                            Sort By
+                                        </h4>
                                         <select
                                             className="form-select"
                                             value={filters.sort}
-                                            onChange={(e) => handleFilterChange("sort", e.target.value)}
+                                            onChange={(e) =>
+                                                handleFilterChange(
+                                                    "sort",
+                                                    e.target.value,
+                                                )
+                                            }
                                         >
-                                            <option value="newest">Newest First</option>
-                                            <option value="oldest">Oldest First</option>
-                                            <option value="title_asc">Title (A-Z)</option>
-                                            <option value="title_desc">Title (Z-A)</option>
-                                            <option value="price_asc">Price: Low to High</option>
-                                            <option value="price_desc">Price: High to Low</option>
+                                            <option value="newest">
+                                                Newest First
+                                            </option>
+                                            <option value="oldest">
+                                                Oldest First
+                                            </option>
+                                            <option value="title_asc">
+                                                Title (A-Z)
+                                            </option>
+                                            <option value="title_desc">
+                                                Title (Z-A)
+                                            </option>
+                                            <option value="price_asc">
+                                                Price: Low to High
+                                            </option>
+                                            <option value="price_desc">
+                                                Price: High to Low
+                                            </option>
                                         </select>
                                     </div>
 
@@ -338,18 +381,33 @@ export default function ExhibitionDetail() {
                                         <div className="category-nav">
                                             <button
                                                 className={`nav-items ${filters.status === "all" ? "active" : ""}`}
-                                                onClick={() => handleFilterChange("status", "all")}
+                                                onClick={() =>
+                                                    handleFilterChange(
+                                                        "status",
+                                                        "all",
+                                                    )
+                                                }
                                             >
                                                 <span>All Statuses</span>
                                             </button>
-                                            
-                                            {statuses.map(status => (
+
+                                            {statuses.map((status) => (
                                                 <button
                                                     key={status}
                                                     className={`nav-items ${filters.status === status ? "active" : ""}`}
-                                                    onClick={() => handleFilterChange("status", status)}
+                                                    onClick={() =>
+                                                        handleFilterChange(
+                                                            "status",
+                                                            status,
+                                                        )
+                                                    }
                                                 >
-                                                    <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                                                    <span>
+                                                        {status
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            status.slice(1)}
+                                                    </span>
                                                 </button>
                                             ))}
                                         </div>
@@ -361,34 +419,52 @@ export default function ExhibitionDetail() {
                                         <div className="category-nav">
                                             <button
                                                 className={`nav-items ${filters.type === "all" ? "active" : ""}`}
-                                                onClick={() => handleFilterChange("type", "all")}
+                                                onClick={() =>
+                                                    handleFilterChange(
+                                                        "type",
+                                                        "all",
+                                                    )
+                                                }
                                             >
                                                 <span>All Types</span>
                                             </button>
-                                            
-                                            {types.map(type => (
+
+                                            {types.map((type) => (
                                                 <button
                                                     key={type}
                                                     className={`nav-items ${filters.type === type ? "active" : ""}`}
-                                                    onClick={() => handleFilterChange("type", type)}
+                                                    onClick={() =>
+                                                        handleFilterChange(
+                                                            "type",
+                                                            type,
+                                                        )
+                                                    }
                                                 >
-                                                    <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                                                    <span>
+                                                        {type
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                            type.slice(1)}
+                                                    </span>
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
 
-                        
-
                                     {/* Quick Actions */}
                                     {auth?.user && (
                                         <div className="filter-block">
-                                            <h4 className="filter-title">Actions</h4>
-                                            <button 
+                                            <h4 className="filter-title">
+                                                Actions
+                                            </h4>
+                                            <button
                                                 className="action-btn primary"
-                                                onClick={() => setCreateModalVisible(true)}
+                                                onClick={() =>
+                                                    setCreateModalVisible(true)
+                                                }
                                             >
-                                                <i className="fas fa-plus-circle"></i> Create New
+                                                <i className="fas fa-plus-circle"></i>{" "}
+                                                Create New
                                             </button>
                                         </div>
                                     )}
@@ -409,7 +485,14 @@ export default function ExhibitionDetail() {
                                     <div className="active-filters">
                                         <span className="filter-chip">
                                             Search: "{filters.search}"
-                                            <button onClick={() => handleFilterChange("search", "")}>
+                                            <button
+                                                onClick={() =>
+                                                    handleFilterChange(
+                                                        "search",
+                                                        "",
+                                                    )
+                                                }
+                                            >
                                                 <i className="fas fa-times"></i>
                                             </button>
                                         </span>
@@ -420,13 +503,27 @@ export default function ExhibitionDetail() {
                                 <div className="grid-container">
                                     {exhibitions.length > 0 ? (
                                         exhibitions.map((item) => (
-                                            <div key={item.id} className="post-card">
-                                                <Link href={`/exhibition-detail/${item.id}`} className="card-img-link">
+                                            <div
+                                                key={item.id}
+                                                className="post-card"
+                                            >
+                                                <Link
+                                                    href={`/exhibition-detail/${item.id}`}
+                                                    className="card-img-link"
+                                                >
                                                     <div className="card-img-wrapper">
                                                         <img
-                                                            alt={item.title || 'Exhibition'}
-                                                            src={getImageUrl(item.image)}
-                                                            onError={(e) => { e.target.src = 'https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png'; }}
+                                                            alt={
+                                                                item.title ||
+                                                                "Exhibition"
+                                                            }
+                                                            src={getImageUrl(
+                                                                item.image,
+                                                            )}
+                                                            onError={(e) => {
+                                                                e.target.src =
+                                                                    "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
+                                                            }}
                                                         />
                                                         <div className="card-badges">
                                                             {/* {item.is_featured && (
@@ -434,7 +531,9 @@ export default function ExhibitionDetail() {
                                                                     <i className="fas fa-star"></i>
                                                                 </span>
                                                             )} */}
-                                                            <span className={`badge status ${item.status}`}>
+                                                            <span
+                                                                className={`badge status ${item.status}`}
+                                                            >
                                                                 {item.status}
                                                             </span>
                                                         </div>
@@ -443,31 +542,48 @@ export default function ExhibitionDetail() {
                                                         </span>
                                                     </div>
                                                 </Link>
-                                                
+
                                                 <div className="card-body">
                                                     <div className="card-date">
-                                                        <i className="far fa-clock"></i> {new Date(item.created_at).toLocaleDateString()}
+                                                        <i className="far fa-clock"></i>{" "}
+                                                        {new Date(
+                                                            item.created_at,
+                                                        ).toLocaleDateString()}
                                                     </div>
-                                                    
+
                                                     <h3 className="card-title">
-                                                        <Link href={`/exhibition-detail/${item.id}`}>
-                                                            {item.title || 'Untitled'}
+                                                        <Link
+                                                            href={`/exhibition-detail/${item.id}`}
+                                                        >
+                                                            {item.title ||
+                                                                "Untitled"}
                                                         </Link>
                                                     </h3>
-                                                    
+
                                                     <p className="card-text">
-                                                        {item.description?.replace(/<[^>]+>/g, '').slice(0, 90)}...
+                                                        {item.description
+                                                            ?.replace(
+                                                                /<[^>]+>/g,
+                                                                "",
+                                                            )
+                                                            .slice(0, 90)}
+                                                        ...
                                                     </p>
-                                                    
+
                                                     <div className="card-footer">
                                                         <div className="meta">
                                                             {item.price > 0 ? (
                                                                 <span className="price">
-                                                                    <i className="fas fa-tag"></i> ${parseFloat(item.price).toLocaleString()}
+                                                                    <i className="fas fa-tag"></i>{" "}
+                                                                    $
+                                                                    {parseFloat(
+                                                                        item.price,
+                                                                    ).toLocaleString()}
                                                                 </span>
                                                             ) : (
                                                                 <span className="meta-item">
-                                                                    <i className="fas fa-palette"></i> {item.type}
+                                                                    <i className="fas fa-palette"></i>{" "}
+                                                                    {item.type}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -488,16 +604,26 @@ export default function ExhibitionDetail() {
                                                 <i className="fas fa-palette"></i>
                                             </div>
                                             <h3>No exhibitions found</h3>
-                                            <p>Try clearing your filters or searching for something else.</p>
+                                            <p>
+                                                Try clearing your filters or
+                                                searching for something else.
+                                            </p>
                                             {auth?.user ? (
-                                                <button 
-                                                    onClick={() => setCreateModalVisible(true)}
+                                                <button
+                                                    onClick={() =>
+                                                        setCreateModalVisible(
+                                                            true,
+                                                        )
+                                                    }
                                                     className="btn btn-secondary"
                                                 >
                                                     Create First Exhibition
                                                 </button>
                                             ) : (
-                                                <button onClick={clearFilters} className="btn btn-secondary">
+                                                <button
+                                                    onClick={clearFilters}
+                                                    className="btn btn-secondary"
+                                                >
                                                     Clear Filters
                                                 </button>
                                             )}
@@ -528,7 +654,9 @@ export default function ExhibitionDetail() {
                 .page-wrapper {
                     background-color: #f4f6f8;
                     min-height: 100vh;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                    font-family:
+                        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                        "Helvetica Neue", Arial, sans-serif;
                 }
 
                 /* --- Report Modal (Fixed) --- */
@@ -549,7 +677,7 @@ export default function ExhibitionDetail() {
                     width: 100%;
                     max-width: 500px;
                     border-radius: 12px;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
                     display: flex;
                     flex-direction: column;
                     overflow: hidden;
@@ -557,8 +685,14 @@ export default function ExhibitionDetail() {
                 }
 
                 @keyframes fadeIn {
-                    from { opacity: 0; transform: scale(0.95); }
-                    to { opacity: 1; transform: scale(1); }
+                    from {
+                        opacity: 0;
+                        transform: scale(0.95);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
                 }
 
                 .modal-header {
@@ -579,7 +713,9 @@ export default function ExhibitionDetail() {
                     align-items: center;
                     gap: 10px;
                 }
-                .modal-title i { color: #dc3545; }
+                .modal-title i {
+                    color: #dc3545;
+                }
 
                 .modal-close-btn {
                     background: transparent;
@@ -596,7 +732,10 @@ export default function ExhibitionDetail() {
                     width: 32px;
                     height: 32px;
                 }
-                .modal-close-btn:hover { background: #f5f5f5; color: #333; }
+                .modal-close-btn:hover {
+                    background: #f5f5f5;
+                    color: #333;
+                }
 
                 .modal-body {
                     padding: 24px;
@@ -614,9 +753,14 @@ export default function ExhibitionDetail() {
                     gap: 10px;
                     margin-bottom: 20px;
                 }
-                .info-box i { color: #007bff; margin-top: 2px; }
+                .info-box i {
+                    color: #007bff;
+                    margin-top: 2px;
+                }
 
-                .form-group { margin-bottom: 0; }
+                .form-group {
+                    margin-bottom: 0;
+                }
                 .form-label {
                     display: block;
                     font-weight: 500;
@@ -624,7 +768,9 @@ export default function ExhibitionDetail() {
                     color: #333;
                     font-size: 14px;
                 }
-                .required { color: #dc3545; }
+                .required {
+                    color: #dc3545;
+                }
 
                 .form-textarea {
                     width: 100%;
@@ -640,7 +786,7 @@ export default function ExhibitionDetail() {
                 .form-textarea:focus {
                     outline: none;
                     border-color: #80bdff;
-                    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+                    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
                 }
 
                 .char-count {
@@ -659,8 +805,14 @@ export default function ExhibitionDetail() {
                     align-items: center;
                     gap: 8px;
                 }
-                .alert-error { background: #fde8e8; color: #c53030; }
-                .alert-success { background: #def7ec; color: #03543f; }
+                .alert-error {
+                    background: #fde8e8;
+                    color: #c53030;
+                }
+                .alert-success {
+                    background: #def7ec;
+                    color: #03543f;
+                }
 
                 .modal-footer {
                     padding: 16px 24px;
@@ -681,8 +833,11 @@ export default function ExhibitionDetail() {
                     border: 1px solid transparent;
                     transition: all 0.2s;
                 }
-                .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-                
+                .btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+
                 .btn-secondary {
                     background: #fff;
                     border-color: #ced4da;
@@ -702,15 +857,15 @@ export default function ExhibitionDetail() {
                 }
 
                 .btn-mobile-filter {
-                    width: 100%; 
+                    width: 100%;
                     padding: 12px;
-                    background: #fff; 
+                    background: #fff;
                     border: 1px solid #d1d5db;
-                    border-radius: 8px; 
+                    border-radius: 8px;
                     font-weight: 600;
-                    display: flex; 
-                    justify-content: center; 
-                    align-items: center; 
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                     gap: 8px;
                     cursor: pointer;
                     transition: all 0.2s;
@@ -747,8 +902,14 @@ export default function ExhibitionDetail() {
                 }
 
                 /* --- Layout CSS --- */
-                .content-section { padding: 40px 0; }
-                .container-md { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+                .content-section {
+                    padding: 40px 0;
+                }
+                .container-md {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 0 20px;
+                }
                 .content-grid {
                     display: grid;
                     grid-template-columns: 280px 1fr;
@@ -775,30 +936,32 @@ export default function ExhibitionDetail() {
                     padding-bottom: 15px;
                     border-bottom: 1px solid #f0f0f0;
                 }
-                .sidebar-header h3 { 
-                    margin: 0; 
-                    font-size: 16px; 
-                    font-weight: 700; 
-                    color: #111; 
+                .sidebar-header h3 {
+                    margin: 0;
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #111;
                 }
-                
+
                 .sidebar-header-actions {
                     display: flex;
                     align-items: center;
                     gap: 10px;
                 }
-                
+
                 .btn-text {
-                    background: none; 
+                    background: none;
                     border: none;
-                    color: #666; 
+                    color: #666;
                     font-size: 13px;
-                    cursor: pointer; 
+                    cursor: pointer;
                     text-decoration: underline;
                     padding: 0;
                 }
-                .btn-text:hover { color: #333; }
-                
+                .btn-text:hover {
+                    color: #333;
+                }
+
                 .btn-icon {
                     background: none;
                     border: none;
@@ -809,109 +972,115 @@ export default function ExhibitionDetail() {
                     justify-content: center;
                     color: #666;
                 }
-                .btn-icon:hover { color: #333; }
-                
-                .filter-block { margin-bottom: 24px; }
-                .filter-block:last-child { margin-bottom: 0; }
-                
+                .btn-icon:hover {
+                    color: #333;
+                }
+
+                .filter-block {
+                    margin-bottom: 24px;
+                }
+                .filter-block:last-child {
+                    margin-bottom: 0;
+                }
+
                 .search-box {
                     position: relative;
                 }
                 .search-box i {
-                    position: absolute; 
-                    left: 12px; 
+                    position: absolute;
+                    left: 12px;
                     top: 50%;
-                    transform: translateY(-50%); 
+                    transform: translateY(-50%);
                     color: #9ca3af;
                     font-size: 14px;
                 }
                 .search-box input {
-                    width: 100%; 
+                    width: 100%;
                     padding: 10px 10px 10px 36px;
-                    border: 1px solid #e5e7eb; 
+                    border: 1px solid #e5e7eb;
                     border-radius: 8px;
-                    font-size: 14px; 
+                    font-size: 14px;
                     background: #f9fafb;
                     color: #374151;
                     transition: all 0.2s;
                 }
                 .search-box input:focus {
-                    background: #fff; 
-                    outline: none; 
+                    background: #fff;
+                    outline: none;
                     border-color: #1b7a3a;
                     box-shadow: 0 0 0 3px rgba(27, 122, 58, 0.1);
                 }
 
                 .filter-title {
-                    font-size: 12px; 
+                    font-size: 12px;
                     text-transform: uppercase;
-                    color: #6b7280; 
+                    color: #6b7280;
                     font-weight: 600;
-                    margin-bottom: 12px; 
+                    margin-bottom: 12px;
                     letter-spacing: 0.5px;
                 }
 
-                .category-nav { 
-                    display: flex; 
-                    flex-direction: column; 
-                    gap: 2px; 
+                .category-nav {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
                 }
-                
+
                 .nav-items {
-                    display: flex; 
+                    display: flex;
                     justify-content: space-between;
-                    align-items: center; 
+                    align-items: center;
                     padding: 8px 12px;
-                    background: transparent; 
+                    background: transparent;
                     border: none;
-                    border-radius: 6px; 
+                    border-radius: 6px;
                     cursor: pointer;
-                    color: #4b5563; 
+                    color: #4b5563;
                     font-size: 14px;
-                    text-align: left; 
+                    text-align: left;
                     width: 100%;
                     transition: all 0.2s;
                 }
-                .nav-items:hover { 
-                    background: #f3f4f6; 
-                    color: #111; 
+                .nav-items:hover {
+                    background: #f3f4f6;
+                    color: #111;
                 }
-                .nav-items.active { 
-                    background: #f0fdf4; 
-                    color: #166534; 
-                    font-weight: 600; 
+                .nav-items.active {
+                    background: #f0fdf4;
+                    color: #166534;
+                    font-weight: 600;
                 }
 
                 .stats-group {
-                    display: flex; 
-                    flex-direction: column; 
+                    display: flex;
+                    flex-direction: column;
                     gap: 8px;
                     margin-top: 10px;
                 }
                 .stat-item {
-                    display: flex; 
+                    display: flex;
                     justify-content: space-between;
-                    align-items: center; 
+                    align-items: center;
                     font-size: 13px;
-                    color: #4b5563; 
+                    color: #4b5563;
                     padding: 6px 0;
                 }
-                .stat-label { 
-                    opacity: 0.8; 
+                .stat-label {
+                    opacity: 0.8;
                 }
-                .stat-value { 
-                    font-weight: 600; 
-                    color: #166534; 
+                .stat-value {
+                    font-weight: 600;
+                    color: #166534;
                 }
 
                 .form-select {
-                    width: 100%; 
+                    width: 100%;
                     padding: 10px;
-                    border: 1px solid #e5e7eb; 
+                    border: 1px solid #e5e7eb;
                     border-radius: 8px;
-                    color: #374151; 
+                    color: #374151;
                     font-size: 14px;
-                    background: #fff; 
+                    background: #fff;
                     cursor: pointer;
                     transition: border-color 0.2s;
                 }
@@ -923,42 +1092,42 @@ export default function ExhibitionDetail() {
 
                 /* --- Feed & Cards --- */
                 .feed-header {
-                    display: flex; 
+                    display: flex;
                     justify-content: space-between;
-                    align-items: baseline; 
+                    align-items: baseline;
                     margin-bottom: 20px;
                 }
-                .feed-header h2 { 
-                    margin: 0; 
-                    font-size: 24px; 
-                    color: #111; 
+                .feed-header h2 {
+                    margin: 0;
+                    font-size: 24px;
+                    color: #111;
                     font-weight: 700;
                 }
-                .result-count { 
-                    color: #6b7280; 
-                    font-size: 14px; 
+                .result-count {
+                    color: #6b7280;
+                    font-size: 14px;
                     font-weight: 500;
                 }
 
-                .active-filters { 
-                    margin-bottom: 20px; 
+                .active-filters {
+                    margin-bottom: 20px;
                 }
                 .filter-chip {
-                    display: inline-flex; 
-                    align-items: center; 
+                    display: inline-flex;
+                    align-items: center;
                     gap: 8px;
-                    background: #e0f2f1; 
+                    background: #e0f2f1;
                     color: #00695c;
-                    padding: 6px 12px; 
-                    border-radius: 20px; 
-                    font-size: 13px; 
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 13px;
                     font-weight: 500;
                 }
-                .filter-chip button { 
-                    background: none; 
-                    border: none; 
-                    color: inherit; 
-                    cursor: pointer; 
+                .filter-chip button {
+                    background: none;
+                    border: none;
+                    color: inherit;
+                    cursor: pointer;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -966,11 +1135,16 @@ export default function ExhibitionDetail() {
                     height: 16px;
                     font-size: 12px;
                 }
-                .filter-chip button:hover { opacity: 0.8; }
+                .filter-chip button:hover {
+                    opacity: 0.8;
+                }
 
                 .grid-container {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    grid-template-columns: repeat(
+                        auto-fill,
+                        minmax(280px, 1fr)
+                    );
                     gap: 24px;
                 }
 
@@ -979,13 +1153,15 @@ export default function ExhibitionDetail() {
                     border-radius: 12px;
                     overflow: hidden;
                     border: 1px solid #e5e7eb;
-                    transition: transform 0.2s, box-shadow 0.2s;
-                    display: flex; 
+                    transition:
+                        transform 0.2s,
+                        box-shadow 0.2s;
+                    display: flex;
                     flex-direction: column;
                 }
                 .post-card:hover {
                     transform: translateY(-4px);
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
                 }
 
                 .card-img-link {
@@ -994,97 +1170,103 @@ export default function ExhibitionDetail() {
                 }
 
                 .card-img-wrapper {
-                    height: 200px; 
-                    position: relative; 
+                    height: 200px;
+                    position: relative;
                     overflow: hidden;
                 }
                 .card-img-wrapper img {
-                    width: 100%; 
-                    height: 100%; 
+                    width: 100%;
+                    height: 100%;
                     object-fit: cover;
                     transition: transform 0.3s;
                 }
-                .post-card:hover .card-img-wrapper img { 
-                    transform: scale(1.05); 
+                .post-card:hover .card-img-wrapper img {
+                    transform: scale(1.05);
                 }
-                
+
                 .card-badges {
-                    position: absolute; 
-                    top: 12px; 
+                    position: absolute;
+                    top: 12px;
                     left: 12px;
-                    display: flex; 
-                    flex-direction: column; 
+                    display: flex;
+                    flex-direction: column;
                     gap: 5px;
                 }
-                
+
                 .badge {
-                    padding: 4px 8px; 
+                    padding: 4px 8px;
                     border-radius: 12px;
-                    font-size: 10px; 
+                    font-size: 10px;
                     font-weight: 600;
-                    text-transform: uppercase; 
+                    text-transform: uppercase;
                     color: white;
                     display: inline-flex;
                     align-items: center;
                     gap: 4px;
                 }
                 .badge.featured {
-                    background: #ffc107; 
+                    background: #ffc107;
                     color: black;
                 }
-                .badge.status.published { background: #28a745; }
-                .badge.status.draft { background: #6c757d; }
-                .badge.status.sold { background: #dc3545; }
-                
+                .badge.status.published {
+                    background: #28a745;
+                }
+                .badge.status.draft {
+                    background: #6c757d;
+                }
+                .badge.status.sold {
+                    background: #dc3545;
+                }
+
                 .category-tag {
-                    position: absolute; 
-                    top: 12px; 
+                    position: absolute;
+                    top: 12px;
                     right: 12px;
-                    background: rgba(255,255,255,0.95);
-                    padding: 4px 10px; 
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 4px 10px;
                     border-radius: 4px;
-                    font-size: 11px; 
-                    font-weight: 700; 
+                    font-size: 11px;
+                    font-weight: 700;
                     color: #166534;
                     text-transform: uppercase;
                     border: 2px solid #166534;
                 }
 
-                .card-body { 
-                    padding: 16px; 
-                    display: flex; 
-                    flex-direction: column; 
-                    flex: 1; 
+                .card-body {
+                    padding: 16px;
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1;
                 }
-                
+
                 .card-date {
-                    font-size: 12px; 
-                    color: #9ca3af; 
+                    font-size: 12px;
+                    color: #9ca3af;
                     margin-bottom: 8px;
                     display: flex;
                     align-items: center;
                     gap: 6px;
                 }
                 .card-title {
-                    font-size: 16px; 
-                    font-weight: 700; 
+                    font-size: 16px;
+                    font-weight: 700;
                     margin: 0 0 8px 0;
                     line-height: 1.4;
                 }
-                .card-title a { 
-                    color: #111; 
-                    text-decoration: none; 
+                .card-title a {
+                    color: #111;
+                    text-decoration: none;
                 }
-                .card-title a:hover { 
-                    color: #166534; 
+                .card-title a:hover {
+                    color: #166534;
                     text-decoration: underline;
                 }
-                
+
                 .card-text {
-                    font-size: 14px; 
-                    color: #4b5563; 
+                    font-size: 14px;
+                    color: #4b5563;
                     line-height: 1.5;
-                    margin-bottom: 16px; 
+                    margin-bottom: 16px;
                     flex: 1;
                     overflow: hidden;
                     display: -webkit-box;
@@ -1093,42 +1275,42 @@ export default function ExhibitionDetail() {
                 }
 
                 .card-footer {
-                    padding-top: 12px; 
+                    padding-top: 12px;
                     border-top: 1px solid #f3f4f6;
-                    display: flex; 
-                    justify-content: space-between; 
+                    display: flex;
+                    justify-content: space-between;
                     align-items: center;
                 }
                 .meta {
-                    font-size: 12px; 
+                    font-size: 12px;
                     color: #9ca3af;
-                    display: flex; 
-                    align-items: center; 
+                    display: flex;
+                    align-items: center;
                     gap: 8px;
                 }
                 .price {
-                    font-weight: 600; 
+                    font-weight: 600;
                     color: #166534;
-                    display: flex; 
-                    align-items: center; 
+                    display: flex;
+                    align-items: center;
                     gap: 4px;
                 }
-                
+
                 .btn-report {
-                    background: none; 
+                    background: none;
                     border: none;
-                    color: #9ca3af; 
-                    font-size: 12px; 
+                    color: #9ca3af;
+                    font-size: 12px;
                     cursor: pointer;
-                    display: flex; 
-                    align-items: center; 
+                    display: flex;
+                    align-items: center;
                     gap: 4px;
                     transition: color 0.2s;
                     padding: 4px 8px;
                     border-radius: 4px;
                 }
-                .btn-report:hover { 
-                    color: #dc3545; 
+                .btn-report:hover {
+                    color: #dc3545;
                     background: #f8f9fa;
                 }
 
@@ -1159,67 +1341,70 @@ export default function ExhibitionDetail() {
                 }
 
                 /* --- Mobile Responsive --- */
-                .mobile-actions { 
-                    display: none; 
-                    margin-bottom: 20px; 
+                .mobile-actions {
+                    display: none;
+                    margin-bottom: 20px;
                 }
-                .sidebar-backdrop { 
-                    display: none; 
+                .sidebar-backdrop {
+                    display: none;
                 }
-                
+
                 @media (max-width: 992px) {
-                    .content-grid { 
-                        grid-template-columns: 1fr; 
+                    .content-grid {
+                        grid-template-columns: 1fr;
                     }
-                    
-                    .mobile-actions { 
-                        display: block; 
+
+                    .mobile-actions {
+                        display: block;
                     }
 
                     .sidebar {
-                        position: fixed; 
-                        top: 0; 
+                        position: fixed;
+                        top: 0;
                         left: -100%;
-                        width: 300px; 
+                        width: 300px;
                         height: 100vh;
-                        z-index: 1050; 
+                        z-index: 1050;
                         transition: left 0.3s;
                         border-right: 1px solid #e5e7eb;
                         background: #fff;
                     }
-                    .sidebar.open { 
-                        left: 0; 
+                    .sidebar.open {
+                        left: 0;
                     }
-                    .sidebar-inner { 
-                        height: 100%; 
-                        border-radius: 0; 
+                    .sidebar-inner {
+                        height: 100%;
+                        border-radius: 0;
                         border: none;
                         overflow-y: auto;
                         padding: 20px;
                     }
-                    
+
                     .sidebar-backdrop {
-                        display: block; 
-                        position: fixed; 
+                        display: block;
+                        position: fixed;
                         inset: 0;
-                        background: rgba(0,0,0,0.5); 
+                        background: rgba(0, 0, 0, 0.5);
                         z-index: 1040;
                     }
-                    .mobile-only { 
-                        display: block !important; 
+                    .mobile-only {
+                        display: block !important;
                     }
                 }
-                .mobile-only { 
-                    display: none; 
+                .mobile-only {
+                    display: none;
                 }
 
                 @media (max-width: 768px) {
                     .grid-container {
-                        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                        grid-template-columns: repeat(
+                            auto-fill,
+                            minmax(250px, 1fr)
+                        );
                         gap: 20px;
                     }
-                    .content-section { 
-                        padding: 30px 0; 
+                    .content-section {
+                        padding: 30px 0;
                     }
                     .container-md {
                         padding: 0 15px;
@@ -1244,58 +1429,104 @@ export default function ExhibitionDetail() {
                 }
 
                 /* --- Additional utility classes --- */
-                .text-center { text-align: center; }
-                .text-dark { color: #111; }
-                .mb-0 { margin-bottom: 0; }
-                .me-2 { margin-right: 8px; }
-                .max-w-4xl { max-width: 56rem; }
-                .d-flex { display: flex; }
-                .flex-wrap { flex-wrap: wrap; }
-                .gap-2 { gap: 8px; }
-                .position-relative { position: relative; }
-                .mt-3 { margin-top: 12px; }
-                .mt-4 { margin-top: 16px; }
-                .mb-0 { margin-bottom: 0; }
-                .ms-2 { margin-left: 8px; }
-                .p-2 { padding: 8px; }
-                .border { border: 1px solid #e5e7eb; }
-                .rounded { border-radius: 6px; }
-                .bg-light { background-color: #f9fafb; }
-                .text-primary { color: #007bff; }
-                .justify-content-end { justify-content: flex-end; }
-                .gap-2 { gap: 8px; }
+                .text-center {
+                    text-align: center;
+                }
+                .text-dark {
+                    color: #111;
+                }
+                .mb-0 {
+                    margin-bottom: 0;
+                }
+                .me-2 {
+                    margin-right: 8px;
+                }
+                .max-w-4xl {
+                    max-width: 56rem;
+                }
+                .d-flex {
+                    display: flex;
+                }
+                .flex-wrap {
+                    flex-wrap: wrap;
+                }
+                .gap-2 {
+                    gap: 8px;
+                }
+                .position-relative {
+                    position: relative;
+                }
+                .mt-3 {
+                    margin-top: 12px;
+                }
+                .mt-4 {
+                    margin-top: 16px;
+                }
+                .mb-0 {
+                    margin-bottom: 0;
+                }
+                .ms-2 {
+                    margin-left: 8px;
+                }
+                .p-2 {
+                    padding: 8px;
+                }
+                .border {
+                    border: 1px solid #e5e7eb;
+                }
+                .rounded {
+                    border-radius: 6px;
+                }
+                .bg-light {
+                    background-color: #f9fafb;
+                }
+                .text-primary {
+                    color: #007bff;
+                }
+                .justify-content-end {
+                    justify-content: flex-end;
+                }
+                .gap-2 {
+                    gap: 8px;
+                }
             `}</style>
         </FrontAuthenticatedLayout>
     );
 }
 
 // Create Exhibition Modal Component
-function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, member }) {
+function CreateExhibitionModal({
+    visible,
+    onClose,
+    langs,
+    currencyOptions,
+    member,
+}) {
     const [form] = Form.useForm();
     const [mainImagePreview, setMainImagePreview] = useState(null);
     const [galleryPreviews, setGalleryPreviews] = useState([]);
     const [documentPreview, setDocumentPreview] = useState(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        type: 'art',
-        title: '',
-        description: '',
-        lang_id: '',
+        type: "art",
+        title: "",
+        description: "",
+        lang_id: "",
         image: null,
         gallery: [],
         document: null,
         price: 0,
-        currency: 'USD',
-        link: '',
-        dimensions: '',
-        material: '',
+        currency: "USD",
+        link: "",
+        dimensions: "",
+        material: "",
         is_available: true,
         is_featured: false,
-        status: 'draft'
+        status: "draft",
     });
 
     const handleMainImageUpload = (file) => {
-        setData('image', file);
+        setData("image", file);
         const reader = new FileReader();
         reader.onload = () => setMainImagePreview(reader.result);
         reader.readAsDataURL(file);
@@ -1304,11 +1535,11 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
 
     const handleGalleryUpload = (file) => {
         const newGallery = [...data.gallery, file];
-        setData('gallery', newGallery);
+        setData("gallery", newGallery);
 
         const reader = new FileReader();
         reader.onload = () => {
-            setGalleryPreviews(prev => [...prev, reader.result]);
+            setGalleryPreviews((prev) => [...prev, reader.result]);
         };
         reader.readAsDataURL(file);
         return false;
@@ -1316,25 +1547,25 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
 
     const handleGalleryRemove = (index) => {
         const newGallery = data.gallery.filter((_, i) => i !== index);
-        setData('gallery', newGallery);
-        setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
+        setData("gallery", newGallery);
+        setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleDocumentUpload = (file) => {
-        setData('document', file);
+        setData("document", file);
         setDocumentPreview(file);
         return false;
     };
 
     const handleDocumentRemove = () => {
-        setData('document', null);
+        setData("document", null);
         setDocumentPreview(null);
     };
 
     const submit = () => {
         const formData = new FormData();
-        Object.keys(data).forEach(key => {
-            if (key === 'gallery' && Array.isArray(data[key])) {
+        Object.keys(data).forEach((key) => {
+            if (key === "gallery" && Array.isArray(data[key])) {
                 data[key].forEach((file, index) => {
                     formData.append(`gallery[${index}]`, file);
                 });
@@ -1343,18 +1574,18 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
             }
         });
 
-        post(route('front.exhibition.create'), {
+        post(route("front.exhibition.create"), {
             data: formData,
             forceFormData: true,
             onSuccess: () => {
-                message.success('Exhibition created successfully!');
+                message.success("Exhibition created successfully!");
                 handleClose();
                 router.reload();
             },
             onError: (errors) => {
-                console.error('Form errors:', errors);
-                message.error('Please check the form for errors.');
-            }
+                console.error("Form errors:", errors);
+                message.error("Please check the form for errors.");
+            },
         });
     };
 
@@ -1384,7 +1615,13 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
             style={{ top: 20 }}
             className="create-exhibition-modal"
         >
-            <div style={{ maxHeight: '70vh', overflowY: 'auto', padding: '0 10px' }}>
+            <div
+                style={{
+                    maxHeight: "70vh",
+                    overflowY: "auto",
+                    padding: "0 10px",
+                }}
+            >
                 <Form
                     form={form}
                     layout="vertical"
@@ -1395,20 +1632,40 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         <Col span={24}>
                             <Form.Item
                                 label="Item Type"
-                                validateStatus={errors.type ? 'error' : ''}
+                                validateStatus={errors.type ? "error" : ""}
                                 help={errors.type}
                                 required
                             >
                                 <Select
                                     size="large"
                                     value={data.type}
-                                    onChange={(value) => setData('type', value)}
+                                    onChange={(value) => setData("type", value)}
                                 >
-                                    <Option value="product"><Space><ShoppingOutlined /> Product</Space></Option>
-                                    <Option value="document"><Space><FileTextOutlined /> Document</Space></Option>
-                                    <Option value="art"><Space><PictureOutlined /> Art</Space></Option>
-                                    <Option value="photography"><Space><PictureOutlined /> Photography</Space></Option>
-                                    <Option value="craft"><Space><EditOutlined /> Craft</Space></Option>
+                                    <Option value="product">
+                                        <Space>
+                                            <ShoppingOutlined /> Product
+                                        </Space>
+                                    </Option>
+                                    <Option value="document">
+                                        <Space>
+                                            <FileTextOutlined /> Document
+                                        </Space>
+                                    </Option>
+                                    <Option value="art">
+                                        <Space>
+                                            <PictureOutlined /> Art
+                                        </Space>
+                                    </Option>
+                                    <Option value="photography">
+                                        <Space>
+                                            <PictureOutlined /> Photography
+                                        </Space>
+                                    </Option>
+                                    <Option value="craft">
+                                        <Space>
+                                            <EditOutlined /> Craft
+                                        </Space>
+                                    </Option>
                                 </Select>
                             </Form.Item>
                         </Col>
@@ -1416,7 +1673,7 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         <Col span={24}>
                             <Form.Item
                                 label="Title"
-                                validateStatus={errors.title ? 'error' : ''}
+                                validateStatus={errors.title ? "error" : ""}
                                 help={errors.title}
                                 required
                             >
@@ -1424,7 +1681,9 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                     size="large"
                                     placeholder="Enter item title"
                                     value={data.title}
-                                    onChange={(e) => setData('title', e.target.value)}
+                                    onChange={(e) =>
+                                        setData("title", e.target.value)
+                                    }
                                 />
                             </Form.Item>
                         </Col>
@@ -1432,14 +1691,18 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         <Col span={24}>
                             <Form.Item
                                 label="Description"
-                                validateStatus={errors.description ? 'error' : ''}
+                                validateStatus={
+                                    errors.description ? "error" : ""
+                                }
                                 help={errors.description}
                             >
                                 <TextArea
                                     rows={3}
                                     placeholder="Describe your exhibition item..."
                                     value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
+                                    onChange={(e) =>
+                                        setData("description", e.target.value)
+                                    }
                                     showCount
                                     maxLength={1000}
                                 />
@@ -1449,14 +1712,16 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         <Col span={12}>
                             <Form.Item
                                 label="Select Language"
-                                validateStatus={errors.lang_id ? 'error' : ''}
+                                validateStatus={errors.lang_id ? "error" : ""}
                                 help={errors.lang_id}
                             >
                                 <Select
                                     size="large"
                                     placeholder="Select Language"
                                     value={data.lang_id}
-                                    onChange={(value) => setData('lang_id', value)}
+                                    onChange={(value) =>
+                                        setData("lang_id", value)
+                                    }
                                 >
                                     {langs?.map((lang) => (
                                         <Option key={lang.id} value={lang.id}>
@@ -1470,13 +1735,15 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         <Col span={12}>
                             <Form.Item
                                 label="Status"
-                                validateStatus={errors.status ? 'error' : ''}
+                                validateStatus={errors.status ? "error" : ""}
                                 help={errors.status}
                                 required
                             >
                                 <Select
                                     value={data.status}
-                                    onChange={(value) => setData('status', value)}
+                                    onChange={(value) =>
+                                        setData("status", value)
+                                    }
                                     size="large"
                                     placeholder="Select Status"
                                 >
@@ -1491,7 +1758,7 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         <Col span={24}>
                             <Form.Item
                                 label="Main Image"
-                                validateStatus={errors.image ? 'error' : ''}
+                                validateStatus={errors.image ? "error" : ""}
                                 help={errors.image}
                                 required
                             >
@@ -1512,10 +1779,10 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                             src={mainImagePreview}
                                             alt="Main preview"
                                             style={{
-                                                maxWidth: '200px',
-                                                maxHeight: '150px',
-                                                borderRadius: '8px',
-                                                objectFit: 'cover'
+                                                maxWidth: "200px",
+                                                maxHeight: "150px",
+                                                borderRadius: "8px",
+                                                objectFit: "cover",
                                             }}
                                             className="border border-dashed border-gray-300"
                                         />
@@ -1527,7 +1794,7 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         <Col span={24}>
                             <Form.Item
                                 label="Gallery Images"
-                                validateStatus={errors.gallery ? 'error' : ''}
+                                validateStatus={errors.gallery ? "error" : ""}
                                 help={errors.gallery}
                             >
                                 <Upload
@@ -1544,33 +1811,50 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                 {galleryPreviews.length > 0 && (
                                     <div className="mt-3">
                                         <div className="d-flex flex-wrap gap-2">
-                                            {galleryPreviews.map((preview, index) => (
-                                                <div key={index} className="position-relative">
-                                                    <img
-                                                        src={preview}
-                                                        alt={`Gallery ${index + 1}`}
-                                                        style={{
-                                                            width: '80px',
-                                                            height: '80px',
-                                                            borderRadius: '6px',
-                                                            objectFit: 'cover'
-                                                        }}
-                                                        className="border border-dashed border-gray-300"
-                                                    />
-                                                    <Button
-                                                        type="link"
-                                                        danger
-                                                        size="small"
-                                                        onClick={() => handleGalleryRemove(index)}
-                                                        style={{ position: 'absolute', top: -5, right: -5 }}
+                                            {galleryPreviews.map(
+                                                (preview, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="position-relative"
                                                     >
-                                                        ×
-                                                    </Button>
-                                                </div>
-                                            ))}
+                                                        <img
+                                                            src={preview}
+                                                            alt={`Gallery ${index + 1}`}
+                                                            style={{
+                                                                width: "80px",
+                                                                height: "80px",
+                                                                borderRadius:
+                                                                    "6px",
+                                                                objectFit:
+                                                                    "cover",
+                                                            }}
+                                                            className="border border-dashed border-gray-300"
+                                                        />
+                                                        <Button
+                                                            type="link"
+                                                            danger
+                                                            size="small"
+                                                            onClick={() =>
+                                                                handleGalleryRemove(
+                                                                    index,
+                                                                )
+                                                            }
+                                                            style={{
+                                                                position:
+                                                                    "absolute",
+                                                                top: -5,
+                                                                right: -5,
+                                                            }}
+                                                        >
+                                                            ×
+                                                        </Button>
+                                                    </div>
+                                                ),
+                                            )}
                                         </div>
                                         <small className="text-muted">
-                                            {galleryPreviews.length} image(s) selected
+                                            {galleryPreviews.length} image(s)
+                                            selected
                                         </small>
                                     </div>
                                 )}
@@ -1582,18 +1866,29 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                 <Col span={12}>
                                     <Form.Item
                                         label="Price"
-                                        validateStatus={errors.price ? 'error' : ''}
+                                        validateStatus={
+                                            errors.price ? "error" : ""
+                                        }
                                         help={errors.price}
                                     >
                                         <InputNumber
-                                            style={{ width: '100%' }}
+                                            style={{ width: "100%" }}
                                             placeholder="0.00"
                                             value={data.price}
-                                            onChange={(value) => setData('price', value)}
+                                            onChange={(value) =>
+                                                setData("price", value)
+                                            }
                                             min={0}
                                             step={0.01}
-                                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                                            formatter={(value) =>
+                                                `$ ${value}`.replace(
+                                                    /\B(?=(\d{3})+(?!\d))/g,
+                                                    ",",
+                                                )
+                                            }
+                                            parser={(value) =>
+                                                value.replace(/\$\s?|(,*)/g, "")
+                                            }
                                         />
                                     </Form.Item>
                                 </Col>
@@ -1601,19 +1896,28 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                 <Col span={12}>
                                     <Form.Item
                                         label="Currency"
-                                        validateStatus={errors.currency ? 'error' : ''}
+                                        validateStatus={
+                                            errors.currency ? "error" : ""
+                                        }
                                         help={errors.currency}
                                     >
                                         <Select
                                             value={data.currency}
-                                            onChange={(value) => setData('currency', value)}
+                                            onChange={(value) =>
+                                                setData("currency", value)
+                                            }
                                             size="large"
                                         >
-                                            {currencyOptions?.map(currency => (
-                                                <Option key={currency.value} value={currency.value}>
-                                                    {currency.label}
-                                                </Option>
-                                            ))}
+                                            {currencyOptions?.map(
+                                                (currency) => (
+                                                    <Option
+                                                        key={currency.value}
+                                                        value={currency.value}
+                                                    >
+                                                        {currency.label}
+                                                    </Option>
+                                                ),
+                                            )}
                                         </Select>
                                     </Form.Item>
                                 </Col>
@@ -1621,13 +1925,17 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                 <Col span={12}>
                                     <Form.Item
                                         label="External Link"
-                                        validateStatus={errors.link ? 'error' : ''}
+                                        validateStatus={
+                                            errors.link ? "error" : ""
+                                        }
                                         help={errors.link}
                                     >
                                         <Input
                                             placeholder="https://example.com"
                                             value={data.link}
-                                            onChange={(e) => setData('link', e.target.value)}
+                                            onChange={(e) =>
+                                                setData("link", e.target.value)
+                                            }
                                             size="large"
                                         />
                                     </Form.Item>
@@ -1635,18 +1943,27 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                             </>
                         )}
 
-                        {(data.type === 'art' || data.type === 'product' || data.type === 'craft') && (
+                        {(data.type === "art" ||
+                            data.type === "product" ||
+                            data.type === "craft") && (
                             <>
                                 <Col span={12}>
                                     <Form.Item
                                         label="Dimensions"
-                                        validateStatus={errors.dimensions ? 'error' : ''}
+                                        validateStatus={
+                                            errors.dimensions ? "error" : ""
+                                        }
                                         help={errors.dimensions}
                                     >
                                         <Input
                                             placeholder="e.g., 24x36 inches, 50x70 cm"
                                             value={data.dimensions}
-                                            onChange={(e) => setData('dimensions', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "dimensions",
+                                                    e.target.value,
+                                                )
+                                            }
                                             size="large"
                                         />
                                     </Form.Item>
@@ -1654,13 +1971,20 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                 <Col span={12}>
                                     <Form.Item
                                         label="Material"
-                                        validateStatus={errors.material ? 'error' : ''}
+                                        validateStatus={
+                                            errors.material ? "error" : ""
+                                        }
                                         help={errors.material}
                                     >
                                         <Input
                                             placeholder="e.g., Oil on canvas, Wood, Metal"
                                             value={data.material}
-                                            onChange={(e) => setData('material', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "material",
+                                                    e.target.value,
+                                                )
+                                            }
                                             size="large"
                                         />
                                     </Form.Item>
@@ -1669,9 +1993,9 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                         )}
 
                         <Col span={24}>
-                            <Form.Item 
+                            <Form.Item
                                 label="Document File (Optional)"
-                                validateStatus={errors.document ? 'error' : ''}
+                                validateStatus={errors.document ? "error" : ""}
                                 help={errors.document}
                             >
                                 <Upload
@@ -1701,10 +2025,14 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                             <Form.Item label="Available for Sale">
                                 <Switch
                                     checked={data.is_available}
-                                    onChange={(checked) => setData('is_available', checked)}
+                                    onChange={(checked) =>
+                                        setData("is_available", checked)
+                                    }
                                 />
                                 <span className="ms-2">
-                                    {data.is_available ? 'Available' : 'Not Available'}
+                                    {data.is_available
+                                        ? "Available"
+                                        : "Not Available"}
                                 </span>
                             </Form.Item>
                         </Col>
@@ -1713,10 +2041,12 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                             <Form.Item label="Featured Item">
                                 <Switch
                                     checked={data.is_featured}
-                                    onChange={(checked) => setData('is_featured', checked)}
+                                    onChange={(checked) =>
+                                        setData("is_featured", checked)
+                                    }
                                 />
                                 <span className="ms-2">
-                                    {data.is_featured ? 'Featured' : 'Regular'}
+                                    {data.is_featured ? "Featured" : "Regular"}
                                 </span>
                             </Form.Item>
                         </Col>
@@ -1737,9 +2067,11 @@ function CreateExhibitionModal({ visible, onClose, langs, currencyOptions, membe
                                 loading={processing}
                                 icon={<SaveOutlined />}
                                 size="large"
-                                style={{ minWidth: '160px' }}
+                                style={{ minWidth: "160px" }}
                             >
-                                {processing ? 'Creating...' : 'Create Exhibition'}
+                                {processing
+                                    ? "Creating..."
+                                    : "Create Exhibition"}
                             </Button>
                         </div>
                     </Form.Item>

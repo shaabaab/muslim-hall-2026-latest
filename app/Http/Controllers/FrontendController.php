@@ -22,6 +22,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -563,7 +564,51 @@ class FrontendController extends Controller
 
         return Inertia::render('Front/ExhibitionDetail', [
             'exhibition' => $exhibition,
+            'boardExhibitions' => $this->boardExhibitionSlides($exhibition),
         ]);
+    }
+
+    /**
+     * Light list of the sibling exhibitions on the same board, used by the
+     * detail page slider. Deliberately built with the query builder, not
+     * Eloquent: the model's `retrieved` hook increments `views`, so loading
+     * the siblings as models would count a view on every exhibition of the
+     * board each time one of them is opened.
+     */
+    private function boardExhibitionSlides($exhibition)
+    {
+        if (!$exhibition->exhibition_board_id) {
+            return collect();
+        }
+
+        return DB::table('exhibitions')
+            ->where('exhibition_board_id', $exhibition->exhibition_board_id)
+            // The query builder skips the SoftDeletes global scope.
+            ->whereNull('deleted_at')
+            ->where(function ($statusQuery) {
+                $statusQuery->where('status', Exhibition::STATUS_PUBLISHED)
+                    ->orWhereNull('status');
+            })
+            ->where(function ($approvalQuery) {
+                $approvalQuery->where('approval_status', Exhibition::APPROVAL_APPROVED)
+                    ->orWhereNull('approval_status');
+            })
+            ->where(function ($publishQuery) {
+                $publishQuery->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            })
+            // Same order as the board page slider, so the two stay in sync.
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'title',
+                'image',
+                'type',
+                'price',
+                'currency',
+                'status',
+            ]);
     }
 
     public function postDetails(Request $request)

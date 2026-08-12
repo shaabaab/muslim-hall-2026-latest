@@ -3,12 +3,14 @@ import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
 import { getS3PublicUrl } from "@/Utils/s3Helpers";
 import Header from "./Header";
 import Footer from "./Footer";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function ExhibitionBoardShow() {
     const { board } = usePage().props;
     const exhibitions = board?.approved_exhibitions || [];
     const [currentIndex, setCurrentIndex] = useState(0);
+    const thumbsRef = useRef(null);
+    const touchStartX = useRef(null);
 
     const fallbackImage = "/assets/images/logo3.png";
 
@@ -29,19 +31,59 @@ export default function ExhibitionBoardShow() {
         return html.replace(/<[^>]+>/g, "");
     };
 
-    const nextSlide = () => {
+    const nextSlide = useCallback(() => {
         if (exhibitions.length === 0) return;
         setCurrentIndex((prev) => (prev + 1) % exhibitions.length);
-    };
+    }, [exhibitions.length]);
 
-    const prevSlide = () => {
+    const prevSlide = useCallback(() => {
         if (exhibitions.length === 0) return;
         setCurrentIndex((prev) =>
-            prev === 0 ? exhibitions.length - 1 : prev - 1
+            prev === 0 ? exhibitions.length - 1 : prev - 1,
         );
+    }, [exhibitions.length]);
+
+    // Arrow keys drive the slider too.
+    useEffect(() => {
+        if (exhibitions.length < 2) return;
+
+        const onKeyDown = (e) => {
+            if (e.key === "ArrowRight") nextSlide();
+            else if (e.key === "ArrowLeft") prevSlide();
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [exhibitions.length, nextSlide, prevSlide]);
+
+    // Keep the active thumbnail centered in the strip as the slide changes.
+    useEffect(() => {
+        const strip = thumbsRef.current;
+        const active = strip?.children[currentIndex];
+        if (!strip || !active) return;
+
+        strip.scrollTo({
+            left:
+                active.offsetLeft -
+                strip.clientWidth / 2 +
+                active.clientWidth / 2,
+            behavior: "smooth",
+        });
+    }, [currentIndex]);
+
+    const handleTouchStart = (e) => {
+        touchStartX.current = e.touches[0].clientX;
     };
 
-    const currentItem = exhibitions[currentIndex];
+    const handleTouchEnd = (e) => {
+        if (touchStartX.current === null) return;
+
+        const delta = e.changedTouches[0].clientX - touchStartX.current;
+        touchStartX.current = null;
+
+        if (Math.abs(delta) < 50) return;
+        delta < 0 ? nextSlide() : prevSlide();
+    };
 
     return (
         <FrontAuthenticatedLayout>
@@ -50,7 +92,10 @@ export default function ExhibitionBoardShow() {
 
                 <section className="board-show-hero">
                     <div className="container">
-                        <Link href={route("exhibition-details")} className="back-link">
+                        <Link
+                            href={route("exhibition-details")}
+                            className="back-link"
+                        >
                             ← Back to Boards
                         </Link>
 
@@ -60,113 +105,204 @@ export default function ExhibitionBoardShow() {
 
                         <div className="board-meta">
                             <span>Owner: {board.owner?.name || "Unknown"}</span>
-                            <span>{exhibitions.length} Approved Exhibitions</span>
+                            <span>
+                                {exhibitions.length} Approved Exhibitions
+                            </span>
                         </div>
                     </div>
                 </section>
-
+                {/*Slider Section*/}
                 <section className="slider-section">
                     <div className="container-md">
-                        {currentItem ? (
-                            <div className="slider-card">
-                                <button className="slider-btn prev" onClick={prevSlide}>
-                                    ‹
-                                </button>
-
-                                <div className="slider-image">
-                                    <img
-                                        src={getImageUrl(
-                                            currentItem.image_url,
-                                            currentItem.image,
-                                        )}
-                                        alt={stripHtml(currentItem.title)}
-                                        onError={handleImageError}
-                                    />
-                                </div>
-
-                                <div className="slider-content">
-                                    <div className="slide-count">
-                                        {currentIndex + 1} / {exhibitions.length}
-                                    </div>
-
-                                    <h2
-                                        dangerouslySetInnerHTML={{
-                                            __html: currentItem.title || "Untitled",
-                                        }}
-                                    />
-
-                                    <div
-                                        className="description"
-                                        dangerouslySetInnerHTML={{
-                                            __html: currentItem.description || "",
-                                        }}
-                                    />
-
-                                    <div className="info-grid">
-                                        <div>
-                                            <span>Type</span>
-                                            <strong>{currentItem.type}</strong>
-                                        </div>
-
-                                        <div>
-                                            <span>Price</span>
-                                            <strong>
-                                                {currentItem.price
-                                                    ? `${currentItem.currency || "USD"} ${parseFloat(
-                                                          currentItem.price
-                                                      ).toLocaleString()}`
-                                                    : "Free"}
-                                            </strong>
-                                        </div>
-
-                                        <div>
-                                            <span>Status</span>
-                                            <strong>{currentItem.status}</strong>
-                                        </div>
-                                    </div>
-
-                                    {(currentItem.sponsor_image_url ||
-                                        currentItem.sponsor_image) && (
-                                        <div className="sponsor-box">
-                                            <span>Sponsored By</span>
-                                            <img
-                                                src={getImageUrl(
-                                                    currentItem.sponsor_image_url,
-                                                    currentItem.sponsor_image,
-                                                )}
-                                                alt="Sponsor"
-                                                onError={handleImageError}
-                                            />
-                                        </div>
-                                    )}
-
-                                    <Link
-                                        href={route("exhibition-detail", currentItem.id)}
-                                        className="details-btn"
+                        {exhibitions.length > 0 ? (
+                            <div className="slider-shell">
+                                {exhibitions.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="slider-btn prev"
+                                        onClick={prevSlide}
+                                        aria-label="Previous exhibition"
                                     >
-                                        View Details
-                                    </Link>
+                                        ‹
+                                    </button>
+                                )}
+
+                                <div
+                                    className="slider-viewport"
+                                    onTouchStart={handleTouchStart}
+                                    onTouchEnd={handleTouchEnd}
+                                >
+                                    <div
+                                        className="slider-track"
+                                        style={{
+                                            transform: `translateX(-${
+                                                currentIndex * 100
+                                            }%)`,
+                                        }}
+                                    >
+                                        {exhibitions.map((item, index) => {
+                                            const isActive =
+                                                index === currentIndex;
+
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`slider-card ${
+                                                        isActive
+                                                            ? "is-active"
+                                                            : ""
+                                                    }`}
+                                                >
+                                                    <div className="slider-image">
+                                                        <img
+                                                            src={getImageUrl(
+                                                                item.image_url,
+                                                                item.image,
+                                                            )}
+                                                            alt={stripHtml(
+                                                                item.title,
+                                                            )}
+                                                            onError={
+                                                                handleImageError
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <div className="slider-content">
+                                                        <div className="slide-count">
+                                                            {index + 1} /{" "}
+                                                            {exhibitions.length}
+                                                        </div>
+
+                                                        <h2
+                                                            dangerouslySetInnerHTML={{
+                                                                __html:
+                                                                    item.title ||
+                                                                    "Untitled",
+                                                            }}
+                                                        />
+
+                                                        <div
+                                                            className="description"
+                                                            dangerouslySetInnerHTML={{
+                                                                __html:
+                                                                    item.description ||
+                                                                    "",
+                                                            }}
+                                                        />
+
+                                                        <div className="info-grid">
+                                                            <div>
+                                                                <span>
+                                                                    Type
+                                                                </span>
+                                                                <strong>
+                                                                    {item.type}
+                                                                </strong>
+                                                            </div>
+
+                                                            <div>
+                                                                <span>
+                                                                    Price
+                                                                </span>
+                                                                <strong>
+                                                                    {item.price
+                                                                        ? `${item.currency || "USD"} ${parseFloat(
+                                                                              item.price,
+                                                                          ).toLocaleString()}`
+                                                                        : "Free"}
+                                                                </strong>
+                                                            </div>
+
+                                                            <div>
+                                                                <span>
+                                                                    Status
+                                                                </span>
+                                                                <strong>
+                                                                    {
+                                                                        item.status
+                                                                    }
+                                                                </strong>
+                                                            </div>
+                                                        </div>
+
+                                                        {(item.sponsor_image_url ||
+                                                            item.sponsor_image) && (
+                                                            <div className="sponsor-box">
+                                                                <span>
+                                                                    Sponsored By
+                                                                </span>
+                                                                <img
+                                                                    src={getImageUrl(
+                                                                        item.sponsor_image_url,
+                                                                        item.sponsor_image,
+                                                                    )}
+                                                                    alt="Sponsor"
+                                                                    onError={
+                                                                        handleImageError
+                                                                    }
+                                                                />
+                                                            </div>
+                                                        )}
+
+                                                        <Link
+                                                            href={route(
+                                                                "exhibition-detail",
+                                                                item.id,
+                                                            )}
+                                                            className="details-btn"
+                                                            tabIndex={
+                                                                isActive
+                                                                    ? 0
+                                                                    : -1
+                                                            }
+                                                        >
+                                                            View Details
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
-                                <button className="slider-btn next" onClick={nextSlide}>
-                                    ›
-                                </button>
+                                {exhibitions.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="slider-btn next"
+                                        onClick={nextSlide}
+                                        aria-label="Next exhibition"
+                                    >
+                                        ›
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="empty-state">
-                                <h3>No approved exhibitions found under this board.</h3>
-                                <p>After admin approval, exhibitions will appear here.</p>
+                                <h3>
+                                    No approved exhibitions found under this
+                                    board.
+                                </h3>
+                                <p>
+                                    After admin approval, exhibitions will
+                                    appear here.
+                                </p>
                             </div>
                         )}
-
+                        {/* Exhibition Length */}
                         {exhibitions.length > 1 && (
-                            <div className="thumbs">
+                            <div className="thumbs" ref={thumbsRef}>
                                 {exhibitions.map((item, index) => (
                                     <button
+                                        type="button"
                                         key={item.id}
                                         className={`thumb ${
-                                            currentIndex === index ? "active" : ""
+                                            currentIndex === index
+                                                ? "active"
+                                                : ""
                                         }`}
+                                        aria-current={currentIndex === index}
+                                        title={stripHtml(item.title)}
                                         onClick={() => setCurrentIndex(index)}
                                     >
                                         <img
@@ -177,6 +313,9 @@ export default function ExhibitionBoardShow() {
                                             alt={stripHtml(item.title)}
                                             onError={handleImageError}
                                         />
+                                        <span className="thumb-index">
+                                            {index + 1}
+                                        </span>
                                     </button>
                                 ))}
                             </div>
@@ -244,27 +383,74 @@ export default function ExhibitionBoardShow() {
                     min-height: 65vh;
                 }
 
-                .slider-card {
+                .slider-shell {
                     position: relative;
-                    background: white;
-                    border-radius: 24px;
+                    /* Gutter on each side so the arrows sit outside the card. */
+                    padding: 0 64px;
+                }
+
+                .slider-viewport {
+                    position: relative;
                     overflow: hidden;
-                    display: grid;
-                    grid-template-columns: 1.1fr 0.9fr;
-                    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.13);
+                    border-radius: 24px;
+                    background: white;
                     border: 1px solid #e5e7eb;
+                    box-shadow: 0 20px 55px rgba(15, 23, 42, 0.13);
+                    touch-action: pan-y;
+                }
+
+                .slider-track {
+                    display: flex;
+                    will-change: transform;
+                    transition: transform 650ms cubic-bezier(0.22, 0.61, 0.36, 1);
+                }
+
+                .slider-card {
+                    flex: 0 0 100%;
+                    width: 100%;
+                    min-width: 100%;
+                    background: white;
+                    display: grid;
+                    grid-template-columns: 1.35fr 1fr;
                 }
 
                 .slider-image {
                     background: #111827;
                     min-height: 520px;
+                    overflow: hidden;
                 }
 
                 .slider-image img {
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
+                    object-position: center;
+                    transform: scale(1.08);
+                    transition: transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
                 }
+
+                .slider-card.is-active .slider-image img {
+                    transform: scale(1);
+                }
+
+                /* Staggered fade-up of the active slide's content. */
+                .slider-content > * {
+                    opacity: 0;
+                    transform: translateY(16px);
+                    transition: opacity 500ms ease, transform 500ms ease;
+                }
+
+                .slider-card.is-active .slider-content > * {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+
+                .slider-card.is-active .slider-content > *:nth-child(1) { transition-delay: 120ms; }
+                .slider-card.is-active .slider-content > *:nth-child(2) { transition-delay: 190ms; }
+                .slider-card.is-active .slider-content > *:nth-child(3) { transition-delay: 260ms; }
+                .slider-card.is-active .slider-content > *:nth-child(4) { transition-delay: 330ms; }
+                .slider-card.is-active .slider-content > *:nth-child(5) { transition-delay: 400ms; }
+                .slider-card.is-active .slider-content > *:nth-child(6) { transition-delay: 470ms; }
 
                 .slider-content {
                     padding: 38px;
@@ -368,34 +554,53 @@ export default function ExhibitionBoardShow() {
                     top: 50%;
                     transform: translateY(-50%);
                     z-index: 4;
-                    width: 48px;
-                    height: 48px;
+                    width: 52px;
+                    height: 52px;
                     border-radius: 50%;
                     border: none;
-                    background: rgba(17,24,39,0.78);
+                    background: rgba(17,24,39,0.35);
                     color: white;
                     font-size: 34px;
                     cursor: pointer;
                     line-height: 1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding-bottom: 4px;
+                    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.28);
+                    transition: background 250ms ease, transform 250ms ease;
                 }
 
+                .slider-btn:hover {
+                    background: #1b7a3a;
+                    transform: translateY(-50%) scale(1.08);
+                }
+
+                /* Anchored to the shell's padding box: outside the card edge. */
                 .slider-btn.prev {
-                    left: 16px;
+                    left: 0;
                 }
 
                 .slider-btn.next {
-                    right: 16px;
+                    right: 0;
                 }
 
                 .thumbs {
-                    margin-top: 22px;
+                    /* offsetLeft of the thumbs is read against this box when
+                       centering the active one. */
+                    position: relative;
+                    margin-top: 14px;
                     display: flex;
                     gap: 12px;
                     overflow-x: auto;
-                    padding-bottom: 6px;
+                    /* overflow-x:auto also clips vertically — this padding
+                       keeps the active thumb's lift + border visible. */
+                    padding: 12px 8px 14px;
+                    scroll-behavior: smooth;
                 }
 
                 .thumb {
+                    position: relative;
                     width: 110px;
                     height: 76px;
                     border-radius: 12px;
@@ -405,16 +610,44 @@ export default function ExhibitionBoardShow() {
                     cursor: pointer;
                     background: white;
                     flex: 0 0 auto;
+                    opacity: 0.6;
+                    transition: opacity 300ms ease, transform 300ms ease,
+                        border-color 300ms ease, box-shadow 300ms ease;
+                }
+
+                .thumb:hover {
+                    opacity: 1;
                 }
 
                 .thumb.active {
-                    border-color: #111827;
+                    border-color: #1b7a3a;
+                    opacity: 1;
+                    transform: translateY(-4px) scale(1.06);
+                    box-shadow: 0 12px 26px rgba(27, 122, 58, 0.32);
                 }
 
                 .thumb img {
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
+                }
+
+                .thumb-index {
+                    position: absolute;
+                    left: 6px;
+                    bottom: 6px;
+                    min-width: 22px;
+                    padding: 2px 6px;
+                    border-radius: 999px;
+                    background: rgba(17, 24, 39, 0.75);
+                    color: white;
+                    font-size: 11px;
+                    font-weight: 800;
+                    line-height: 1.5;
+                }
+
+                .thumb.active .thumb-index {
+                    background: #1b7a3a;
                 }
 
                 .empty-state {
@@ -425,6 +658,21 @@ export default function ExhibitionBoardShow() {
                     border: 1px solid #e5e7eb;
                 }
 
+                @media (max-width: 1100px) {
+                    /* No room for a gutter — overlay the arrows on the card. */
+                    .slider-shell {
+                        padding: 0;
+                    }
+
+                    .slider-btn.prev {
+                        left: 14px;
+                    }
+
+                    .slider-btn.next {
+                        right: 14px;
+                    }
+                }
+
                 @media (max-width: 900px) {
                     .slider-card {
                         grid-template-columns: 1fr;
@@ -432,6 +680,13 @@ export default function ExhibitionBoardShow() {
 
                     .slider-image {
                         min-height: 320px;
+                    }
+
+                    /* Card is stacked now, so 50% of it sits over the text.
+                       Centre the arrows on the image instead — half of the
+                       .slider-image height above. */
+                    .slider-btn {
+                        top: 160px;
                     }
 
                     .info-grid {
@@ -447,9 +702,35 @@ export default function ExhibitionBoardShow() {
                     .slider-content {
                         padding: 24px;
                     }
+
+                    .slider-btn {
+                        width: 42px;
+                        height: 42px;
+                        font-size: 26px;
+                    }
+
+                    .slider-btn.prev {
+                        left: 8px;
+                    }
+
+                    .slider-btn.next {
+                        right: 8px;
+                    }
+
+                    .thumb {
+                        width: 84px;
+                        height: 60px;
+                    }
                 }
-                .slider-btn.next,.slider-btn.prev{
-                    display:none;
+
+                @media (prefers-reduced-motion: reduce) {
+                    .slider-track,
+                    .slider-image img,
+                    .slider-content > *,
+                    .thumb,
+                    .slider-btn {
+                        transition: none !important;
+                    }
                 }
             `}</style>
         </FrontAuthenticatedLayout>

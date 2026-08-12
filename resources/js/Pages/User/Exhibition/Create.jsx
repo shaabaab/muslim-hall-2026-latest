@@ -460,94 +460,24 @@ export default function Create({ auth, langs = [], boards = [] }) {
                         )}
                         {boardPermissionNotice()}
                     </Card>
+                    <Col span={24}>
+                        <Form.Item
+                            label="Caption"
+                            // required
+                            validateStatus={errors.title ? "error" : ""}
+                            help={errors.title}
+                        >
+                            <ReactQuill
+                                theme="snow"
+                                value={data.title}
+                                onChange={(value) => setData("title", value)}
+                                modules={quillModules}
+                                formats={quillFormats}
+                            />
+                        </Form.Item>
+                    </Col>
 
-                    <Row gutter={24}>
-                        <Col span={24}>
-                            <Form.Item
-                                label="Item Type"
-                                required
-                                validateStatus={errors.type ? "error" : ""}
-                                help={errors.type}
-                            >
-                                <Select
-                                    size="large"
-                                    value={data.type}
-                                    onChange={(value) => setData("type", value)}
-                                >
-                                    <Option value="product">
-                                        <Space>
-                                            <ShoppingOutlined />
-                                            Product
-                                        </Space>
-                                    </Option>
-                                    <Option value="document">
-                                        <Space>
-                                            <FileTextOutlined />
-                                            Document
-                                        </Space>
-                                    </Option>
-                                    <Option value="art">
-                                        <Space>
-                                            <PictureOutlined />
-                                            Art
-                                        </Space>
-                                    </Option>
-                                    <Option value="photography">
-                                        <Space>
-                                            <PictureOutlined />
-                                            Photography
-                                        </Space>
-                                    </Option>
-                                    <Option value="craft">
-                                        <Space>
-                                            <EditOutlined />
-                                            Craft
-                                        </Space>
-                                    </Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={24}>
-                            <Form.Item
-                                label="Title Text Editor"
-                                required
-                                validateStatus={errors.title ? "error" : ""}
-                                help={errors.title}
-                            >
-                                <ReactQuill
-                                    theme="snow"
-                                    value={data.title}
-                                    onChange={(value) =>
-                                        setData("title", value)
-                                    }
-                                    modules={quillModules}
-                                    formats={quillFormats}
-                                />
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={24}>
-                            <Form.Item
-                                label="Description with Embedded Link"
-                                required
-                                validateStatus={
-                                    errors.description ? "error" : ""
-                                }
-                                help={errors.description}
-                            >
-                                <ReactQuill
-                                    theme="snow"
-                                    value={data.description}
-                                    onChange={(value) =>
-                                        setData("description", value)
-                                    }
-                                    modules={quillModules}
-                                    formats={quillFormats}
-                                />
-                            </Form.Item>
-                        </Col>
-
+                    <Row gutter={22}>
                         <Col xs={24} md={12}>
                             <Form.Item
                                 label="Main Image"
@@ -585,8 +515,7 @@ export default function Create({ auth, langs = [], boards = [] }) {
                                 )}
                             </Form.Item>
                         </Col>
-
-                        <Col xs={24} md={12}>
+                        {/* <Col xs={24} md={12}>
                             <Form.Item
                                 label="Sponsor Image"
                                 validateStatus={
@@ -623,9 +552,8 @@ export default function Create({ auth, langs = [], boards = [] }) {
                                     />
                                 )}
                             </Form.Item>
-                        </Col>
-
-                        <Col span={24}>
+                        </Col> */}
+                        {/* <Col span={24}>
                             <Form.Item
                                 label="Gallery Images"
                                 validateStatus={errors.gallery ? "error" : ""}
@@ -695,6 +623,75 @@ export default function Create({ auth, langs = [], boards = [] }) {
                                         ))}
                                     </div>
                                 )}
+                            </Form.Item>
+                        </Col> */}
+                    </Row>
+
+                    <Row gutter={24}>
+                        <Col span={24}>
+                            <Form.Item
+                                label="Item Type"
+                                // required
+                                validateStatus={errors.type ? "error" : ""}
+                                help={errors.type}
+                            >
+                                <Select
+                                    size="large"
+                                    value={data.type}
+                                    onChange={(value) => setData("type", value)}
+                                >
+                                    <Option value="product">
+                                        <Space>
+                                            <ShoppingOutlined />
+                                            Product
+                                        </Space>
+                                    </Option>
+                                    <Option value="document">
+                                        <Space>
+                                            <FileTextOutlined />
+                                            Document
+                                        </Space>
+                                    </Option>
+                                    <Option value="art">
+                                        <Space>
+                                            <PictureOutlined />
+                                            Art
+                                        </Space>
+                                    </Option>
+                                    <Option value="photography">
+                                        <Space>
+                                            <PictureOutlined />
+                                            Photography
+                                        </Space>
+                                    </Option>
+                                    <Option value="craft">
+                                        <Space>
+                                            <EditOutlined />
+                                            Craft
+                                        </Space>
+                                    </Option>
+                                </Select>
+                            </Form.Item>
+                        </Col>
+
+                        <Col span={24}>
+                            <Form.Item
+                                label="Description"
+                                // required
+                                validateStatus={
+                                    errors.description ? "error" : ""
+                                }
+                                help={errors.description}
+                            >
+                                <ReactQuill
+                                    theme="snow"
+                                    value={data.description}
+                                    onChange={(value) =>
+                                        setData("description", value)
+                                    }
+                                    modules={quillModules}
+                                    formats={quillFormats}
+                                />
                             </Form.Item>
                         </Col>
 
