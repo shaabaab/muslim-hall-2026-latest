@@ -336,12 +336,13 @@ export default function ExhibitionDetail() {
         const name = exhibition?.user?.name || "Unknown";
 
         if (!boardOwnerId || !creatorId) {
-            return { role: null, name };
+            return { role: null, name, id: null };
         }
 
         return {
             role: boardOwnerId === creatorId ? "Owner" : "Contributor",
             name,
+            id: creatorId,
         };
     }, [
         exhibition?.board?.user_id,
@@ -1019,10 +1020,18 @@ export default function ExhibitionDetail() {
                                                         }}
                                                     />
 
+                                                    {/* role is only set when the creator id
+                                                        resolved, so the author link is always
+                                                        valid here. */}
                                                     {creator.role && (
                                                         <div className="creator-row">
-                                                            <span
+                                                            <Link
+                                                                href={route(
+                                                                    "author.profile",
+                                                                    creator.id,
+                                                                )}
                                                                 className={`creator-chip ${creator.role.toLowerCase()}`}
+                                                                title={`View ${creator.name}'s profile`}
                                                             >
                                                                 <SvgIcon.User />
                                                                 {creator.role}
@@ -1031,7 +1040,7 @@ export default function ExhibitionDetail() {
                                                                         creator.name
                                                                     }
                                                                 </b>
-                                                            </span>
+                                                            </Link>
                                                         </div>
                                                     )}
                                                     {/* <div className="status-row">
@@ -2013,6 +2022,17 @@ export default function ExhibitionDetail() {
                     font-weight: 900;
                     text-transform: lowercase;
                     letter-spacing: .05em;
+                    /* The chip links to the creator's author profile. */
+                    text-decoration: none;
+                    transition: filter 200ms ease;
+                }
+
+                .creator-chip:hover {
+                    filter: brightness(0.94);
+                }
+
+                .creator-chip:hover b {
+                    text-decoration: underline;
                 }
 
                 .creator-chip .svg-icon {

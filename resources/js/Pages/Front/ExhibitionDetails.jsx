@@ -174,6 +174,45 @@ export default function ExhibitionDetail() {
         return buildS3UrlAlways(imagePath);
     };
 
+    // An exhibition posted by its board's own creator is the owner's; anyone
+    // else posting into the board is a contributor. Needs `user` and `board`
+    // eager-loaded on each exhibition.
+    const getCreator = (item) => {
+        const boardOwnerId = item?.board?.user_id ?? item?.board?.owner?.id;
+        const creatorId = item?.user_id ?? item?.user?.id;
+
+        const name = item?.user?.name || "Unknown";
+
+        if (!boardOwnerId || !creatorId) {
+            return { role: null, name, id: null };
+        }
+
+        return {
+            role: boardOwnerId === creatorId ? "Owner" : "Contributor",
+            name,
+            id: creatorId,
+        };
+    };
+
+    // role is only set when the creator id resolved, so the author link is
+    // always valid by the time the chip renders.
+    const renderCreatorChip = (item) => {
+        const creator = getCreator(item);
+
+        if (!creator.role) return null;
+
+        return (
+            <Link
+                href={route("author.profile", creator.id)}
+                className={`creator-chip ${creator.role.toLowerCase()}`}
+                title={`View ${creator.name}'s profile`}
+            >
+                {creator.role}
+                <b>{creator.name}</b>
+            </Link>
+        );
+    };
+
     // Derived Data for Filters
     const statuses = [
         ...new Set(exhibitions.map((item) => item.status).filter(Boolean)),
@@ -569,6 +608,8 @@ export default function ExhibitionDetail() {
                                                             .slice(0, 90)}
                                                         ...
                                                     </p>
+
+                                                    {renderCreatorChip(item)}
 
                                                     <div className="card-footer">
                                                         <div className="meta">
@@ -1272,6 +1313,53 @@ export default function ExhibitionDetail() {
                     display: -webkit-box;
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
+                }
+
+                /* Owner = posted by the board's creator, contributor = anyone
+                   else who posted into the board. The chip links to that
+                   person's author profile. */
+                .creator-chip {
+                    display: inline-flex;
+                    align-items: baseline;
+                    gap: 6px;
+                    align-self: flex-start;
+                    margin-bottom: 12px;
+                    padding: 5px 10px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    font-weight: 900;
+                    text-transform: lowercase;
+                    letter-spacing: 0.04em;
+                    text-decoration: none;
+                    transition: filter 200ms ease;
+                }
+
+                .creator-chip b {
+                    font-size: 12px;
+                    font-weight: 800;
+                    text-transform: none;
+                    letter-spacing: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .creator-chip.owner {
+                    background: #dcfce7;
+                    color: #166534;
+                }
+
+                .creator-chip.contributor {
+                    background: #fef3c7;
+                    color: #92400e;
+                }
+
+                .creator-chip:hover {
+                    filter: brightness(0.94);
+                }
+
+                .creator-chip:hover b {
+                    text-decoration: underline;
                 }
 
                 .card-footer {
