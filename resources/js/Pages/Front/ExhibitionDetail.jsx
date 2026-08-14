@@ -5,6 +5,7 @@ import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
 import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 import Header from "./Header";
 import Footer from "./Footer";
+import ImageLightbox from "@/Components/ImageLightbox";
 import { message } from "antd";
 
 const SvgIcon = {
@@ -265,6 +266,7 @@ export default function ExhibitionDetail() {
     const [userReaction, setUserReaction] = useState(null);
     const [reactionLoading, setReactionLoading] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
 
     const [comments, setComments] = useState(exhibition?.comments || []);
     const [commentText, setCommentText] = useState("");
@@ -362,6 +364,7 @@ export default function ExhibitionDetail() {
     // preserveState keeps this component mounted across the swap.
     useEffect(() => {
         setSelectedImage(null);
+        setLightboxOpen(false);
         setCommentText("");
         setReplyOpen({});
         setReplyText({});
@@ -417,13 +420,16 @@ export default function ExhibitionDetail() {
                 return;
             }
 
+            // The fullscreen viewer owns the keyboard while it is open.
+            if (lightboxOpen) return;
+
             if (e.key === "ArrowRight") nextSlide();
             else if (e.key === "ArrowLeft") prevSlide();
         };
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [slides.length, nextSlide, prevSlide]);
+    }, [slides.length, nextSlide, prevSlide, lightboxOpen]);
 
     // Keep the active thumbnail centered in the strip.
     useEffect(() => {
@@ -918,7 +924,17 @@ export default function ExhibitionDetail() {
                                                 />
 
                                                 <div className="media-column">
-                                                    <div className="main-image-box">
+                                                    <div
+                                                        className="main-image-box"
+                                                        style={{
+                                                            cursor: "zoom-in",
+                                                        }}
+                                                        onClick={() =>
+                                                            setLightboxOpen(
+                                                                true,
+                                                            )
+                                                        }
+                                                    >
                                                         <img
                                                             src={getImageUrl(
                                                                 mainImage,
@@ -1636,6 +1652,14 @@ export default function ExhibitionDetail() {
 
                 <Footer />
             </div>
+
+            {/* Derived from mainImage, so picking another gallery thumbnail
+                while it is open swaps the fullscreen image too. */}
+            <ImageLightbox
+                src={lightboxOpen ? getImageUrl(mainImage) : null}
+                alt={stripHtml(exhibition.title)}
+                onClose={() => setLightboxOpen(false)}
+            />
 
             <style>{`
                 .container-md {

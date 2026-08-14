@@ -3,12 +3,15 @@ import FrontAuthenticatedLayout from "@/Layouts/FrontEndLayout";
 import { getS3PublicUrl } from "@/Utils/s3Helpers";
 import Header from "./Header";
 import Footer from "./Footer";
+import ImageLightbox from "@/Components/ImageLightbox";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function ExhibitionBoardShow() {
     const { board } = usePage().props;
     const exhibitions = board?.approved_exhibitions || [];
     const [currentIndex, setCurrentIndex] = useState(0);
+    // { src, alt } while the fullscreen viewer is open, null otherwise.
+    const [lightbox, setLightbox] = useState(null);
     const thumbsRef = useRef(null);
     const touchStartX = useRef(null);
 
@@ -62,18 +65,20 @@ export default function ExhibitionBoardShow() {
         );
     }, [exhibitions.length]);
 
-    // Arrow keys drive the slider too.
+    // Arrow keys drive the slider too — but not behind the fullscreen viewer.
     useEffect(() => {
         if (exhibitions.length < 2) return;
 
         const onKeyDown = (e) => {
+            if (lightbox) return;
+
             if (e.key === "ArrowRight") nextSlide();
             else if (e.key === "ArrowLeft") prevSlide();
         };
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [exhibitions.length, nextSlide, prevSlide]);
+    }, [exhibitions.length, nextSlide, prevSlide, lightbox]);
 
     // Keep the active thumbnail centered in the strip as the slide changes.
     useEffect(() => {
@@ -173,7 +178,26 @@ export default function ExhibitionBoardShow() {
                                                             : ""
                                                     }`}
                                                 >
-                                                    <div className="slider-image">
+                                                    <div
+                                                        className="slider-image"
+                                                        style={{
+                                                            cursor: isActive
+                                                                ? "zoom-in"
+                                                                : "default",
+                                                        }}
+                                                        onClick={() =>
+                                                            isActive &&
+                                                            setLightbox({
+                                                                src: getImageUrl(
+                                                                    item.image_url,
+                                                                    item.image,
+                                                                ),
+                                                                alt: stripHtml(
+                                                                    item.title,
+                                                                ),
+                                                            })
+                                                        }
+                                                    >
                                                         {/* Blurred copy fills
                                                             the box behind the
                                                             photo. */}
@@ -394,6 +418,12 @@ export default function ExhibitionBoardShow() {
 
                 <Footer />
             </div>
+
+            <ImageLightbox
+                src={lightbox?.src}
+                alt={lightbox?.alt}
+                onClose={() => setLightbox(null)}
+            />
 
             <style>{`
                 .container-md {
