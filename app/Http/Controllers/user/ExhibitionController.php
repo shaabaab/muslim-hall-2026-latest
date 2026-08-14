@@ -284,6 +284,13 @@ class ExhibitionController extends Controller
 
     private function uploadMainFiles(Request $request, array &$validated, ?Exhibition $exhibition = null): void
     {
+        // The edit form initialises these as null, which Inertia sends as "" and
+        // ConvertEmptyStringsToNull turns back into null — a value the nullable
+        // rules accept, so an edit that leaves the files alone would overwrite the
+        // stored paths with NULL. Drop them here: the blocks below re-add each one
+        // when a real file is uploaded, and Eloquent ignores keys that are absent.
+        unset($validated['image'], $validated['sponsor_image'], $validated['document_file']);
+
         if ($request->hasFile('image')) {
             $validated['image'] = $exhibition
                 ? ServiceClass::updateFile($request->file('image'), 'exhibitions/images', $exhibition->image)
