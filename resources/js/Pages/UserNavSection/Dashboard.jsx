@@ -395,8 +395,7 @@ export default function Dashboard({
                                                 "user.exhibitions.create",
                                             )}
                                         >
-                                            <PlusCircleFilled /> Create
-                                            Exhibition
+                                            <PlusCircleFilled /> Join Exhibition
                                         </Link>
                                     ) : (
                                         <span style={{ cursor: "not-allowed" }}>
