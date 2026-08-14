@@ -383,21 +383,17 @@ export default function FrontAuthenticatedLayout({ children }) {
         >
             <div
                 style={{
-                    background: "rgba(255,255,255,0.9)",
-                    borderRadius: "50%",
-                    padding: 4,
+                    background: "#69c0ff",
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    flexShrink: 0,
                 }}
             >
-                <img
-                    width="32"
-                    height="32"
-                    src="https://img.icons8.com/pulsar-gradient/48/user.png"
-                    alt="logo"
-                />
+                <span style={{ color: "white", fontWeight: "bold" }}>M</span>
             </div>
             {(!collapsed || isMobile) && (
                 <Text
