@@ -28,6 +28,21 @@ class ExhibitionController extends Controller
         return $user;
     }
 
+    /**
+     * Owner segment for this exhibition's S3 keys, e.g. "hasnain-ahmed-12".
+     * Slugged because getCloudUrl() concatenates the key onto AWS_URL without
+     * URL-encoding it, so a raw name carrying spaces or non-Latin script would
+     * produce a dead image link. The id keeps the segment unique when two
+     * members share a name, and gives a value at all when slug() strips a
+     * non-Latin name to an empty string.
+     */
+    private function userFolder(): string
+    {
+        $user = $this->ensureMember();
+
+        return trim(Str::slug($user->name ?? '') . '-' . $user->id, '-');
+    }
+
     private function cleanHtml($html)
     {
         return strip_tags($html ?? '', '<p><br><strong><b><em><i><u><s><ul><ol><li><a><h1><h2><h3><h4><h5><h6><span><blockquote>');
@@ -291,17 +306,22 @@ class ExhibitionController extends Controller
         // when a real file is uploaded, and Eloquent ignores keys that are absent.
         unset($validated['image'], $validated['sponsor_image'], $validated['document_file']);
 
+        // Uploads land under the owner's folder, so the public URL reads
+        // .../exhibitions/images/hasnain-ahmed-12/<uuid>.jpg. Existing rows keep
+        // whatever key they were stored with; only new uploads are namespaced.
+        $owner = $this->userFolder();
+
         if ($request->hasFile('image')) {
             $validated['image'] = $exhibition
-                ? ServiceClass::updateFile($request->file('image'), 'exhibitions/images', $exhibition->image)
-                : ServiceClass::uploadFile($request->file('image'), 'exhibitions/images');
+                ? ServiceClass::updateFile($request->file('image'), "exhibitions/images/{$owner}", $exhibition->image)
+                : ServiceClass::uploadFile($request->file('image'), "exhibitions/images/{$owner}");
             if (!$validated['image']) abort(422, 'Image upload failed.');
         }
 
         if ($request->hasFile('sponsor_image')) {
             $validated['sponsor_image'] = $exhibition
-                ? ServiceClass::updateFile($request->file('sponsor_image'), 'exhibitions/sponsors', $exhibition->sponsor_image)
-                : ServiceClass::uploadFile($request->file('sponsor_image'), 'exhibitions/sponsors');
+                ? ServiceClass::updateFile($request->file('sponsor_image'), "exhibitions/sponsors/{$owner}", $exhibition->sponsor_image)
+                : ServiceClass::uploadFile($request->file('sponsor_image'), "exhibitions/sponsors/{$owner}");
             if (!$validated['sponsor_image']) abort(422, 'Sponsor image upload failed.');
         }
 
@@ -311,7 +331,7 @@ class ExhibitionController extends Controller
             }
             $galleryPaths = [];
             foreach ($request->file('gallery') as $image) {
-                $path = ServiceClass::uploadFile($image, 'exhibitions/gallery');
+                $path = ServiceClass::uploadFile($image, "exhibitions/gallery/{$owner}");
                 if (!$path) abort(422, 'Gallery image upload failed.');
                 $galleryPaths[] = $path;
             }
@@ -322,8 +342,8 @@ class ExhibitionController extends Controller
 
         if ($request->hasFile('document_file')) {
             $validated['document_file'] = $exhibition
-                ? ServiceClass::updateFile($request->file('document_file'), 'exhibitions/documents', $exhibition->document_file)
-                : ServiceClass::uploadFile($request->file('document_file'), 'exhibitions/documents');
+                ? ServiceClass::updateFile($request->file('document_file'), "exhibitions/documents/{$owner}", $exhibition->document_file)
+                : ServiceClass::uploadFile($request->file('document_file'), "exhibitions/documents/{$owner}");
             if (!$validated['document_file']) abort(422, 'Document upload failed.');
         }
     }
