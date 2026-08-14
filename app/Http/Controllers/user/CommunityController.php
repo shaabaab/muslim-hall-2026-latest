@@ -137,6 +137,12 @@ class CommunityController extends Controller
             'location' => 'nullable|string|max:255',
         ]);
 
+        // An edit that does not replace the image sends image="" (Inertia null →
+        // empty string → ConvertEmptyStringsToNull), which the nullable rule lets
+        // through and would blank the stored path. Drop the key unless a real file
+        // came with the request.
+        unset($validated['image']);
+
         if ($request->hasFile('image')) {
             // Delete old image
             if ($post->image) {
