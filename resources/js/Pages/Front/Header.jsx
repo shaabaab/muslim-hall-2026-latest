@@ -33,12 +33,12 @@ export default function Header() {
 
     const featureLinks = useMemo(
         () => [
-            {
-                href: "/community",
-                label: "Community",
-                icon: "fa-users",
-                restricted: true,
-            },
+            // {
+            //     href: "/community",
+            //     label: "Community",
+            //     icon: "fa-users",
+            //     restricted: true,
+            // },
             {
                 href: "/exhibition-details",
                 label: "Exhibition",
