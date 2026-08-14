@@ -50,9 +50,18 @@ export default function Footer() {
             const hijri = toHijri(year, month, day);
 
             const islamicMonths = [
-                "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani",
-                "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
-                "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"
+                "Muharram",
+                "Safar",
+                "Rabi' al-Awwal",
+                "Rabi' al-Thani",
+                "Jumada al-Awwal",
+                "Jumada al-Thani",
+                "Rajab",
+                "Sha'ban",
+                "Ramadan",
+                "Shawwal",
+                "Dhu al-Qi'dah",
+                "Dhu al-Hijjah",
             ];
 
             return `${islamicMonths[hijri.hm - 1]} ${hijri.hd}, ${hijri.hy} AH`;
@@ -80,7 +89,9 @@ export default function Footer() {
             return {
                 fajr: formatTime(prayerTimes.fajr),
                 sunrise: formatTime(prayerTimes.sunrise),
-                dhuhr: prayerTimes.dhuhr ? formatTime(prayerTimes.dhuhr) : "--:--",
+                dhuhr: prayerTimes.dhuhr
+                    ? formatTime(prayerTimes.dhuhr)
+                    : "--:--",
                 asr: formatTime(prayerTimes.asr),
                 maghrib: formatTime(prayerTimes.maghrib),
                 isha: formatTime(prayerTimes.isha),
@@ -133,6 +144,17 @@ export default function Footer() {
 
     const upcomingEvents = events?.slice(0, 3) || [];
 
+    // Skip rows with a blank url, and make sure legacy values without a
+    // scheme are not treated as relative paths by the browser.
+    const socialLinks = (social || [])
+        .filter((platform) => platform?.url)
+        .map((platform) => ({
+            ...platform,
+            url: /^https?:\/\//i.test(platform.url)
+                ? platform.url
+                : `https://${platform.url}`,
+        }));
+
     return (
         <div className="footer-container">
             <footer className="modern-footer">
@@ -148,7 +170,9 @@ export default function Footer() {
                                             footer?.footer_title ||
                                             "Muslim Hall"
                                         }
-                                        src={getS3PublicUrl(`${footer.footer_logo}`)}
+                                        src={getS3PublicUrl(
+                                            `${footer.footer_logo}`,
+                                        )}
                                         onError={(e) => {
                                             e.target.src =
                                                 "https://i.postimg.cc/13wzJ2gs/Muslim-Hall-Logo-Design-1.png";
@@ -166,9 +190,9 @@ export default function Footer() {
                                     "Muslim Hall is your premier destination for Islamic knowledge, connecting communities through authentic publications, educational resources, and spiritual guidance."}
                             </p>
                             <div className="social-links">
-                                {social && social.length > 0 ? (
-                                    social.map((platform) => (
-                                        <Link
+                                {socialLinks.length > 0 ? (
+                                    socialLinks.map((platform) => (
+                                        <a
                                             key={platform.id}
                                             href={platform.url}
                                             className="social-link"
@@ -178,7 +202,7 @@ export default function Footer() {
                                         >
                                             {/* Use platform.icon instead of platform.name */}
                                             <i className={platform.icon}></i>
-                                        </Link>
+                                        </a>
                                     ))
                                 ) : (
                                     <>
@@ -241,7 +265,9 @@ export default function Footer() {
                                         <Link href="/contact">Contact</Link>
                                     </li>
                                     <li>
-                                        <Link href="/terms">Terms & Conditions</Link>
+                                        <Link href="/terms">
+                                            Terms & Conditions
+                                        </Link>
                                     </li>
                                     <li>
                                         <Link href="/post-details">Posts</Link>
@@ -431,7 +457,7 @@ export default function Footer() {
                 }
 
                 .footer-logo img {
-                        height: 120px;
+                    height: 120px;
                     filter: brightness(0) invert(1);
                 }
 
@@ -523,13 +549,13 @@ export default function Footer() {
                     margin-top: 20px;
                 }
 
-                .contact-item-update{
+                .contact-item-update {
                     display: flex;
                     align-items: center;
                     gap: 10px;
                     color: rgba(255, 255, 255, 1);
                     font-size: 14px;
-                    background:none;
+                    background: none;
                 }
 
                 .contact-item i {

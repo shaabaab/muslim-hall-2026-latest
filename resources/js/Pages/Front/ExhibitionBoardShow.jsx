@@ -40,12 +40,13 @@ export default function ExhibitionBoardShow() {
         const name = item?.user?.name || "Unknown";
 
         if (!boardOwnerId || !itemCreatorId) {
-            return { role: null, name };
+            return { role: null, name, id: null };
         }
 
         return {
             role: boardOwnerId === itemCreatorId ? "Owner" : "Contributor",
             name,
+            id: itemCreatorId,
         };
     };
 
@@ -213,9 +214,22 @@ export default function ExhibitionBoardShow() {
                                                                 }
                                                             </span>
 
+                                                            {/* role is only set when the creator
+                                                                id resolved, so the author link is
+                                                                always valid here. */}
                                                             {creator.role && (
-                                                                <span
+                                                                <Link
+                                                                    href={route(
+                                                                        "author.profile",
+                                                                        creator.id,
+                                                                    )}
                                                                     className={`creator-chip ${creator.role.toLowerCase()}`}
+                                                                    title={`View ${creator.name}'s profile`}
+                                                                    tabIndex={
+                                                                        isActive
+                                                                            ? 0
+                                                                            : -1
+                                                                    }
                                                                 >
                                                                     {
                                                                         creator.role
@@ -225,7 +239,7 @@ export default function ExhibitionBoardShow() {
                                                                             creator.name
                                                                         }
                                                                     </b>
-                                                                </span>
+                                                                </Link>
                                                             )}
                                                         </div>
 
@@ -558,6 +572,17 @@ export default function ExhibitionBoardShow() {
                     font-weight: 900;
                     text-transform: lowercase;
                     letter-spacing: .04em;
+                    /* The chip links to the creator's author profile. */
+                    text-decoration: none;
+                    transition: filter 200ms ease;
+                }
+
+                .creator-chip:hover {
+                    filter: brightness(0.94);
+                }
+
+                .creator-chip:hover b {
+                    text-decoration: underline;
                 }
 
                 .creator-chip b {
