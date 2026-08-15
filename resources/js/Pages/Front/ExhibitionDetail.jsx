@@ -710,6 +710,32 @@ export default function ExhibitionDetail() {
         }
     };
 
+    // `comments.user` / `comments.replies.user` are eager loaded, so the id is
+    // normally on the relation; fall back to the foreign key.
+    const authorId = (entry) => entry?.user?.id ?? entry?.user_id ?? null;
+
+    // Not a <Link>: the identity blocks are divs styled by tag selectors
+    // (`.comment-top div`), and swapping the element would drop that styling.
+    const authorLinkProps = (entry) => {
+        const id = authorId(entry);
+        if (!id) return {};
+
+        const go = () => router.visit(route("author.profile", id));
+
+        return {
+            role: "link",
+            tabIndex: 0,
+            title: `View ${entry?.user?.name || "this user"}'s profile`,
+            onClick: go,
+            onKeyDown: (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    go();
+                }
+            },
+        };
+    };
+
     const formatPrice = () => {
         if (!exhibition?.price) return "Free";
 
@@ -1371,7 +1397,18 @@ export default function ExhibitionDetail() {
                                                         key={comment.id}
                                                         className="comment-item"
                                                     >
-                                                        <div className="comment-avatar">
+                                                        <div
+                                                            className={`comment-avatar ${
+                                                                authorId(
+                                                                    comment,
+                                                                )
+                                                                    ? "author-jump"
+                                                                    : ""
+                                                            }`}
+                                                            {...authorLinkProps(
+                                                                comment,
+                                                            )}
+                                                        >
                                                             {comment.user?.name
                                                                 ?.charAt(0)
                                                                 ?.toUpperCase() ||
@@ -1380,7 +1417,18 @@ export default function ExhibitionDetail() {
 
                                                         <div className="comment-content">
                                                             <div className="comment-top">
-                                                                <div>
+                                                                <div
+                                                                    className={
+                                                                        authorId(
+                                                                            comment,
+                                                                        )
+                                                                            ? "author-jump"
+                                                                            : ""
+                                                                    }
+                                                                    {...authorLinkProps(
+                                                                        comment,
+                                                                    )}
+                                                                >
                                                                     <strong>
                                                                         {comment
                                                                             .user
@@ -2494,6 +2542,28 @@ export default function ExhibitionDetail() {
                 .comment-content {
                     flex: 1;
                     min-width: 0;
+                }
+
+                /* Avatar + name of a commenter open their author profile. Only
+                   applied when the commenter id resolved, so a styled element
+                   is always clickable. */
+                .author-jump {
+                    cursor: pointer;
+                    transition: opacity .2s ease, filter .2s ease;
+                }
+
+                .author-jump:hover {
+                    opacity: .85;
+                }
+
+                .author-jump:hover strong {
+                    text-decoration: underline;
+                }
+
+                .author-jump:focus-visible {
+                    outline: 2px solid #2563eb;
+                    outline-offset: 2px;
+                    border-radius: 8px;
                 }
 
                 .comment-top,
