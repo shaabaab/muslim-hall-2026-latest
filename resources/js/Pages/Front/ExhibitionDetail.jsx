@@ -1582,7 +1582,18 @@ export default function ExhibitionDetail() {
                                                                                     }
                                                                                     className="reply-item"
                                                                                 >
-                                                                                    <div className="reply-avatar">
+                                                                                    <div
+                                                                                        className={`reply-avatar ${
+                                                                                            authorId(
+                                                                                                reply,
+                                                                                            )
+                                                                                                ? "author-jump"
+                                                                                                : ""
+                                                                                        }`}
+                                                                                        {...authorLinkProps(
+                                                                                            reply,
+                                                                                        )}
+                                                                                    >
                                                                                         {reply.user?.name
                                                                                             ?.charAt(
                                                                                                 0,
@@ -1592,7 +1603,18 @@ export default function ExhibitionDetail() {
                                                                                     </div>
 
                                                                                     <div>
-                                                                                        <div className="reply-top">
+                                                                                        <div
+                                                                                            className={`reply-top ${
+                                                                                                authorId(
+                                                                                                    reply,
+                                                                                                )
+                                                                                                    ? "author-jump"
+                                                                                                    : ""
+                                                                                            }`}
+                                                                                            {...authorLinkProps(
+                                                                                                reply,
+                                                                                            )}
+                                                                                        >
                                                                                             <strong>
                                                                                                 {reply
                                                                                                     .user
@@ -2544,9 +2566,9 @@ export default function ExhibitionDetail() {
                     min-width: 0;
                 }
 
-                /* Avatar + name of a commenter open their author profile. Only
-                   applied when the commenter id resolved, so a styled element
-                   is always clickable. */
+                /* Avatar + name of a commenter or replier open their author
+                   profile. Only applied when the id resolved, so a styled
+                   element is always clickable. */
                 .author-jump {
                     cursor: pointer;
                     transition: opacity .2s ease, filter .2s ease;
