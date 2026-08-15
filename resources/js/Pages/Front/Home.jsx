@@ -722,6 +722,139 @@ export default function Home() {
                 </section>
             )}
             {/* =========================================
+                EXHIBITION SECTION
+               ========================================= */}
+            <section className="section-container">
+                <div className="container">
+                    <div className="section-header-modern">
+                        <div>
+                            <h5 className="sub-title">Gallery</h5>
+
+                            <h2 className="main-title">Exhibitions</h2>
+
+                            <p className="section-subtitle mt-1 text-muted">
+                                Public art and cultural showcases
+                            </p>
+                        </div>
+                        <Link
+                            href="/exhibition-details"
+                            className="btn-view-all"
+                        >
+                            View Gallery <i className="fas fa-arrow-right"></i>
+                        </Link>
+                    </div>
+
+                    {(exhibition || []).length > 0 ? (
+                        <div className="home-exhibition-board-grid">
+                            {(exhibition || []).map((board) => {
+                                const posts = getBoardPosts(board);
+
+                                return (
+                                    <div
+                                        className="home-exhibition-board-card"
+                                        key={board.id}
+                                    >
+                                        <Link
+                                            href={`/exhibition-board/${board.id}`}
+                                            className="home-exhibition-board-cover"
+                                        >
+                                            <img
+                                                src={getBoardImage(board)}
+                                                alt={
+                                                    stripHtml(board.title) ||
+                                                    "Exhibition Board"
+                                                }
+                                                onError={(e) => {
+                                                    e.currentTarget.src =
+                                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
+                                                }}
+                                            />
+                                            <span className="home-exhibition-board-badge">
+                                                {board.exhibitions_count ||
+                                                    posts.length ||
+                                                    0}{" "}
+                                                Exhibitions
+                                            </span>
+                                        </Link>
+
+                                        <div className="home-exhibition-board-body">
+                                            <Link
+                                                href={`/exhibition-board/${board.id}`}
+                                                className="home-exhibition-board-title"
+                                            >
+                                                {stripHtml(board.title) ||
+                                                    "Untitled Board"}
+                                            </Link>
+
+                                            <p className="home-exhibition-board-desc">
+                                                {stripHtml(
+                                                    board.description,
+                                                ).slice(0, 95) ||
+                                                    "Explore selected exhibition posts from this board."}
+                                            </p>
+
+                                            <div className="home-exhibition-post-list">
+                                                {posts.length > 0 ? (
+                                                    posts.map((item) => (
+                                                        <Link
+                                                            href={`/exhibition-detail/${item.id}`}
+                                                            className="home-exhibition-mini-post"
+                                                            key={item.id}
+                                                        >
+                                                            <img
+                                                                src={getExhibitionImage(
+                                                                    item,
+                                                                )}
+                                                                alt={
+                                                                    stripHtml(
+                                                                        item.title,
+                                                                    ) ||
+                                                                    "Exhibition"
+                                                                }
+                                                                onError={(
+                                                                    e,
+                                                                ) => {
+                                                                    e.currentTarget.src =
+                                                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
+                                                                }}
+                                                            />
+                                                            <div>
+                                                                <h4>
+                                                                    {stripHtml(
+                                                                        item.title,
+                                                                    ) ||
+                                                                        "Untitled Exhibition"}
+                                                                </h4>
+                                                                <p>
+                                                                    {stripHtml(
+                                                                        item.description ||
+                                                                            item.content,
+                                                                    ).slice(
+                                                                        0,
+                                                                        55,
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </Link>
+                                                    ))
+                                                ) : (
+                                                    <div className="home-exhibition-empty-post">
+                                                        No exhibition post
+                                                        found.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="empty-state">No exhibitions found.</div>
+                    )}
+                </div>
+            </section>
+            {/* =========================================
                 LATEST UPDATES (BLOG)
                ========================================= */}
             <section className="section-padding">
@@ -1009,139 +1142,6 @@ export default function Home() {
                     </Swiper>
                 </section>
             )}
-            {/* =========================================
-                EXHIBITION SECTION
-               ========================================= */}
-            <section className="section-container">
-                <div className="container">
-                    <div className="section-header-modern">
-                        <div>
-                            <h5 className="sub-title">Gallery</h5>
-
-                            <h2 className="main-title">Exhibitions</h2>
-
-                            <p className="section-subtitle mt-1 text-muted">
-                                Public art and cultural showcases
-                            </p>
-                        </div>
-                        <Link
-                            href="/exhibition-details"
-                            className="btn-view-all"
-                        >
-                            View Gallery <i className="fas fa-arrow-right"></i>
-                        </Link>
-                    </div>
-
-                    {(exhibition || []).length > 0 ? (
-                        <div className="home-exhibition-board-grid">
-                            {(exhibition || []).map((board) => {
-                                const posts = getBoardPosts(board);
-
-                                return (
-                                    <div
-                                        className="home-exhibition-board-card"
-                                        key={board.id}
-                                    >
-                                        <Link
-                                            href={`/exhibition-board/${board.id}`}
-                                            className="home-exhibition-board-cover"
-                                        >
-                                            <img
-                                                src={getBoardImage(board)}
-                                                alt={
-                                                    stripHtml(board.title) ||
-                                                    "Exhibition Board"
-                                                }
-                                                onError={(e) => {
-                                                    e.currentTarget.src =
-                                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
-                                                }}
-                                            />
-                                            <span className="home-exhibition-board-badge">
-                                                {board.exhibitions_count ||
-                                                    posts.length ||
-                                                    0}{" "}
-                                                Exhibitions
-                                            </span>
-                                        </Link>
-
-                                        <div className="home-exhibition-board-body">
-                                            <Link
-                                                href={`/exhibition-board/${board.id}`}
-                                                className="home-exhibition-board-title"
-                                            >
-                                                {stripHtml(board.title) ||
-                                                    "Untitled Board"}
-                                            </Link>
-
-                                            <p className="home-exhibition-board-desc">
-                                                {stripHtml(
-                                                    board.description,
-                                                ).slice(0, 95) ||
-                                                    "Explore selected exhibition posts from this board."}
-                                            </p>
-
-                                            <div className="home-exhibition-post-list">
-                                                {posts.length > 0 ? (
-                                                    posts.map((item) => (
-                                                        <Link
-                                                            href={`/exhibition-detail/${item.id}`}
-                                                            className="home-exhibition-mini-post"
-                                                            key={item.id}
-                                                        >
-                                                            <img
-                                                                src={getExhibitionImage(
-                                                                    item,
-                                                                )}
-                                                                alt={
-                                                                    stripHtml(
-                                                                        item.title,
-                                                                    ) ||
-                                                                    "Exhibition"
-                                                                }
-                                                                onError={(
-                                                                    e,
-                                                                ) => {
-                                                                    e.currentTarget.src =
-                                                                        "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
-                                                                }}
-                                                            />
-                                                            <div>
-                                                                <h4>
-                                                                    {stripHtml(
-                                                                        item.title,
-                                                                    ) ||
-                                                                        "Untitled Exhibition"}
-                                                                </h4>
-                                                                <p>
-                                                                    {stripHtml(
-                                                                        item.description ||
-                                                                            item.content,
-                                                                    ).slice(
-                                                                        0,
-                                                                        55,
-                                                                    )}
-                                                                </p>
-                                                            </div>
-                                                        </Link>
-                                                    ))
-                                                ) : (
-                                                    <div className="home-exhibition-empty-post">
-                                                        No exhibition post
-                                                        found.
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="empty-state">No exhibitions found.</div>
-                    )}
-                </div>
-            </section>
 
             <style>{`
                 .home-exhibition-board-grid {

@@ -533,6 +533,12 @@ class FrontendController extends Controller
                 $query->with(['user', 'reactions'])->latest();
             },
         ])
+            // Boards have no view counter of their own; the badge on this page
+            // is the sum of the views of the same exhibitions the board card
+            // counts on /exhibition-details, so both pages agree.
+            ->withSum(['exhibitions as views_count' => function ($query) {
+                $this->applyPublicExhibitionFilters($query, false);
+            }], 'views')
             ->where('approval_status', ExhibitionBoard::STATUS_APPROVED)
             ->where(function ($query) {
                 $query->where('is_active', true)

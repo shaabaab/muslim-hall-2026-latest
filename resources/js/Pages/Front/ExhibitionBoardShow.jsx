@@ -9,6 +9,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export default function ExhibitionBoardShow() {
     const { board } = usePage().props;
     const exhibitions = board?.approved_exhibitions || [];
+    console.log(exhibitions);
+    // withSum returns null for a board with no countable exhibitions.
+    const boardViews = Number(board?.views_count || 0);
     const [currentIndex, setCurrentIndex] = useState(0);
     // { src, alt } while the fullscreen viewer is open, null otherwise.
     const [lightbox, setLightbox] = useState(null);
@@ -132,6 +135,7 @@ export default function ExhibitionBoardShow() {
                             <span>
                                 {exhibitions.length} Approved Exhibitions
                             </span>
+                            <span>{boardViews.toLocaleString()} Views</span>
                         </div>
                     </div>
                 </section>
@@ -241,6 +245,10 @@ export default function ExhibitionBoardShow() {
                                                             {/* role is only set when the creator
                                                                 id resolved, so the author link is
                                                                 always valid here. */}
+                                                            <span className="slide-count">
+                                                                Views:{" "}
+                                                                {item.views}
+                                                            </span>
                                                             {creator.role && (
                                                                 <Link
                                                                     href={route(
