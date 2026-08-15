@@ -855,6 +855,109 @@ export default function Home() {
                 </div>
             </section>
             {/* =========================================
+                ISLAMIC ZONE
+               ========================================= */}
+            <section className="section-padding islamic-section-bg">
+                <div className="container">
+                    <div className="section-header-modern">
+                        <div>
+                            <h5 className="sub-title green-text">
+                                Enlightenment
+                            </h5>
+                            <Link href="/islamic-zone">
+                                <h2 className="main-title">Islamic Zone</h2>
+                            </Link>
+                        </div>
+                        <Link
+                            href="/islamic-zone"
+                            className="btn-view-all green"
+                        >
+                            Browse Library <i className="fas fa-book-open"></i>
+                        </Link>
+                    </div>
+
+                    <Swiper
+                        modules={[Navigation]}
+                        navigation
+                        spaceBetween={30}
+                        breakpoints={contentSwiperBreakpoints}
+                        className="islamic-swiper"
+                    >
+                        {islamic && islamic.length > 0 ? (
+                            islamic.map((p) => (
+                                <SwiperSlide key={p.id}>
+                                    <div className="islamic-card-clean border-1 border-[#0f8022] shadow-md shadow-blue bg-[#ffffff] ">
+                                        <div className="islamic-img-holder">
+                                            <Link
+                                                href={`/islamic-detail/${p.id}`}
+                                            >
+                                                <img
+                                                    src={
+                                                        p.gallery
+                                                            ? getS3PublicUrl(
+                                                                  JSON.parse(
+                                                                      p.gallery,
+                                                                  )[0],
+                                                              )
+                                                            : getS3PublicUrl(
+                                                                  p.image,
+                                                              )
+                                                    }
+                                                    alt={p.title}
+                                                    onError={(e) => {
+                                                        e.target.src =
+                                                            "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
+                                                    }}
+                                                />
+                                            </Link>
+                                            <div className="type-badge">
+                                                {p.type || "Knowledge"}
+                                            </div>
+                                        </div>
+                                        <div className="islamic-content">
+                                            <h3 className="islamic-title">
+                                                <Link
+                                                    href={`/islamic-detail/${p.id}`}
+                                                >
+                                                    {p.title}
+                                                </Link>
+                                            </h3>
+                                            <p className="islamic-desc">
+                                                {p.description
+                                                    ?.replace(/<[^>]+>/g, "")
+                                                    .slice(0, 60)}
+                                                ...
+                                            </p>
+                                            <div className="islamic-footer">
+                                                <Link
+                                                    href={`/islamic-detail/${p.id}`}
+                                                    className="learn-more-link"
+                                                >
+                                                    Learn More
+                                                </Link>
+                                                <span className="islamic-date">
+                                                    <i className="far fa-clock"></i>{" "}
+                                                    {new Date(
+                                                        p.created_at,
+                                                    ).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </SwiperSlide>
+                            ))
+                        ) : (
+                            <SwiperSlide>
+                                <div className="empty-state">
+                                    No content found.
+                                </div>
+                            </SwiperSlide>
+                        )}
+                    </Swiper>
+                </div>
+            </section>
+
+            {/* =========================================
                 LATEST UPDATES (BLOG)
                ========================================= */}
             <section className="section-padding">
@@ -957,108 +1060,7 @@ export default function Home() {
                     </Swiper>
                 </div>
             </section>
-            {/* =========================================
-                ISLAMIC ZONE
-               ========================================= */}
-            <section className="section-padding islamic-section-bg">
-                <div className="container">
-                    <div className="section-header-modern">
-                        <div>
-                            <h5 className="sub-title green-text">
-                                Enlightenment
-                            </h5>
-                            <Link href="/islamic-zone">
-                                <h2 className="main-title">Islamic Zone</h2>
-                            </Link>
-                        </div>
-                        <Link
-                            href="/islamic-zone"
-                            className="btn-view-all green"
-                        >
-                            Browse Library <i className="fas fa-book-open"></i>
-                        </Link>
-                    </div>
 
-                    <Swiper
-                        modules={[Navigation]}
-                        navigation
-                        spaceBetween={30}
-                        breakpoints={contentSwiperBreakpoints}
-                        className="islamic-swiper"
-                    >
-                        {islamic && islamic.length > 0 ? (
-                            islamic.map((p) => (
-                                <SwiperSlide key={p.id}>
-                                    <div className="islamic-card-clean border-1 border-[#0f8022] shadow-md shadow-blue bg-[#ffffff] ">
-                                        <div className="islamic-img-holder">
-                                            <Link
-                                                href={`/islamic-detail/${p.id}`}
-                                            >
-                                                <img
-                                                    src={
-                                                        p.gallery
-                                                            ? getS3PublicUrl(
-                                                                  JSON.parse(
-                                                                      p.gallery,
-                                                                  )[0],
-                                                              )
-                                                            : getS3PublicUrl(
-                                                                  p.image,
-                                                              )
-                                                    }
-                                                    alt={p.title}
-                                                    onError={(e) => {
-                                                        e.target.src =
-                                                            "https://i.ibb.co.com/7xnc8z33/Chat-GPT-Image-Jan-11-2026-02-55-52-PM-removebg-preview.png";
-                                                    }}
-                                                />
-                                            </Link>
-                                            <div className="type-badge">
-                                                {p.type || "Knowledge"}
-                                            </div>
-                                        </div>
-                                        <div className="islamic-content">
-                                            <h3 className="islamic-title">
-                                                <Link
-                                                    href={`/islamic-detail/${p.id}`}
-                                                >
-                                                    {p.title}
-                                                </Link>
-                                            </h3>
-                                            <p className="islamic-desc">
-                                                {p.description
-                                                    ?.replace(/<[^>]+>/g, "")
-                                                    .slice(0, 60)}
-                                                ...
-                                            </p>
-                                            <div className="islamic-footer">
-                                                <Link
-                                                    href={`/islamic-detail/${p.id}`}
-                                                    className="learn-more-link"
-                                                >
-                                                    Learn More
-                                                </Link>
-                                                <span className="islamic-date">
-                                                    <i className="far fa-clock"></i>{" "}
-                                                    {new Date(
-                                                        p.created_at,
-                                                    ).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </SwiperSlide>
-                            ))
-                        ) : (
-                            <SwiperSlide>
-                                <div className="empty-state">
-                                    No content found.
-                                </div>
-                            </SwiperSlide>
-                        )}
-                    </Swiper>
-                </div>
-            </section>
             {/* --- IN-CONTENT AD BANNER (BEFORE EXHIBITION) --- */}
             {inContentAds.length > 0 && (
                 <section className="container my-5">
