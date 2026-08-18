@@ -6,6 +6,9 @@ import Footer from "./Footer";
 import ImageLightbox from "@/Components/ImageLightbox";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+// Roughly one short paragraph, then the slide links out to the detail page.
+const DESCRIPTION_LIMIT = 320;
+
 export default function ExhibitionBoardShow() {
     const { board } = usePage().props;
     const exhibitions = board?.approved_exhibitions || [];
@@ -15,7 +18,6 @@ export default function ExhibitionBoardShow() {
     const [currentIndex, setCurrentIndex] = useState(0);
     // { src, alt } while the fullscreen viewer is open, null otherwise.
     const [lightbox, setLightbox] = useState(null);
-    const thumbsRef = useRef(null);
     const touchStartX = useRef(null);
 
     const fallbackImage = "/assets/images/logo3.png";
@@ -32,9 +34,30 @@ export default function ExhibitionBoardShow() {
         }
     };
 
+    // Editor HTML -> plain text. The DOM decodes entities (&nbsp;, &amp;) that
+    // a tag-stripping regex leaves behind, and counting characters on plain
+    // text means a cut can never land inside a tag.
     const stripHtml = (html) => {
         if (!html) return "";
-        return html.replace(/<[^>]+>/g, "");
+        const el = document.createElement("div");
+        el.innerHTML = html;
+        return (el.textContent || "").replace(/\s+/g, " ").trim();
+    };
+
+    // Cuts back to the last word boundary, unless that throws away too much.
+    const truncate = (text, limit) => {
+        if (text.length <= limit) return { text, isTruncated: false };
+
+        const cut = text.slice(0, limit);
+        const lastSpace = cut.lastIndexOf(" ");
+
+        return {
+            text: (lastSpace > limit * 0.6
+                ? cut.slice(0, lastSpace)
+                : cut
+            ).trimEnd(),
+            isTruncated: true,
+        };
     };
 
     // An exhibition posted by the board's own creator is the owner's; anyone
@@ -82,21 +105,6 @@ export default function ExhibitionBoardShow() {
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [exhibitions.length, nextSlide, prevSlide, lightbox]);
-
-    // Keep the active thumbnail centered in the strip as the slide changes.
-    useEffect(() => {
-        const strip = thumbsRef.current;
-        const active = strip?.children[currentIndex];
-        if (!strip || !active) return;
-
-        strip.scrollTo({
-            left:
-                active.offsetLeft -
-                strip.clientWidth / 2 +
-                active.clientWidth / 2,
-            behavior: "smooth",
-        });
-    }, [currentIndex]);
 
     const handleTouchStart = (e) => {
         touchStartX.current = e.touches[0].clientX;
@@ -172,6 +180,10 @@ export default function ExhibitionBoardShow() {
                                             const isActive =
                                                 index === currentIndex;
                                             const creator = getCreator(item);
+                                            const summary = truncate(
+                                                stripHtml(item.description),
+                                                DESCRIPTION_LIMIT,
+                                            );
 
                                             return (
                                                 <div
@@ -283,14 +295,34 @@ export default function ExhibitionBoardShow() {
                                                             }}
                                                         />
 
-                                                        <div
-                                                            className="description"
-                                                            dangerouslySetInnerHTML={{
-                                                                __html:
-                                                                    item.description ||
-                                                                    "",
-                                                            }}
-                                                        />
+                                                        {/* Plain text, capped:
+                                                            long descriptions
+                                                            used to stretch the
+                                                            card (and so the
+                                                            image frame). */}
+                                                        <div className="description">
+                                                            {summary.text}
+                                                            {summary.isTruncated && (
+                                                                <>
+                                                                    {"… "}
+                                                                    <Link
+                                                                        href={route(
+                                                                            "exhibition-detail",
+                                                                            item.id,
+                                                                        )}
+                                                                        className="see-more"
+                                                                        tabIndex={
+                                                                            isActive
+                                                                                ? 0
+                                                                                : -1
+                                                                        }
+                                                                    >
+                                                                        see
+                                                                        more...!
+                                                                    </Link>
+                                                                </>
+                                                            )}
+                                                        </div>
 
                                                         {/* <div className="info-grid">
                                                             <div>
@@ -392,7 +424,7 @@ export default function ExhibitionBoardShow() {
                         )}
                         {/* Exhibition Length */}
                         {exhibitions.length > 1 && (
-                            <div className="thumbs" ref={thumbsRef}>
+                            <div className="thumbs">
                                 {exhibitions.map((item, index) => (
                                     <button
                                         type="button"
@@ -659,6 +691,12 @@ export default function ExhibitionBoardShow() {
                     font-weight: 600;
                 }
 
+                /* Goes to the same place as the View Details button. */
+                .see-more {
+                    white-space: nowrap;
+                    font-weight: 800;
+                }
+
                 .info-grid {
                     display: grid;
                     grid-template-columns: repeat(3, 1fr);
@@ -758,30 +796,27 @@ export default function ExhibitionBoardShow() {
                 }
 
                 .thumbs {
-                    /* offsetLeft of the thumbs is read against this box when
-                       centering the active one. */
-                    position: relative;
                     margin-top: 14px;
-                    display: flex;
+                    /* Four per row; extra thumbs wrap onto further rows. */
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
                     gap: 12px;
-                    overflow-x: auto;
-                    /* overflow-x:auto also clips vertically — this padding
-                       keeps the active thumb's lift + border visible. */
+                    /* Room for the active thumb's lift + border. */
                     padding: 12px 8px 14px;
-                    scroll-behavior: smooth;
                 }
 
                 .thumb {
                     position: relative;
-                    width: 110px;
-                    height: 76px;
+                    /* Columns set the width; the ratio keeps the old 110x76
+                       proportions as the grid resizes. */
+                    width: 100%;
+                    aspect-ratio: 110 / 76;
                     border-radius: 12px;
                     overflow: hidden;
                     border: 3px solid transparent;
                     padding: 0;
                     cursor: pointer;
                     background: white;
-                    flex: 0 0 auto;
                     opacity: 0.6;
                     transition: opacity 300ms ease, transform 300ms ease,
                         border-color 300ms ease, box-shadow 300ms ease;
@@ -889,9 +924,10 @@ export default function ExhibitionBoardShow() {
                         right: 8px;
                     }
 
-                    .thumb {
-                        width: 84px;
-                        height: 60px;
+                    /* Still four across, just tighter. */
+                    .thumbs {
+                        gap: 8px;
+                        padding: 10px 4px 12px;
                     }
                 }
 
