@@ -1,7 +1,7 @@
 # Muslim Hall — Work Summary
 
 **Work area:** Exhibitions section (public pages, member area, admin panel)
-**Period:** 3 August 2026 – 18 August 2026
+**Period:** 3 August 2026 – 24 August 2026
 **Scope:** 23 sets of changes across 75 files
 
 ---
@@ -53,6 +53,12 @@ visitors can browse the whole board without going back and forth.
 ### Clickable people
 Names and profile pictures — on exhibitions, comments and replies — now link through to
 that person's public profile.
+
+### Share button on every exhibition board
+The public board listing page now has a **Share** button on each board, next to the view
+count. On a phone it opens the device's usual share sheet — WhatsApp, Facebook, Messenger,
+email and so on. On a computer it copies the board's address to the clipboard and confirms
+that it has done so.
 
 ### Owner and Contributor labels
 Each exhibition inside a board is now labelled to show whether it was posted by the
@@ -117,6 +123,22 @@ board's owner or by a contributor, and a total view count is shown on the board 
 10. **Exhibition title and description no longer block submission** — they are now
     optional.
 
+11. **Shared links showed no picture and no title.** Sharing an exhibition to Facebook,
+    WhatsApp, Instagram or anywhere else posted a bare web address with no preview card.
+    The cause was not the share button: social platforms build the preview themselves by
+    reading the page, and the exhibition pages were not supplying a title, description or
+    image for them to read — so every link fell back to a generic "Muslim Hall" with no
+    picture. Exhibition pages and board pages now provide all three, and the same
+    improvement applies to the pages that already supplied them (posts and Islamic Zone),
+    which now also specify the picture's size and the site name so the larger preview card
+    is used.
+
+    Two things worth knowing about this one. Facebook and WhatsApp **remember** the old
+    empty preview for any address that has already been shared, so previously shared links
+    may keep looking plain until they are refreshed through Facebook's own sharing tool.
+    And **Instagram does not support link previews at all** — it is the one platform where
+    a shared link cannot show a picture, regardless of the work above.
+
 ---
 
 ## 4. Documentation and verification
@@ -162,3 +184,14 @@ These are not blocking anything today, but each will cost time or cause confusio
 4. **Older boards created before this work may have an incomplete active/inactive
    setting**, which could make a board publicly visible yet impossible to approve
    exhibitions for. Worth a quick check against the live data.
+
+5. **Check the share previews on the live site once, after this release.** The preview
+   picture is served from the site's file storage, and if that storage is set to refuse
+   anonymous requests the social platforms cannot fetch the image — the preview would
+   still appear without a picture even though the pages are now correct. One shared link
+   tested on Facebook confirms it either way.
+
+6. **Optional: dedicated Facebook / WhatsApp / X buttons.** The current Share button uses
+   the phone's own share sheet, which is the natural behaviour on mobile but gives desktop
+   visitors a copied link rather than a one-click share. Individual platform buttons can
+   be added if that matters for the audience.

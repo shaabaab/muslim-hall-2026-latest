@@ -4,6 +4,7 @@ import { getS3PublicUrl } from "@/Utils/s3Helpers";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useEffect, useState } from "react";
+import { message } from "antd";
 
 export default function ExhibitionBoards() {
     const { boards, filters: initialFilters } = usePage().props;
@@ -74,6 +75,33 @@ export default function ExhibitionBoards() {
             name,
             id: postCreatorId,
         };
+    };
+
+    // Native share sheet where the browser offers one (mostly mobile), copy the
+    // link everywhere else. No login needed either way. The image and title in
+    // the resulting preview card come from the Open Graph tags on the board
+    // page — social platforms ignore whatever is passed here.
+    const handleShare = async (board) => {
+        const url = route("exhibition-board.show", board.id);
+        const title = stripHtml(board.title) || "Exhibition Board";
+
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, text: title, url });
+                return;
+            } catch (error) {
+                // Dismissing the sheet is not a failure worth reporting.
+                if (error?.name === "AbortError") return;
+            }
+        }
+
+        try {
+            await navigator.clipboard.writeText(url);
+            message.success("Board link copied to clipboard.");
+        } catch (error) {
+            console.error("Share error:", error);
+            message.error("Could not copy the link.");
+        }
     };
 
     const getPostImageUrl = (post) => {
@@ -164,13 +192,38 @@ export default function ExhibitionBoards() {
                                                         <span className="board-label">
                                                             Board
                                                         </span>
-                                                        <span className="board-views">
-                                                            {Number(
-                                                                board.views_count ||
-                                                                    0,
-                                                            ).toLocaleString()}{" "}
-                                                            views
-                                                        </span>
+
+                                                        <div className="board-topline-right">
+                                                            <span className="board-views">
+                                                                {Number(
+                                                                    board.views_count ||
+                                                                        0,
+                                                                ).toLocaleString()}{" "}
+                                                                views
+                                                            </span>
+
+                                                            <button
+                                                                type="button"
+                                                                className="board-share-btn"
+                                                                onClick={() =>
+                                                                    handleShare(
+                                                                        board,
+                                                                    )
+                                                                }
+                                                                title="Share this board"
+                                                                aria-label={`Share ${
+                                                                    stripHtml(
+                                                                        board.title,
+                                                                    ) ||
+                                                                    "this board"
+                                                                }`}
+                                                            >
+                                                                <i className="fas fa-share-nodes"></i>
+                                                                <span>
+                                                                    Share
+                                                                </span>
+                                                            </button>
+                                                        </div>
                                                     </div>
 
                                                     <Link
@@ -478,10 +531,39 @@ export default function ExhibitionBoards() {
                     letter-spacing: 0.05em;
                 }
 
+                .board-topline-right {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
                 .board-views {
                     color: #64748b;
                     font-size: 13px;
                     font-weight: 700;
+                }
+
+                .board-share-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 7px;
+                    background: #f2fff5;
+                    border: 1px solid #d7f0de;
+                    color: #0f8022;
+                    border-radius: 999px;
+                    padding: 7px 14px;
+                    font-size: 13px;
+                    font-weight: 800;
+                    cursor: pointer;
+                    transition: background 0.2s ease, border-color 0.2s ease,
+                        color 0.2s ease, transform 0.2s ease;
+                }
+
+                .board-share-btn:hover {
+                    background: #0f8022;
+                    border-color: #0f8022;
+                    color: #ffffff;
+                    transform: translateY(-1px);
                 }
 
                 .board-title-link {
