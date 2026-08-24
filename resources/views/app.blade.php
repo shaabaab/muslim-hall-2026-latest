@@ -13,7 +13,13 @@
             <meta property="og:image" content="{{ $meta['image'] }}">
             <meta property="og:image:secure_url" content="{{ $meta['image'] }}">
             <meta name="twitter:image" content="{{ $meta['image'] }}">
+            {{-- WhatsApp falls back to a small thumbnail when it can't size the image cheaply. --}}
+            <meta property="og:image:width" content="1200">
+            <meta property="og:image:height" content="630">
+            <meta property="og:image:alt" content="{{ $meta['title'] ?? 'Muslim Hall' }}">
         @endif
+        <meta property="og:site_name" content="Muslim Hall">
+        <meta name="description" content="{{ $meta['description'] ?? 'Muslim Hall - Your trusted platform' }}">
         <meta property="og:url" content="{{ request()->fullUrl() }}">
         <meta property="og:type" content="article">
         <meta name="twitter:card" content="summary_large_image">
