@@ -549,9 +549,30 @@ class FrontendController extends Controller
 
         $board->setRelation('approvedExhibitions', $board->exhibitions);
 
+        // Share cards for board links are built by scraping this URL for Open
+        // Graph tags. Boards often have no cover of their own, so fall back to
+        // the first exhibition's image the same way the board card does.
+        $metaImage = $board->image_url
+            ?? optional($board->exhibitions->first())->image_url
+            ?? asset('assets/images/logo3.png');
+
+        $metaTitle = trim(html_entity_decode(strip_tags(
+            $board->title ?? 'Exhibition Board'
+        )));
+
+        $metaDescription = Str::limit(trim(html_entity_decode(strip_tags(
+            $board->description ?? ''
+        ))), 160) ?: 'Explore exhibitions shared under this board.';
+
         return Inertia::render('Front/ExhibitionBoardShow', [
             'board' => $board,
-        ]);
+        ])->withViewData([
+                    'meta' => [
+                        'title' => $metaTitle,
+                        'description' => $metaDescription,
+                        'image' => $metaImage,
+                    ]
+                ]);
     }
 
     public function exhibition($id)
