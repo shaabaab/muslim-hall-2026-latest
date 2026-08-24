@@ -72,6 +72,7 @@ board's owner or by a contributor, and a total view count is shown on the board 
 |---|---|
 | **Exhibition board page** (public) | Rebuilt as a slideshow with thumbnails underneath, keyboard and swipe navigation, and a blurred backdrop so photos of any shape sit neatly in the frame |
 | **Exhibition board page** — latest pass | Long descriptions are now shortened with a **"see more…!"** link through to the full page, which also stopped very long text from stretching the photo frame; thumbnails now sit **four per row** instead of scrolling sideways |
+| **Exhibition board page** — header | The green panel at the top of a board now shows the **board's main picture on the right**, alongside the title, description and Owner/Exhibitions/Views details on the left. Boards without a picture of their own use the first exhibition's photo, so the space is never left empty. On phones the picture moves below the text |
 | **Exhibition listing page** (public) | Refreshed layout and card design |
 | **Exhibition detail page** (public) | Rebuilt — description, comments and replies, reactions, exhibition information panel and sponsor block |
 | **Create Exhibition form** | Rebuilt and expanded: choose an existing board or request a new one, plus caption, main image, sponsor image, gallery images, item type, description, document, PDF, video and audio files, price, currency, dimensions, material, external link, language and availability. Menu item renamed to **"Join Exhibition"** |

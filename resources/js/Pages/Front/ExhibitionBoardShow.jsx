@@ -134,16 +134,44 @@ export default function ExhibitionBoardShow() {
                             ← Back to Boards
                         </Link>
 
-                        <h1>{board.title}</h1>
+                        <div className="hero-layout">
+                            <div className="hero-text">
+                                <h1>{board.title}</h1>
 
-                        <p>{stripHtml(board.description)}</p>
+                                <p>{stripHtml(board.description)}</p>
 
-                        <div className="board-meta">
-                            <span>Owner: {board.owner?.name || "Unknown"}</span>
-                            <span>
-                                {exhibitions.length} Approved Exhibitions
-                            </span>
-                            <span>{boardViews.toLocaleString()} Views</span>
+                                <div className="board-meta">
+                                    <span>
+                                        Owner: {board.owner?.name || "Unknown"}
+                                    </span>
+                                    <span>
+                                        {exhibitions.length} Approved
+                                        Exhibitions
+                                    </span>
+                                    <span>
+                                        {boardViews.toLocaleString()} Views
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Boards often have no cover of their own — fall
+                                back to the first exhibition's photo, the same
+                                way the board card on the listing page does. */}
+                            <div className="hero-image">
+                                <img
+                                    src={getImageUrl(
+                                        board?.image_url,
+                                        board?.image,
+                                        exhibitions[0]?.image_url,
+                                        exhibitions[0]?.image,
+                                    )}
+                                    alt={
+                                        stripHtml(board.title) ||
+                                        "Exhibition board"
+                                    }
+                                    onError={handleImageError}
+                                />
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -487,6 +515,35 @@ export default function ExhibitionBoardShow() {
                     color: #d1d5db;
                     text-decoration: none;
                     margin-bottom: 18px;
+                }
+
+                /* Copy on the left, the board's own image on the right. */
+                .hero-layout {
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) 380px;
+                    gap: 34px;
+                    align-items: center;
+                }
+
+                .hero-text {
+                    min-width: 0;
+                }
+
+                .hero-image {
+                    width: 100%;
+                    height: 250px;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    background: rgba(255,255,255,0.12);
+                    border: 1px solid rgba(255,255,255,0.22);
+                    box-shadow: 0 18px 42px rgba(0,0,0,0.22);
+                }
+
+                .hero-image img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
                 }
 
                 .board-show-hero h1 {
@@ -881,6 +938,17 @@ export default function ExhibitionBoardShow() {
                 }
 
                 @media (max-width: 900px) {
+                    /* Stacked: the image drops below the copy rather than
+                       squeezing the title into a narrow column. */
+                    .hero-layout {
+                        grid-template-columns: 1fr;
+                        gap: 22px;
+                    }
+
+                    .hero-image {
+                        height: 220px;
+                    }
+
                     .slider-card {
                         grid-template-columns: 1fr;
                     }
