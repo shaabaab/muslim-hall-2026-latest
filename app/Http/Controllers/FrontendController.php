@@ -571,10 +571,35 @@ class FrontendController extends Controller
             ->where('id', $id)
             ->firstOrFail();
 
+        // Social platforms build the share card by scraping this URL for Open
+        // Graph tags — they never run JS, so the tags have to be in the server
+        // response. withViewData feeds app.blade.php's $meta block.
+        $seo = $exhibition->seo;
+
+        $metaImage = $exhibition->image_url
+            ?? \App\Services\ServiceClass::getFileUrl($seo->og_image ?? null)
+            ?? asset('assets/images/logo3.png');
+
+        // Titles are stored as HTML (the page renders them with
+        // dangerouslySetInnerHTML); raw tags inside a meta attribute break the card.
+        $metaTitle = trim(html_entity_decode(strip_tags(
+            $seo->og_title ?? $seo->meta_title ?? $exhibition->title ?? 'Exhibition'
+        )));
+
+        $metaDescription = Str::limit(trim(html_entity_decode(strip_tags(
+            $seo->og_description ?? $seo->meta_description ?? $exhibition->description ?? ''
+        ))), 160) ?: 'Muslim Hall Exhibition';
+
         return Inertia::render('Front/ExhibitionDetail', [
             'exhibition' => $exhibition,
             'boardExhibitions' => $this->boardExhibitionSlides($exhibition),
-        ]);
+        ])->withViewData([
+                    'meta' => [
+                        'title' => $metaTitle,
+                        'description' => $metaDescription,
+                        'image' => $metaImage,
+                    ]
+                ]);
     }
 
     /**
