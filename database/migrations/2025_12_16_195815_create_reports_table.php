@@ -10,6 +10,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        if (Schema::hasTable('reports')) {
+            return;
+        }
+
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
             $table->text('reason');
@@ -23,6 +27,7 @@ return new class extends Migration {
 
             // User who reported
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('handled_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();
             $table->softDeletes();
@@ -31,8 +36,6 @@ return new class extends Migration {
             $table->index(['reportable_id', 'reportable_type']);
             $table->index('status');
             $table->index('user_id');
-
-            $table->foreignId('handled_by')->nullable()->after('user_id')->constrained('users')->nullOnDelete();
         });
     }
 

@@ -70,12 +70,9 @@
         }
     </style>
 
-    <link rel="stylesheet" href="{{ asset('build/assets/app-CjuHbPFE.css') }}">
-    <script src="{{ asset('build/assets/app-DhmLnfrb.js') }}" type="module"></script>
-
     @routes
     @viteReactRefresh
-    @vite(['resources/js/app.jsx'])
+    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     @inertiaHead
 </head>
 
