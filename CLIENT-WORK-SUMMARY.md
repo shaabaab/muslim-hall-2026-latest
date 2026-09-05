@@ -1,8 +1,9 @@
 # Muslim Hall — Work Summary
 
 **Work area:** Exhibitions section (public pages, member area, admin panel)
-**Period:** 3 August 2026 – 24 August 2026
-**Scope:** 23 sets of changes across 75 files
+**Period:** 3 August 2026 – 5 September 2026
+**Scope:** 23 sets of changes across 75 files, plus a follow-up investigation and fix in
+September (see problem 12)
 
 ---
 
@@ -16,6 +17,11 @@ approval process.
 
 All of those were fixed, the exhibition pages were rebuilt, and the complete
 board-to-published-exhibition workflow was tested end to end for the first time.
+
+In early September a separate report — "my exhibition is not submitting" — was
+investigated and traced to a mismatch between what the submission form accepted and what
+the database was able to store. That is problem 12 below, and it accounts for around 58
+failed submissions since mid-July.
 
 ---
 
@@ -140,6 +146,43 @@ board's owner or by a contributor, and a total view count is shown on the board 
     And **Instagram does not support link previews at all** — it is the one platform where
     a shared link cannot show a picture, regardless of the work above.
 
+12. **Some members could not submit an exhibition at all, and were told nothing.** The
+    form appeared to accept the submission and then simply did nothing — no error, no
+    confirmation, no exhibition. Reported as "my exhibition is not submitting".
+
+    Two fields were storing more, or different, information than the database had been
+    set up to hold:
+
+    - **Caption.** The form allowed up to 5,000 characters, but the database could only
+      store 255. The rich-text formatting counts towards that limit as well, so a caption
+      was often over the line before it looked long. Captions written in Arabic or Bengali
+      reached it especially quickly — a short Hadith with its translation is already past
+      255 characters.
+    - **External Link.** This field had been set up to store a number rather than a web
+      address, so **any** submission containing a link was rejected regardless of length.
+
+    In both cases the member's uploaded photos were saved successfully and only the
+    exhibition record failed, which is why it looked as though nothing had happened at
+    all. It also explains why the fault seemed random: whether a submission worked
+    depended entirely on how long the caption was and whether a link was included.
+
+    The site's own error records show **around 58 failed attempts between 18 July and
+    4 September** — roughly two-thirds caused by the caption and one-third by the link.
+    Six of them were members editing an existing exhibition rather than creating a new
+    one, so edits were being lost in the same way.
+
+    Three things were changed. Both fields now hold the full range of what members
+    actually enter, and every remaining field was checked against the database for the
+    same kind of mismatch. A submission is now saved **completely or not at all**, so a
+    failure no longer leaves photos stranded in storage without an exhibition. And if
+    anything does go wrong, the member is now shown a clear message instead of silence.
+
+    Because the uploaded photos were preserved, the affected members can be identified
+    from their own files and contacted to resubmit. **No member content has been
+    deleted.** The fix was also tested against long Arabic and Bengali captions before
+    release, which caught two further faults of the same kind that would otherwise have
+    appeared the moment the caption limit was raised.
+
 ---
 
 ## 4. Documentation and verification
@@ -159,6 +202,16 @@ board's owner or by a contributor, and a total view count is shown on the board 
 
 - **Two internal reference documents** were added to the project so the next developer
   does not have to rediscover any of this.
+
+- **Automated checks were added for the submission fault in problem 12** — covering a
+  submission with an external link, a submission with a long formatted caption, and
+  confirmation that a failed submission leaves no stranded photos behind. These run on
+  demand and will catch the same fault if it is ever reintroduced. They are the first
+  automated tests the project has for the exhibitions area.
+
+- **A reporting tool was added** that lists photos in storage with no matching exhibition
+  and identifies which member uploaded each one. It only reports — it deletes nothing —
+  because those files are the only surviving record of who was affected.
 
 - **Tidy-up across roughly 50 files** — consistent handling of image addresses and
   consistent code formatting. No change in behaviour, but less room for the image
@@ -196,3 +249,20 @@ These are not blocking anything today, but each will cost time or cause confusio
    the phone's own share sheet, which is the natural behaviour on mobile but gives desktop
    visitors a copied link rather than a one-click share. Individual platform buttons can
    be added if that matters for the audience.
+
+7. **Contact the members affected by problem 12.** They can be identified from the photos
+   they uploaded, and their submissions cannot be recovered — they will need to submit
+   again. Worth doing soon: some of them last tried in July.
+
+8. **Very large photos can still fail during upload.** This is a separate, less frequent
+   cause with the same outward symptom, and it is the one part of problem 12 that is not
+   resolved. When a photo is large enough to exhaust the server's working memory the
+   upload stops mid-way, and unlike the faults above this cannot be caught and reported
+   from within the site. Raising the server's image-processing limit, or rejecting
+   oversized photos before processing them, would close it. Recommended if any member
+   reports the same symptom after this release.
+
+9. **The silent-failure pattern is wider than the exhibition form.** Item 1 above notes
+   that the admin panel shows no error messages; problem 12 was the same fault in the
+   member area. It is now fixed for exhibition submission specifically, but other member
+   forms have not been checked and may fail just as quietly.

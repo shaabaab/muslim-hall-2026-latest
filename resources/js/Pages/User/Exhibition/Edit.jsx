@@ -139,7 +139,11 @@ export default function Edit({ auth, exhibition, langs = [], boards = [] }) {
             preserveScroll: true,
             onSuccess: () =>
                 message.success("Exhibition updated for approval."),
-            onError: () => message.error("Please check form errors."),
+            // `submission` is the server's catch-all when the save itself failed
+            // rather than a single field; without it the user only saw the form
+            // sit there doing nothing.
+            onError: (errors) =>
+                message.error(errors.submission || "Please check form errors."),
         });
     };
 

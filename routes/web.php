@@ -567,6 +567,9 @@ Route::get('/storage-link', function () {
     ]);
 });
 
-include_once __DIR__ . '/user.php';
+// Not include_once: the route file has to run on every application boot, and a
+// process that boots more than once (the test suite) otherwise loses every
+// user.* route after the first boot.
+include __DIR__ . '/user.php';
 
 require __DIR__ . '/auth.php';

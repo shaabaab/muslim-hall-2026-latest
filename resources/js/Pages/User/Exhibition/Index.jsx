@@ -300,11 +300,11 @@ export default function Index({ exhibitions, filters, auth }) {
             width: 200,
             render: (_, record) => (
                 <Space size="small">
-                    {/* <Tooltip title="View">
+                    <Tooltip title="View">
                         <Link href={route("user.exhibitions.show", record.id)}>
                             <Button icon={<EyeOutlined />} size="small" />
                         </Link>
-                    </Tooltip> */}
+                    </Tooltip>
 
                     <Tooltip title="Edit">
                         <Link href={route("user.exhibitions.edit", record.id)}>

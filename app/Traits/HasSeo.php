@@ -77,30 +77,30 @@ trait HasSeo
 
         $model->seo()->create([
             // Meta
-            'meta_title'        => $request->input('meta_title', $model->name ?? $model->title),
+            'meta_title'        => self::seoLine($request->input('meta_title', $model->name ?? $model->title)),
             'meta_description'  => $request->input('meta_description', $request->input('description', $model->description ?? $model->content)),
             'meta_keywords'     => $metaKeywords,
             'meta_robots'       => $request->input('meta_robots', 'index, follow'),
 
             // OG
-            'og_title'          => $request->input('og_title', $model->name ?? $model->title),
+            'og_title'          => self::seoLine($request->input('og_title', $model->name ?? $model->title)),
             'og_description'    => $request->input('og_description', $request->input('description', $model->description ?? $model->content)),
             'og_image'          => $ogImagePath,
             'og_type'           => $request->input('og_type', 'website'),
-            'og_url'            => $request->input('og_url', url('/' . strtolower(class_basename($model)) . '/' . $slug)),
-            'og_site_name'      => $request->input('og_site_name', config('app.name', 'Muslim Hall')),
+            'og_url'            => self::seoLine($request->input('og_url', url('/' . strtolower(class_basename($model)) . '/' . $slug))),
+            'og_site_name'      => self::seoLine($request->input('og_site_name', config('app.name', 'Muslim Hall'))),
 
             // Twitter
-            'twitter_title'       => $request->input('twitter_title', $model->name ?? $model->title),
+            'twitter_title'       => self::seoLine($request->input('twitter_title', $model->name ?? $model->title)),
             'twitter_description' => $request->input('twitter_description', $request->input('description', $model->description ?? $model->content)),
             'twitter_card'        => $request->input('twitter_card', 'summary_large_image'),
             'twitter_site'        => $request->input('twitter_site', '@muslimHall'),
             'twitter_creator'     => $request->input('twitter_creator', '@muslimHall'),
             'twitter_image'       => $twitterImagePath,
-            'twitter_url'         => $request->input('twitter_url', url('/' . strtolower(class_basename($model)) . '/' . $slug)),
+            'twitter_url'         => self::seoLine($request->input('twitter_url', url('/' . strtolower(class_basename($model)) . '/' . $slug))),
 
             // Canonical & JSON fields
-            'canonical_url'     => $request->input('canonical_url', url('/' . strtolower(class_basename($model)) . '/' . $slug)),
+            'canonical_url'     => self::seoLine($request->input('canonical_url', url('/' . strtolower(class_basename($model)) . '/' . $slug))),
             'structured_data'   => $structuredData,
             'focus_keywords'    => $focusKeywords,
         ]);
@@ -189,9 +189,15 @@ trait HasSeo
             'canonical_url',
         ];
 
+        // Everything here is VARCHAR(255) except the three descriptions, which
+        // are TEXT and so keep their full value.
+        $textFields = ['meta_description', 'og_description', 'twitter_description'];
+
         foreach ($seoFields as $field) {
             if ($request->has($field)) {
-                $seoData[$field] = $request->input($field);
+                $seoData[$field] = in_array($field, $textFields, true)
+                    ? $request->input($field)
+                    : self::seoLine($request->input($field));
             }
         }
 
@@ -200,22 +206,22 @@ trait HasSeo
             $model->seo->update($seoData);
         } else {
             $defaultSeoData = [
-                'meta_title'        => $model->name ?? $model->title,
+                'meta_title'        => self::seoLine($model->name ?? $model->title),
                 'meta_description'  => $model->description ?? $model->content,
                 'meta_keywords'     => json_encode(['Muslim Hall', $model->title ?? $model->name]),
                 'meta_robots'       => 'index, follow',
-                'og_title'          => $model->name ?? $model->title,
+                'og_title'          => self::seoLine($model->name ?? $model->title),
                 'og_description'    => $model->description ?? $model->content,
                 'og_type'           => 'website',
-                'og_url'            => url('/' . strtolower(class_basename($model)) . '/' . $slug),
+                'og_url'            => self::seoLine(url('/' . strtolower(class_basename($model)) . '/' . $slug)),
                 'og_site_name'      => config('app.name', 'Muslim Hall'),
-                'twitter_title'       => $model->name ?? $model->title,
+                'twitter_title'       => self::seoLine($model->name ?? $model->title),
                 'twitter_description' => $model->description ?? $model->content,
                 'twitter_card'        => 'summary_large_image',
                 'twitter_site'        => '@muslimHall',
                 'twitter_creator'     => '@muslimHall',
-                'twitter_url'         => url('/' . strtolower(class_basename($model)) . '/' . $slug),
-                'canonical_url'     => url('/' . strtolower(class_basename($model)) . '/' . $slug),
+                'twitter_url'         => self::seoLine(url('/' . strtolower(class_basename($model)) . '/' . $slug)),
+                'canonical_url'     => self::seoLine(url('/' . strtolower(class_basename($model)) . '/' . $slug)),
                 'structured_data'   => json_encode([]),
                 'focus_keywords'    => json_encode([]),
             ];
@@ -274,6 +280,28 @@ trait HasSeo
     /**
      * Helpers
      */
+
+    /**
+     * Fit a value into one of the VARCHAR(255) columns on `seos`.
+     *
+     * These are fed from model titles, and a title can now be a TEXT column
+     * holding rich-text markup (exhibition captions come from a ReactQuill
+     * editor). Left unclamped, one long caption made the seo insert throw from
+     * inside the created() hook, which rolled the whole submission back after
+     * its media had already been uploaded. Markup is stripped as well — a meta
+     * tag wants plain text regardless of length.
+     */
+    private static function seoLine($value, int $limit = 255): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $value)));
+
+        return $value === '' ? null : mb_substr($value, 0, $limit);
+    }
+
     private static function normalizeKeywords($input, ?array $default): string
     {
         if (is_array($input)) {

@@ -129,7 +129,11 @@ export default function Create({ auth, langs = [], boards = [] }) {
                 message.success("Exhibition submitted for approval.");
                 resetForm();
             },
-            onError: () => message.error("Please check form errors."),
+            // `submission` is the server's catch-all when the save itself failed
+            // rather than a single field; without it the user only saw the form
+            // sit there doing nothing.
+            onError: (errors) =>
+                message.error(errors.submission || "Please check form errors."),
         });
     };
 

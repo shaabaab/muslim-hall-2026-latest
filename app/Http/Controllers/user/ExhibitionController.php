@@ -12,7 +12,13 @@ use App\Models\ExhibitionBoard;
 use App\Services\ServiceClass;
 use App\Support\UploadRules;
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use App\Models\ExhibitionBoardMember;
 
 class ExhibitionController extends Controller
@@ -184,7 +190,9 @@ class ExhibitionController extends Controller
             'new_board_image' => UploadRules::image(),
             'board_request_message' => 'nullable|string|max:1000',
             'title' => 'nullable|string|max:5000',
-            'description' => 'nullable|string',
+            // Capped to stay inside the TEXT column: 10000 characters is at most
+            // 40000 bytes, against a 65535-byte limit. Matches the admin rules.
+            'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
             'image' => UploadRules::image(true),
             'sponsor_image' => UploadRules::image(),
@@ -213,29 +221,57 @@ class ExhibitionController extends Controller
             'link' => 'nullable|string|max:1000',
         ]);
 
-        $board = $this->resolveBoardForSubmission($request, $validated, $user);
+        // Everything written to S3 from here on, so it can be removed again if a
+        // later step throws. Without this a failed insert left the media in the
+        // bucket with no row pointing at it.
+        $uploadedKeys = [];
 
-        $validated['title'] = $this->cleanHtml($validated['title']);
-        $validated['description'] = $this->cleanHtml($validated['description']);
-        $validated['exhibition_board_id'] = $board->id;
-        // $validated['slug'] = $this->generateUniqueSlug(strip_tags($request->title));
-        $validated['slug'] = $this->generateUniqueSlug(strip_tags($validated['title'] ?? ''));
-        $validated['user_id'] = $user->id;
-        $validated['status'] = Exhibition::STATUS_DRAFT;
-        $validated['approval_status'] = Exhibition::APPROVAL_PENDING;
-        $validated['approved_at'] = null;
-        $validated['approved_by'] = null;
-        $validated['admin_note'] = null;
-        $validated['is_available'] = $request->boolean('is_available', true);
-        $validated['is_featured'] = false;
-        $validated['currency'] = $request->currency ?? 'USD';
+        try {
+            $boardImageKey = null;
+            if ($request->board_mode === 'new' && $request->hasFile('new_board_image')) {
+                $boardImageKey = ServiceClass::uploadFile($request->file('new_board_image'), 'exhibition-boards');
+                if (!$boardImageKey) {
+                    abort(422, 'Board image upload failed.');
+                }
+                $uploadedKeys[] = $boardImageKey;
+            }
 
-        $this->uploadMainFiles($request, $validated, null);
+            $validated['title'] = $this->cleanHtml($validated['title']);
+            $validated['description'] = $this->cleanHtml($validated['description']);
+            $validated['user_id'] = $user->id;
+            $validated['status'] = Exhibition::STATUS_DRAFT;
+            $validated['approval_status'] = Exhibition::APPROVAL_PENDING;
+            $validated['approved_at'] = null;
+            $validated['approved_by'] = null;
+            $validated['admin_note'] = null;
+            $validated['is_available'] = $request->boolean('is_available', true);
+            $validated['is_featured'] = false;
+            $validated['currency'] = $request->currency ?? 'USD';
 
-        unset($validated['board_mode'], $validated['new_board_title'], $validated['new_board_description'], $validated['new_board_image'], $validated['board_request_message']);
+            $this->uploadMainFiles($request, $validated, null, $uploadedKeys);
 
-        $exhibition = Exhibition::create($validated);
-        $this->syncExtraMedia($request, $exhibition);
+            // The row, the board and the membership request either all land or
+            // none of them do. Media syncing stays outside: it moves files that
+            // can be gigabytes and must not hold a transaction open.
+            [$exhibition, $board] = DB::transaction(function () use ($request, $validated, $user, $boardImageKey) {
+                $board = $this->resolveBoardForSubmission($request, $validated, $user, $boardImageKey);
+
+                $validated['exhibition_board_id'] = $board->id;
+                $validated['slug'] = $this->generateUniqueSlug(strip_tags($validated['title'] ?? ''));
+
+                unset($validated['board_mode'], $validated['new_board_title'], $validated['new_board_description'], $validated['new_board_image'], $validated['board_request_message']);
+
+                return [Exhibition::create($validated), $board];
+            });
+
+            $this->syncExtraMedia($request, $exhibition);
+        } catch (\Throwable $e) {
+            foreach ($uploadedKeys as $key) {
+                ServiceClass::deleteFile($key);
+            }
+
+            return $this->submissionFailure($e, 'store', ['user_id' => $user->id]);
+        }
 
         $message = 'Exhibition submitted. Admin approval required.';
         if ((int) $board->user_id !== (int) $user->id) {
@@ -251,7 +287,7 @@ class ExhibitionController extends Controller
         return redirect()->route('user.exhibitions.index')->with('success', $message);
     }
 
-    private function resolveBoardForSubmission(Request $request, array $validated, $user): ExhibitionBoard
+    private function resolveBoardForSubmission(Request $request, array $validated, $user, ?string $boardImageKey = null): ExhibitionBoard
     {
         if ($request->board_mode === 'new') {
             $boardData = [
@@ -263,12 +299,10 @@ class ExhibitionController extends Controller
                 'is_active' => true,
             ];
 
-            if ($request->hasFile('new_board_image')) {
-                $boardImage = ServiceClass::uploadFile($request->file('new_board_image'), 'exhibition-boards');
-                if (!$boardImage) {
-                    abort(422, 'Board image upload failed.');
-                }
-                $boardData['image'] = $boardImage;
+            // Uploaded by the caller before the transaction opened, so the key can
+            // be rolled back out of S3 if the insert below fails.
+            if ($boardImageKey) {
+                $boardData['image'] = $boardImageKey;
             }
 
             return ExhibitionBoard::create($boardData);
@@ -297,7 +331,16 @@ class ExhibitionController extends Controller
         return $board;
     }
 
-    private function uploadMainFiles(Request $request, array &$validated, ?Exhibition $exhibition = null): void
+    /**
+     * Write the main media to S3 and put the resulting keys into $validated.
+     *
+     * Every key written is appended to $uploadedKeys so the caller can delete
+     * them again when a later step fails. On an edit the previously stored keys
+     * go into $staleKeys instead of being deleted inline: if the update throws,
+     * the row still points at files that exist, and the caller only clears them
+     * once the write has committed.
+     */
+    private function uploadMainFiles(Request $request, array &$validated, ?Exhibition $exhibition, array &$uploadedKeys, array &$staleKeys = []): void
     {
         // The edit form initialises these as null, which Inertia sends as "" and
         // ConvertEmptyStringsToNull turns back into null — a value the nullable
@@ -312,40 +355,70 @@ class ExhibitionController extends Controller
         $owner = $this->userFolder();
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $exhibition
-                ? ServiceClass::updateFile($request->file('image'), "exhibitions/images/{$owner}", $exhibition->image)
-                : ServiceClass::uploadFile($request->file('image'), "exhibitions/images/{$owner}");
+            $validated['image'] = ServiceClass::uploadFile($request->file('image'), "exhibitions/images/{$owner}");
             if (!$validated['image']) abort(422, 'Image upload failed.');
+            $uploadedKeys[] = $validated['image'];
+            if ($exhibition && $exhibition->image) $staleKeys[] = $exhibition->image;
         }
 
         if ($request->hasFile('sponsor_image')) {
-            $validated['sponsor_image'] = $exhibition
-                ? ServiceClass::updateFile($request->file('sponsor_image'), "exhibitions/sponsors/{$owner}", $exhibition->sponsor_image)
-                : ServiceClass::uploadFile($request->file('sponsor_image'), "exhibitions/sponsors/{$owner}");
+            $validated['sponsor_image'] = ServiceClass::uploadFile($request->file('sponsor_image'), "exhibitions/sponsors/{$owner}");
             if (!$validated['sponsor_image']) abort(422, 'Sponsor image upload failed.');
+            $uploadedKeys[] = $validated['sponsor_image'];
+            if ($exhibition && $exhibition->sponsor_image) $staleKeys[] = $exhibition->sponsor_image;
         }
 
         if ($request->hasFile('gallery')) {
-            if ($exhibition && is_array($exhibition->gallery)) {
-                foreach ($exhibition->gallery as $oldImage) ServiceClass::deleteFile($oldImage);
-            }
             $galleryPaths = [];
             foreach ($request->file('gallery') as $image) {
                 $path = ServiceClass::uploadFile($image, "exhibitions/gallery/{$owner}");
                 if (!$path) abort(422, 'Gallery image upload failed.');
                 $galleryPaths[] = $path;
+                $uploadedKeys[] = $path;
             }
             $validated['gallery'] = $galleryPaths;
+            if ($exhibition && is_array($exhibition->gallery)) {
+                foreach ($exhibition->gallery as $oldImage) $staleKeys[] = $oldImage;
+            }
         } elseif ($exhibition) {
             $validated['gallery'] = $exhibition->gallery;
         }
 
         if ($request->hasFile('document_file')) {
-            $validated['document_file'] = $exhibition
-                ? ServiceClass::updateFile($request->file('document_file'), "exhibitions/documents/{$owner}", $exhibition->document_file)
-                : ServiceClass::uploadFile($request->file('document_file'), "exhibitions/documents/{$owner}");
+            $validated['document_file'] = ServiceClass::uploadFile($request->file('document_file'), "exhibitions/documents/{$owner}");
             if (!$validated['document_file']) abort(422, 'Document upload failed.');
+            $uploadedKeys[] = $validated['document_file'];
+            if ($exhibition && $exhibition->document_file) $staleKeys[] = $exhibition->document_file;
         }
+    }
+
+    /**
+     * Turn a failed submission into something the form can actually show.
+     *
+     * Validation, authorization and abort() results already carry their own
+     * meaning, so they pass straight through. Everything else — a query error, a
+     * storage timeout — used to surface as a bare 500, which Inertia renders as
+     * the form quietly doing nothing at all. That is what "my exhibition is not
+     * submitting" looked like from the user's side. Log the real cause and give
+     * them an error on the form instead.
+     */
+    private function submissionFailure(\Throwable $e, string $action, array $context = [])
+    {
+        if ($e instanceof ValidationException || $e instanceof AuthorizationException || $e instanceof HttpExceptionInterface) {
+            throw $e;
+        }
+
+        Log::error("Exhibition {$action} failed", $context + ['exception' => $e]);
+
+        if ($e instanceof ModelNotFoundException) {
+            return back()->withInput()->withErrors([
+                'exhibition_board_id' => 'That board is no longer available. Pick another board and try again.',
+            ]);
+        }
+
+        return back()->withInput()->withErrors([
+            'submission' => 'Your exhibition could not be saved, so nothing was submitted. Please review the form and try again.',
+        ]);
     }
 
     public function show(Exhibition $exhibition)
@@ -381,7 +454,9 @@ class ExhibitionController extends Controller
             'exhibition_board_id' => 'required|exists:exhibition_boards,id',
             'board_request_message' => 'nullable|string|max:1000',
             'title' => 'required|string|max:5000',
-            'description' => 'nullable|string',
+            // Capped to stay inside the TEXT column: 10000 characters is at most
+            // 40000 bytes, against a 65535-byte limit. Matches the admin rules.
+            'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
             'image' => UploadRules::image(),
             'sponsor_image' => UploadRules::image(),
@@ -410,17 +485,6 @@ class ExhibitionController extends Controller
         ]);
 
         $board = ExhibitionBoard::where('id', $validated['exhibition_board_id'])->approved()->active()->firstOrFail();
-        if ((int) $board->user_id !== (int) $user->id) {
-            ExhibitionBoardMember::updateOrCreate(
-                ['exhibition_board_id' => $board->id, 'user_id' => $user->id],
-                [
-                    'owner_status' => ExhibitionBoardMember::STATUS_PENDING,
-                    'admin_status' => ExhibitionBoardMember::STATUS_PENDING,
-                    'status' => ExhibitionBoardMember::STATUS_PENDING,
-                    'request_message' => $validated['board_request_message'] ?? 'Requested from exhibition edit page.',
-                ]
-            );
-        }
 
         $validated['title'] = $this->cleanHtml($validated['title']);
         $validated['description'] = $this->cleanHtml($validated['description'] ?? '');
@@ -432,11 +496,45 @@ class ExhibitionController extends Controller
         $validated['is_available'] = $request->boolean('is_available', true);
         $validated['is_featured'] = false;
         $validated['currency'] = $request->currency ?? 'USD';
+        $requestMessage = $validated['board_request_message'] ?? 'Requested from exhibition edit page.';
         unset($validated['board_request_message']);
 
-        $this->uploadMainFiles($request, $validated, $exhibition);
-        $exhibition->update($validated);
-        $this->syncExtraMedia($request, $exhibition);
+        $uploadedKeys = [];
+        $staleKeys = [];
+
+        try {
+            $this->uploadMainFiles($request, $validated, $exhibition, $uploadedKeys, $staleKeys);
+
+            DB::transaction(function () use ($validated, $exhibition, $board, $user, $requestMessage) {
+                if ((int) $board->user_id !== (int) $user->id) {
+                    ExhibitionBoardMember::updateOrCreate(
+                        ['exhibition_board_id' => $board->id, 'user_id' => $user->id],
+                        [
+                            'owner_status' => ExhibitionBoardMember::STATUS_PENDING,
+                            'admin_status' => ExhibitionBoardMember::STATUS_PENDING,
+                            'status' => ExhibitionBoardMember::STATUS_PENDING,
+                            'request_message' => $requestMessage,
+                        ]
+                    );
+                }
+
+                $exhibition->update($validated);
+            });
+
+            $this->syncExtraMedia($request, $exhibition);
+        } catch (\Throwable $e) {
+            foreach ($uploadedKeys as $key) {
+                ServiceClass::deleteFile($key);
+            }
+
+            return $this->submissionFailure($e, 'update', ['user_id' => $user->id, 'exhibition_id' => $exhibition->id]);
+        }
+
+        // Only now that the row points at the new keys is it safe to drop what
+        // it used to point at.
+        foreach ($staleKeys as $key) {
+            ServiceClass::deleteFile($key);
+        }
 
         return redirect()->route('user.exhibitions.index')
             ->with('success', 'Exhibition updated. Waiting for required board/admin approval again.');
@@ -493,9 +591,21 @@ class ExhibitionController extends Controller
         }
     }
 
+    /**
+     * `slug` is a VARCHAR(255) while the caption it is derived from is a TEXT
+     * column validated to 5000 characters, so the base has to be capped or a
+     * long caption pushes the insert over the column width — the same class of
+     * silent failure this file's other fixes address. 200 leaves room for the
+     * "-<n>" uniqueness suffix.
+     */
+    private function trimSlug(string $slug): string
+    {
+        return trim(mb_substr($slug, 0, 200), '-');
+    }
+
     private function generateUniqueSlug($title, $ignoreId = null)
     {
-        $slug = Str::slug(strip_tags($title)) ?: 'exhibition';
+        $slug = $this->trimSlug(Str::slug(strip_tags($title))) ?: 'exhibition';
         $query = Exhibition::where('slug', 'like', $slug . '%');
         if ($ignoreId) $query->where('id', '!=', $ignoreId);
         $count = $query->count();
@@ -504,7 +614,7 @@ class ExhibitionController extends Controller
 
     private function generateUniqueBoardSlug($title, $ignoreId = null)
     {
-        $slug = Str::slug(strip_tags($title)) ?: 'board';
+        $slug = $this->trimSlug(Str::slug(strip_tags($title))) ?: 'board';
         $query = ExhibitionBoard::where('slug', 'like', $slug . '%');
         if ($ignoreId) $query->where('id', '!=', $ignoreId);
         $count = $query->count();
