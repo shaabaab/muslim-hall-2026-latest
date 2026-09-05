@@ -2,6 +2,11 @@ import { useForm, Link } from "@inertiajs/react";
 import Authenticated from "@/Layouts/FrontAuthenticatedLayout";
 import { useMemo, useState } from "react";
 import ReactQuill from "react-quill";
+import CharacterCount from "@/Components/CharacterCount";
+import {
+    plainTextLength,
+    EXHIBITION_TITLE_MAX,
+} from "@/Utils/richText";
 import "react-quill/dist/quill.snow.css";
 import {
     Form,
@@ -477,6 +482,10 @@ export default function Create({ auth, langs = [], boards = [] }) {
                                 onChange={(value) => setData("title", value)}
                                 modules={quillModules}
                                 formats={quillFormats}
+                            />
+                            <CharacterCount
+                                length={plainTextLength(data.title)}
+                                max={EXHIBITION_TITLE_MAX}
                             />
                         </Form.Item>
                     </Col>

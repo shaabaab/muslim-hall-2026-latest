@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Models\ExhibitionBoard;
 use App\Services\ServiceClass;
 use App\Support\UploadRules;
+use App\Rules\MaxPlainTextLength;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -189,7 +190,7 @@ class ExhibitionController extends Controller
             'new_board_description' => 'nullable|string|max:10000',
             'new_board_image' => UploadRules::image(),
             'board_request_message' => 'nullable|string|max:1000',
-            'title' => 'nullable|string|max:5000',
+            'title' => ['nullable', 'string', 'max:20000', new MaxPlainTextLength(350)],
             // Capped to stay inside the TEXT column: 10000 characters is at most
             // 40000 bytes, against a 65535-byte limit. Matches the admin rules.
             'description' => 'nullable|string|max:10000',
@@ -453,7 +454,7 @@ class ExhibitionController extends Controller
         $validated = $request->validate([
             'exhibition_board_id' => 'required|exists:exhibition_boards,id',
             'board_request_message' => 'nullable|string|max:1000',
-            'title' => 'required|string|max:5000',
+            'title' => ['required', 'string', 'max:20000', new MaxPlainTextLength(350)],
             // Capped to stay inside the TEXT column: 10000 characters is at most
             // 40000 bytes, against a 65535-byte limit. Matches the admin rules.
             'description' => 'nullable|string|max:10000',

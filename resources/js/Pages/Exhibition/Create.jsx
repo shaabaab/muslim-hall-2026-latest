@@ -1,6 +1,11 @@
 import { useForm } from '@inertiajs/react';
 import Authenticated from '@/Layouts/AuthenticatedLayout';
 import ReactQuill from "react-quill";
+import CharacterCount from "@/Components/CharacterCount";
+import {
+    plainTextLength,
+    EXHIBITION_TITLE_MAX,
+} from "@/Utils/richText";
 import "react-quill/dist/quill.snow.css";
 import {
     Form,
@@ -275,6 +280,10 @@ export default function Create({ auth, langs }) {
                                     modules={quillModules}
                                     formats={quillFormats}
                                     placeholder="Write title. You can use bold, font size, color..."
+                                />
+                                <CharacterCount
+                                    length={plainTextLength(data.title)}
+                                    max={EXHIBITION_TITLE_MAX}
                                 />
                             </Form.Item>
                         </Col>

@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\ServiceClass;
 use App\Support\UploadRules;
+use App\Rules\MaxPlainTextLength;
 use Illuminate\Support\Facades\Auth;
 
 class ExhibitionController extends Controller
@@ -106,7 +107,7 @@ class ExhibitionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:5000',
+            'title' => ['required', 'string', 'max:20000', new MaxPlainTextLength(350)],
             'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
             'image' => UploadRules::image(true),
@@ -216,7 +217,7 @@ class ExhibitionController extends Controller
     public function frontStore(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:5000',
+            'title' => ['required', 'string', 'max:20000', new MaxPlainTextLength(350)],
             'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
             'image' => UploadRules::image(true),
@@ -349,7 +350,7 @@ class ExhibitionController extends Controller
     public function update(Request $request, Exhibition $exhibition)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:5000',
+            'title' => ['required', 'string', 'max:20000', new MaxPlainTextLength(350)],
             'description' => 'nullable|string|max:10000',
             'type' => 'required|in:product,document,art,photography,craft',
             'image' => UploadRules::image(),

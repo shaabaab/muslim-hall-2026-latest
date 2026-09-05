@@ -29,6 +29,11 @@ import {
 import { Link } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
+import CharacterCount from "@/Components/CharacterCount";
+import {
+    plainTextLength,
+    EXHIBITION_TITLE_MAX,
+} from "@/Utils/richText";
 import "react-quill/dist/quill.snow.css";
 import { buildS3UrlAlways } from "@/Utils/s3Helpers";
 
@@ -362,6 +367,10 @@ export default function Edit({ auth, exhibition, langs }) {
                                     modules={quillModules}
                                     formats={quillFormats}
                                     placeholder="Write title. You can use bold, font size, color..."
+                                />
+                                <CharacterCount
+                                    length={plainTextLength(data.title)}
+                                    max={EXHIBITION_TITLE_MAX}
                                 />
                             </Form.Item>
                         </Col>
