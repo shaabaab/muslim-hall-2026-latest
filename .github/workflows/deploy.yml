@@ -20,20 +20,52 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          # Abort the SSH script on the first failing command. Without this the
+          # script runs to completion and the job is graded on the exit code of
+          # the LAST command only, so a failed git pull or migration still
+          # reports a green tick.
+          script_stop: true
           script: |
+            set -e
+
+            # 0. Deploy target. Kept in one place so every later step agrees.
+            DEPLOY_DIR=/www/wwwroot/13.232.248.155
+
             # 1. Navigate to your live deployment directory
-            cd /www/wwwroot/13.232.248.155
+            cd "$DEPLOY_DIR"
 
             # 2. Fix directory ownership FIRST so the ubuntu user can run git commands and builds safely
-            sudo chown -R ubuntu:ubuntu /www/wwwroot/13.232.248.155
+            sudo chown -R ubuntu:ubuntu "$DEPLOY_DIR"
+
+            # 2b. Ownership flips between ubuntu and www on every deploy, which
+            # makes git refuse the repo with "detected dubious ownership".
+            git config --global --add safe.directory "$DEPLOY_DIR" || true
 
             # 3. Explicitly load NVM and enforce Node 20 environment in this SSH shell session
             export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+              echo "ERROR: nvm not found at $NVM_DIR/nvm.sh"
+              exit 1
+            fi
+            . "$NVM_DIR/nvm.sh"
             nvm use 20
 
-            # 4. Pull down the fresh updates from your repository
-            git pull origin ${{ github.ref_name }}
+            # 4. Force the working tree to exactly match the pushed commit.
+            # 'git pull' merges, so it fails on local edits or a detached HEAD
+            # and leaves the tree behind origin. fetch + reset cannot.
+            git fetch origin ${{ github.ref_name }}
+            git reset --hard origin/${{ github.ref_name }}
+
+            # 4b. Prove the checkout is the commit that triggered this run.
+            # Frontend changes live only in the compiled bundle, so a silently
+            # stale tree produces a "successful" deploy of the previous release.
+            EXPECTED=${{ github.sha }}
+            ACTUAL=$(git rev-parse HEAD)
+            if [ "$EXPECTED" != "$ACTUAL" ]; then
+              echo "ERROR: checkout mismatch. expected $EXPECTED, got $ACTUAL"
+              exit 1
+            fi
+            echo "Deploying commit $ACTUAL"
 
             # 5. Install PHP dependencies (in case composer.json changed)
             /www/server/php/83/bin/php /usr/bin/composer install --no-dev --optimize-autoloader --no-interaction
@@ -46,7 +78,7 @@ jobs:
             npm run build
 
             # 8. Hand security ownership back to aaPanel's web server worker
-            sudo chown -R www:www /www/wwwroot/13.232.248.155
+            sudo chown -R www:www "$DEPLOY_DIR"
 
             # 9. Wipe out old framework cache states safely
             sudo -u www /www/server/php/83/bin/php artisan optimize:clear
