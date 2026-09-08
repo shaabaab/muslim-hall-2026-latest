@@ -15,6 +15,12 @@ export default defineConfig({
               port: 5173,
               strictPort: true,
               origin: `${ddevUrl}:5173`,
+              // Vite 6 only echoes back same-origin requests by default, but the
+              // page is served from :443 while assets come from :5173. Without
+              // this the browser blocks every module and the app never mounts.
+              cors: {
+                  origin: ddevUrl,
+              },
               hmr: {
                   protocol: 'wss',
                   host: new URL(ddevUrl).hostname,

@@ -90,7 +90,7 @@ export default function Index({ exhibitions, filters = {}, auth }) {
             {
                 preserveState: true,
                 replace: true,
-            }
+            },
         );
     };
 
@@ -105,7 +105,7 @@ export default function Index({ exhibitions, filters = {}, auth }) {
             {
                 preserveState: true,
                 replace: true,
-            }
+            },
         );
     };
 
@@ -116,7 +116,7 @@ export default function Index({ exhibitions, filters = {}, auth }) {
             {
                 preserveState: true,
                 replace: true,
-            }
+            },
         );
     };
 
@@ -132,7 +132,7 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                 onError: () => {
                     message.error("Failed to approve exhibition");
                 },
-            }
+            },
         );
     };
 
@@ -167,7 +167,7 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                 onError: () => {
                     message.error("Failed to reject exhibition");
                 },
-            }
+            },
         );
     };
 
@@ -179,13 +179,13 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                 preserveScroll: true,
                 onSuccess: () => {
                     message.success(
-                        `Item ${currentStatus ? "unfeatured" : "featured"} successfully`
+                        `Item ${currentStatus ? "unfeatured" : "featured"} successfully`,
                     );
                 },
                 onError: () => {
                     message.error("Failed to update featured status");
                 },
-            }
+            },
         );
     };
 
@@ -201,7 +201,7 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                 onError: () => {
                     message.error("Failed to mark item as sold");
                 },
-            }
+            },
         );
     };
 
@@ -371,7 +371,9 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                 <Space direction="vertical" size={2}>
                     <Badge
                         status={record.is_available ? "success" : "default"}
-                        text={record.is_available ? "Available" : "Not Available"}
+                        text={
+                            record.is_available ? "Available" : "Not Available"
+                        }
                     />
 
                     {record.status === "sold" && <Tag color="red">Sold</Tag>}
@@ -410,7 +412,10 @@ export default function Index({ exhibitions, filters = {}, auth }) {
             dataIndex: "approval_status",
             key: "approval_status",
             render: (status) => (
-                <Tag color={getApprovalColor(status)} icon={getApprovalIcon(status)}>
+                <Tag
+                    color={getApprovalColor(status)}
+                    icon={getApprovalIcon(status)}
+                >
                     {status ? status.toUpperCase() : "PENDING"}
                 </Tag>
             ),
@@ -518,21 +523,23 @@ export default function Index({ exhibitions, filters = {}, auth }) {
 
     const stats = {
         total: exhibitions?.total || 0,
-        published: exhibitionData.filter((item) => item.status === "published").length,
+        published: exhibitionData.filter((item) => item.status === "published")
+            .length,
         sold: exhibitionData.filter((item) => item.status === "sold").length,
         featured: exhibitionData.filter((item) => item.is_featured).length,
         pending: exhibitionData.filter(
-            (item) => !item.approval_status || item.approval_status === "pending"
+            (item) =>
+                !item.approval_status || item.approval_status === "pending",
         ).length,
         approved: exhibitionData.filter(
-            (item) => item.approval_status === "approved"
+            (item) => item.approval_status === "approved",
         ).length,
         rejected: exhibitionData.filter(
-            (item) => item.approval_status === "rejected"
+            (item) => item.approval_status === "rejected",
         ).length,
         totalValue: exhibitionData.reduce(
             (sum, item) => sum + (parseFloat(item.price) || 0),
-            0
+            0,
         ),
     };
 
@@ -546,7 +553,8 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                         </Title>
 
                         <Text type="secondary">
-                            Manage products, art, photography, documents and crafts
+                            Manage products, art, photography, documents and
+                            crafts
                         </Text>
                     </div>
 
@@ -631,7 +639,9 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                                 size="large"
                                 style={{ width: "100%" }}
                                 value={filters.type || null}
-                                onChange={(value) => handleFilter("type", value)}
+                                onChange={(value) =>
+                                    handleFilter("type", value)
+                                }
                             >
                                 <Option value="product">Product</Option>
                                 <Option value="document">Document</Option>
@@ -648,7 +658,9 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                                 size="large"
                                 style={{ width: "100%" }}
                                 value={filters.status || null}
-                                onChange={(value) => handleFilter("status", value)}
+                                onChange={(value) =>
+                                    handleFilter("status", value)
+                                }
                             >
                                 <Option value="published">Published</Option>
                                 <Option value="draft">Draft</Option>
@@ -713,7 +725,7 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                                 {
                                     preserveState: true,
                                     replace: true,
-                                }
+                                },
                             );
                         },
                     }}
