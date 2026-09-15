@@ -21,6 +21,18 @@ web_extra_exposed_ports:
     http_port: 5172
     https_port: 5173
 
+# Vite runs as a managed daemon rather than something started by hand. A stale
+# public/hot left behind by an ungraceful stop points Laravel's @vite at a dead
+# :5173 and renders a blank white page; keeping the dev server up for the life
+# of the container means public/hot is always backed by a live server, and
+# frontend edits hot-reload without remembering to run `ddev npm run dev`.
+# Logs: `ddev logs -s web` (or .ddev/.global_commands). Needs node_modules
+# installed — run `ddev npm install` after a fresh clone.
+web_extra_daemons:
+  - name: vite
+    command: "npm run dev"
+    directory: /var/www/html
+
 # Key features of DDEV's config.yaml:
 
 # name: <projectname> # Name of the project, automatically provides

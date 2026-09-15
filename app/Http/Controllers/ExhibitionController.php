@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Language;
+use App\Models\AppSetting;
 use App\Models\Exhibition;
 use App\Models\ExhibitionBoard;
 use App\Models\ExhibitionBoardMember;
@@ -48,7 +49,26 @@ class ExhibitionController extends Controller
         return Inertia::render('Exhibition/Index', [
             'exhibitions' => $exhibitions,
             'filters' => $request->only(['search', 'type', 'status', 'approval_status']),
+            'submissionOpen' => AppSetting::getBool(AppSetting::EXHIBITION_SUBMISSION_OPEN),
         ]);
+    }
+
+    /**
+     * Open or close member exhibition submissions site-wide. Driven by the
+     * switch in the Actions column header of the admin exhibition table.
+     */
+    public function toggleSubmission(Request $request)
+    {
+        $validated = $request->validate([
+            'open' => 'required|boolean',
+        ]);
+
+        AppSetting::setBool(
+            AppSetting::EXHIBITION_SUBMISSION_OPEN,
+            (bool) $validated['open'],
+        );
+
+        return back();
     }
 
     public function create()

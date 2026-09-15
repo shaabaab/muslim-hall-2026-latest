@@ -1,4 +1,4 @@
-import { Link, router } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import Authenticated from "@/Layouts/FrontAuthenticatedLayout";
 import {
     Table,
@@ -17,6 +17,7 @@ import {
     Badge,
     Image,
     Switch,
+    Modal,
 } from "antd";
 import {
     PlusOutlined,
@@ -35,12 +36,24 @@ import {
     StarFilled,
 } from "@ant-design/icons";
 import { buildS3UrlAlways } from "@/Utils/s3Helpers";
+import { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { Search } = Input;
 
 export default function Index({ exhibitions, filters, auth }) {
+    const { exhibitionSubmissionOpen = true, flash } = usePage().props;
+    const [closedModalOpen, setClosedModalOpen] = useState(false);
+
+    // Covers the direct-URL case: create() bounces back here with this flash
+    // message, and the same popup explains why instead of a silent redirect.
+    useEffect(() => {
+        if (flash?.error === "Exhibition submission is closed.") {
+            setClosedModalOpen(true);
+        }
+    }, [flash?.error]);
+
     const getImageUrl = (record) => {
         if (!record) {
             return "/placeholder-image.jpg";
@@ -390,15 +403,26 @@ export default function Index({ exhibitions, filters, auth }) {
                             crafts
                         </Text>
                     </div>
-                    <Link href={route("user.exhibitions.create")}>
+                    {exhibitionSubmissionOpen ? (
+                        <Link href={route("user.exhibitions.create")}>
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                size="large"
+                            >
+                                Add Item
+                            </Button>
+                        </Link>
+                    ) : (
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
                             size="large"
+                            onClick={() => setClosedModalOpen(true)}
                         >
                             Add Item
                         </Button>
-                    </Link>
+                    )}
                 </div>
 
                 {/* Statistics */}
@@ -529,6 +553,21 @@ export default function Index({ exhibitions, filters, auth }) {
                     scroll={{ x: 1000 }}
                 />
             </Card>
+
+            <Modal
+                title="Exhibition submission is closed"
+                open={closedModalOpen}
+                onCancel={() => setClosedModalOpen(false)}
+                onOk={() => setClosedModalOpen(false)}
+                okText="Got it"
+                cancelButtonProps={{ style: { display: "none" } }}
+            >
+                <Text>
+                    The admin has closed exhibition submissions for now. You
+                    cannot open the submission form until it is reopened. Your
+                    existing exhibitions are unaffected.
+                </Text>
+            </Modal>
         </Authenticated>
     );
 }

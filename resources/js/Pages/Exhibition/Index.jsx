@@ -18,6 +18,7 @@ import {
     Image,
     Modal,
     Form,
+    Switch,
 } from "antd";
 import {
     PlusOutlined,
@@ -45,10 +46,16 @@ const { Option } = Select;
 const { Search } = Input;
 const { TextArea } = Input;
 
-export default function Index({ exhibitions, filters = {}, auth }) {
+export default function Index({
+    exhibitions,
+    filters = {},
+    auth,
+    submissionOpen = true,
+}) {
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [selectedExhibition, setSelectedExhibition] = useState(null);
     const [rejectNote, setRejectNote] = useState("");
+    const [submissionSaving, setSubmissionSaving] = useState(false);
 
     const getImageUrl = (record) => {
         if (!record) {
@@ -167,6 +174,32 @@ export default function Index({ exhibitions, filters = {}, auth }) {
                 onError: () => {
                     message.error("Failed to reject exhibition");
                 },
+            },
+        );
+    };
+
+    // Site-wide gate on member submissions, not a per-row value — the switch
+    // lives in the Actions column header so there is only ever one of it.
+    const toggleSubmission = (checked) => {
+        setSubmissionSaving(true);
+
+        router.post(
+            route("admin.exhibitions.toggle-submission"),
+            { open: checked },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    message.success(
+                        checked
+                            ? "Exhibition submission opened"
+                            : "Exhibition submission closed",
+                    );
+                },
+                onError: () => {
+                    message.error("Failed to update submission status");
+                },
+                onFinish: () => setSubmissionSaving(false),
             },
         );
     };
@@ -421,9 +454,39 @@ export default function Index({ exhibitions, filters = {}, auth }) {
             ),
         },
         {
-            title: "Actions",
+            title: (
+                <Space direction="vertical" size={2}>
+                    <Text strong>Actions</Text>
+
+                    <Space size={6}>
+                        <Tooltip
+                            title={
+                                submissionOpen
+                                    ? "Members can submit exhibitions. Turn off to close submissions."
+                                    : "Submissions are closed. Members cannot open the submission form."
+                            }
+                        >
+                            <Switch
+                                size="small"
+                                checked={submissionOpen}
+                                loading={submissionSaving}
+                                onChange={toggleSubmission}
+                            />
+                        </Tooltip>
+
+                        <Text
+                            type={submissionOpen ? "success" : "danger"}
+                            className="text-xs"
+                        >
+                            {submissionOpen
+                                ? "Submission open"
+                                : "Submission closed"}
+                        </Text>
+                    </Space>
+                </Space>
+            ),
             key: "actions",
-            width: 150,
+            width: 190,
             fixed: "right",
             render: (_, record) => (
                 <Space size="small" wrap>

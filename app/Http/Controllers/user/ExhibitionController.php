@@ -4,6 +4,7 @@ namespace App\Http\Controllers\user;
 
 use Inertia\Inertia;
 use App\Models\Language;
+use App\Models\AppSetting;
 use App\Models\Exhibition;
 use Illuminate\Support\Str;
 use App\Models\Subscription;
@@ -168,9 +169,25 @@ class ExhibitionController extends Controller
         ]);
     }
 
+    /**
+     * Admin gate on member submissions. Checked on both create() and store()
+     * so that closing submissions also blocks a direct URL hit or a replayed
+     * POST, not just the button on the index page.
+     */
+    private function submissionIsOpen(): bool
+    {
+        return AppSetting::getBool(AppSetting::EXHIBITION_SUBMISSION_OPEN);
+    }
+
     public function create()
     {
         $user = $this->ensureMember();
+
+        if (!$this->submissionIsOpen()) {
+            return redirect()
+                ->route('user.exhibitions.index')
+                ->with('error', 'Exhibition submission is closed.');
+        }
 
         return Inertia::render('User/Exhibition/Create', [
             'langs' => Language::active()->get(),
@@ -182,6 +199,14 @@ class ExhibitionController extends Controller
     public function store(Request $request)
     {
         $user = $this->ensureMember();
+
+        if (!$this->submissionIsOpen()) {
+            // `submission` is the key the Create page surfaces as a message, so
+            // a form left open when the admin closed submissions fails loudly.
+            throw ValidationException::withMessages([
+                'submission' => 'Exhibition submission is closed.',
+            ]);
+        }
 
         $validated = $request->validate([
             'board_mode' => 'required|in:existing,new',
