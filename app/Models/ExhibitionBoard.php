@@ -26,11 +26,13 @@ class ExhibitionBoard extends Model
         'approved_by',
         'admin_note',
         'is_active',
+        'submission_open',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
         'is_active' => 'boolean',
+        'submission_open' => 'boolean',
     ];
 
     protected $appends = [
@@ -88,6 +90,12 @@ class ExhibitionBoard extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /** Boards currently accepting member exhibition submissions. */
+    public function scopeSubmissionOpen($query)
+    {
+        return $query->where('submission_open', true);
     }
 
     public function approve($adminId)

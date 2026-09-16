@@ -42,8 +42,13 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { Search } = Input;
 
-export default function Index({ exhibitions, filters, auth }) {
-    const { exhibitionSubmissionOpen = true, flash } = usePage().props;
+export default function Index({
+    exhibitions,
+    filters,
+    auth,
+    submissionOpen = true,
+}) {
+    const { flash } = usePage().props;
     const [closedModalOpen, setClosedModalOpen] = useState(false);
 
     // Covers the direct-URL case: create() bounces back here with this flash
@@ -403,7 +408,7 @@ export default function Index({ exhibitions, filters, auth }) {
                             crafts
                         </Text>
                     </div>
-                    {exhibitionSubmissionOpen ? (
+                    {submissionOpen ? (
                         <Link href={route("user.exhibitions.create")}>
                             <Button
                                 type="primary"
@@ -563,9 +568,9 @@ export default function Index({ exhibitions, filters, auth }) {
                 cancelButtonProps={{ style: { display: "none" } }}
             >
                 <Text>
-                    The admin has closed exhibition submissions for now. You
-                    cannot open the submission form until it is reopened. Your
-                    existing exhibitions are unaffected.
+                    No exhibition board is accepting submissions right now. You
+                    cannot open the submission form until an admin reopens one.
+                    Your existing exhibitions are unaffected.
                 </Text>
             </Modal>
         </Authenticated>

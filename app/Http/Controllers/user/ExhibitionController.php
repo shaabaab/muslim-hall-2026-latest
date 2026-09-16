@@ -4,7 +4,6 @@ namespace App\Http\Controllers\user;
 
 use Inertia\Inertia;
 use App\Models\Language;
-use App\Models\AppSetting;
 use App\Models\Exhibition;
 use Illuminate\Support\Str;
 use App\Models\Subscription;
@@ -166,24 +165,25 @@ class ExhibitionController extends Controller
         return Inertia::render('User/Exhibition/Index', [
             'exhibitions' => $exhibitions,
             'filters' => $request->only(['search', 'type', 'status', 'approval_status', 'board_id']),
+            'submissionOpen' => $this->anyBoardAcceptsSubmissions(),
         ]);
     }
 
     /**
-     * Admin gate on member submissions. Checked on both create() and store()
-     * so that closing submissions also blocks a direct URL hit or a replayed
-     * POST, not just the button on the index page.
+     * Admin gate on member submissions, per board. With no open board there is
+     * nothing to submit to, so the create page is pointless — bounce back with
+     * the message the index page turns into a popup.
      */
-    private function submissionIsOpen(): bool
+    private function anyBoardAcceptsSubmissions(): bool
     {
-        return AppSetting::getBool(AppSetting::EXHIBITION_SUBMISSION_OPEN);
+        return ExhibitionBoard::approved()->active()->submissionOpen()->exists();
     }
 
     public function create()
     {
         $user = $this->ensureMember();
 
-        if (!$this->submissionIsOpen()) {
+        if (!$this->anyBoardAcceptsSubmissions()) {
             return redirect()
                 ->route('user.exhibitions.index')
                 ->with('error', 'Exhibition submission is closed.');
@@ -199,14 +199,6 @@ class ExhibitionController extends Controller
     public function store(Request $request)
     {
         $user = $this->ensureMember();
-
-        if (!$this->submissionIsOpen()) {
-            // `submission` is the key the Create page surfaces as a message, so
-            // a form left open when the admin closed submissions fails loudly.
-            throw ValidationException::withMessages([
-                'submission' => 'Exhibition submission is closed.',
-            ]);
-        }
 
         $validated = $request->validate([
             'board_mode' => 'required|in:existing,new',
@@ -338,6 +330,14 @@ class ExhibitionController extends Controller
             ->approved()
             ->active()
             ->firstOrFail();
+
+        // Per-board gate. Checked here rather than in validation so it also
+        // catches a form that was already open when the admin closed the board.
+        if (!$board->submission_open) {
+            throw ValidationException::withMessages([
+                'exhibition_board_id' => 'Submissions are closed for this board. Pick another board.',
+            ]);
+        }
 
         if ((int) $board->user_id !== (int) $user->id) {
             ExhibitionBoardMember::updateOrCreate(

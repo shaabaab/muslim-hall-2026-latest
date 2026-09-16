@@ -7,7 +7,6 @@ use Closure;
 use App\Models\User;
 use App\Models\Social;
 use App\Models\Setting;
-use App\Models\AppSetting;
 use Inertia\Middleware;
 use App\Models\ContactInfo;
 use App\Models\Subscription;
@@ -128,12 +127,6 @@ class HandleInertiaRequests extends Middleware
             'header' => Setting::first(),
             'settings' => Setting::first(),
             'storage_disk' => config('filesystems.default'),
-            // Admin-controlled gate on member exhibition submissions. Shared so
-            // both the admin table switch and the user-side create button read
-            // the same value without each page having to fetch it.
-            'exhibitionSubmissionOpen' => AppSetting::getBool(
-                AppSetting::EXHIBITION_SUBMISSION_OPEN,
-            ),
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),

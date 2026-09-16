@@ -118,6 +118,28 @@ class ExhibitionBoardController extends Controller
         return back()->with('success', 'Board rejected successfully.');
     }
 
+    /**
+     * Open or close member submissions for one board. Driven by the switch in
+     * the Action column of the board list.
+     */
+    public function toggleSubmission(Request $request, ExhibitionBoard $board)
+    {
+        $validated = $request->validate([
+            'open' => 'required|boolean',
+        ]);
+
+        $board->update([
+            'submission_open' => (bool) $validated['open'],
+        ]);
+
+        return back()->with(
+            'success',
+            $validated['open']
+                ? 'Submissions opened for this board.'
+                : 'Submissions closed for this board.',
+        );
+    }
+
     public function approveMemberRequest(ExhibitionBoardMember $memberRequest)
     {
         $memberRequest->approveByAdmin(Auth::id());

@@ -252,6 +252,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/exhibition-boards/{board}/reject', [AdminExhibitionBoardController::class, 'reject'])
         ->name('exhibition-boards.reject');
 
+    Route::post('/exhibition-boards/{board}/toggle-submission', [AdminExhibitionBoardController::class, 'toggleSubmission'])
+        ->name('exhibition-boards.toggle-submission');
+
     Route::post('/exhibition-board-member-requests/{memberRequest}/admin-approve', [AdminExhibitionBoardController::class, 'approveMemberRequest'])
         ->name('exhibition-board-member-requests.admin-approve');
 
@@ -263,9 +266,6 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     Route::post('/exhibitions/{exhibition}/reject', [AdminExhibitionController::class, 'reject'])
         ->name('exhibitions.reject');
-
-    Route::post('/exhibitions-submission-toggle', [AdminExhibitionController::class, 'toggleSubmission'])
-        ->name('exhibitions.toggle-submission');
     Route::resource('islamic-zone', IslamicZoneController::class);
     Route::get('/islamic-zone/download/{id}', [IslamicZoneController::class, 'download'])->name('islamic-zone.download');
     Route::resource('books', BookController::class);

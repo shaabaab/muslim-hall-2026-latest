@@ -319,11 +319,16 @@ export default function Create({ auth, langs = [], boards = [] }) {
                                             <Option
                                                 key={board.id}
                                                 value={board.id}
+                                                disabled={
+                                                    !board.submission_open
+                                                }
                                             >
                                                 {board.title}{" "}
                                                 {board.is_owner
                                                     ? "(My Board)"
                                                     : "(Other Member Board)"}
+                                                {!board.submission_open &&
+                                                    " — submissions closed"}
                                             </Option>
                                         ))}
                                     </Select>

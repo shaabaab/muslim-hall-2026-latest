@@ -18,6 +18,7 @@ import {
     Image,
     Modal,
     Form,
+    Switch,
 } from "antd";
 import {
     EyeOutlined,
@@ -44,6 +45,32 @@ export default function Index({ boards, filters = {}, auth }) {
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [selectedBoard, setSelectedBoard] = useState(null);
     const [rejectNote, setRejectNote] = useState("");
+    // Board id currently being saved, so only that row's switch spins.
+    const [submissionSavingId, setSubmissionSavingId] = useState(null);
+
+    const toggleSubmission = (board, checked) => {
+        setSubmissionSavingId(board.id);
+
+        router.post(
+            route("admin.exhibition-boards.toggle-submission", board.id),
+            { open: checked },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    message.success(
+                        checked
+                            ? "Submissions opened for this board"
+                            : "Submissions closed for this board",
+                    );
+                },
+                onError: () => {
+                    message.error("Failed to update submission status");
+                },
+                onFinish: () => setSubmissionSavingId(null),
+            },
+        );
+    };
 
     const getImageUrl = (recordOrPath) => {
     if (!recordOrPath) {
@@ -317,9 +344,39 @@ export default function Index({ boards, filters = {}, auth }) {
             title: "Action",
             key: "action",
             fixed: "right",
-            width: 380,
+            width: 460,
             render: (_, record) => (
                 <Space wrap>
+                    <Tooltip
+                        title={
+                            record.submission_open
+                                ? "Members can submit exhibitions to this board. Turn off to close it."
+                                : "Submissions are closed for this board. Members cannot post to it."
+                        }
+                    >
+                        <Space size={6}>
+                            <Switch
+                                size="small"
+                                checked={!!record.submission_open}
+                                loading={submissionSavingId === record.id}
+                                onChange={(checked) =>
+                                    toggleSubmission(record, checked)
+                                }
+                            />
+
+                            <Text
+                                type={
+                                    record.submission_open
+                                        ? "success"
+                                        : "danger"
+                                }
+                                style={{ fontSize: 12 }}
+                            >
+                                {record.submission_open ? "Open" : "Closed"}
+                            </Text>
+                        </Space>
+                    </Tooltip>
+
                     <Link href={route("admin.exhibition-boards.show", record.id)}>
                         <Button size="small" type="primary" ghost icon={<EyeOutlined />}>
                             View
