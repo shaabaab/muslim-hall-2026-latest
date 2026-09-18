@@ -8,71 +8,83 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 
-// Temporary preview of the contest result board. The winners below are sample
-// rows; wire them to real contest data when the feature lands.
+// The published prize list. `place` is set only for the top three, which is
+// what gives those rows the gilded rosette; everyone else takes the plain one.
+// Every winner also receives a certificate and a book alongside the cash.
 const WINNERS = [
     {
         place: 1,
-        name: "Nusrat Jahan Mim",
-        email: "nusrat.mim@example.com",
-        prize: "৳15,000",
-        note: "Champion",
+        entry: "48",
+        name: "Afifa Jannat Zuma",
+        score: 241,
+        prize: "Tk 3,000",
     },
     {
         place: 2,
-        name: "Mohammad Ridwan Kabir",
-        email: "ridwan.kabir@example.com",
-        prize: "৳10,000",
-        note: "Runner-up",
+        entry: "22",
+        name: "Abu Bokor Siddiq",
+        score: 229,
+        prize: "Tk 2,500",
     },
     {
         place: 3,
-        name: "Ayesha Siddiqua",
-        email: "ayesha.s@example.com",
-        prize: "৳7,000",
-        note: "Third place",
+        entry: "39",
+        name: "Fahim Chowdhury",
+        score: 226,
+        prize: "Tk 2,000",
+    },
+    { entry: "32", name: "Samiullah Riyad", score: 224, prize: "Tk 1,500" },
+    { entry: "35", name: "Shamim Hossain", score: 223, prize: "Tk 1,000" },
+    { entry: "03", name: "Amatullah Bushra", score: 223, prize: "Tk 500" },
+    { entry: "23", name: "Israt Jahan Hafsa", score: 218, prize: "Tk 500" },
+    { entry: "24", name: "Rifah Sanjida", score: 217, prize: "Tk 500" },
+    { entry: "38", name: "Mohammad Akmam", score: 216, prize: "Tk 500" },
+    {
+        entry: "36",
+        name: "Mohammad Shahedul Islam",
+        score: 215,
+        prize: "Tk 500",
+    },
+    // No score was published for the first participant's award.
+    {
+        entry: "57",
+        name: "Hamida",
+        score: null,
+        prize: "Tk 500",
+        note: "First participant",
+    },
+];
+
+// Awarded outside the scored ranking.
+const SPECIAL_AWARD = { entry: "41", title: "Most Viewed" };
+
+const SPONSOR = {
+    caption: "Sponsor of the Muslim Hall online Calligraphy Event",
+    name: "Metropolitan Heart & Vascular Centre",
+};
+
+const COLLABORATORS = [
+    "Bangladesh Charushilpi Parishad, Dhaka",
+    "Hadith Department (SHIS), International Islamic University Chittagong (IIUC)",
+    "Sikandar Mehedi Academy, Chittagong",
+];
+
+const ADJUDICATORS = [
+    {
+        name: "Renowned Artist Mr Ibrahim Mondal",
+        role: "President, Bangladesh Charushilpi Parishad, Dhaka",
     },
     {
-        name: "Tanvir Hasan Rafi",
-        email: "tanvir.rafi@example.com",
-        prize: "৳3,000",
-        note: "Merit",
+        name: "Mr. Nazmul Huda",
+        role: "Associate Professor, Department of Hadith (SHIS), International Islamic University Chittagong (IIUC)",
     },
     {
-        name: "Sadia Afrin Nova",
-        email: "sadia.nova@example.com",
-        prize: "৳3,000",
-        note: "Merit",
+        name: "Artist Sikandar Mehedi",
+        role: "Sikandar Mehedi Academy, Chittagong",
     },
     {
-        name: "Imran Chowdhury",
-        email: "imran.ch@example.com",
-        prize: "৳3,000",
-        note: "Merit",
-    },
-    {
-        name: "Farhana Yasmin",
-        email: "farhana.y@example.com",
-        prize: "Certificate",
-        note: "Finalist",
-    },
-    {
-        name: "Abdullah Al Mamun",
-        email: "mamun.abdullah@example.com",
-        prize: "Certificate",
-        note: "Finalist",
-    },
-    {
-        name: "Rubaiya Islam Tisha",
-        email: "rubaiya.tisha@example.com",
-        prize: "Certificate",
-        note: "Finalist",
-    },
-    {
-        name: "Shahriar Alam Niloy",
-        email: "shahriar.niloy@example.com",
-        prize: "Certificate",
-        note: "Finalist",
+        name: "Chowdhury Golam Mawla",
+        role: "Chairman, Muslim Hall",
     },
 ];
 
@@ -105,14 +117,14 @@ export default function ContestResultBoard() {
     );
 
     const headerAds = (bannerAds.length ? bannerAds : approvedHeaderAds).slice(
-        0,
         1,
+        2,
     );
 
     return (
         <>
             <Head>
-                <title>Calligraphy Contest Results — Muslim Hall</title>
+                <title>Hadith Calligraphy Exhibition &rsquo;26 Results — Muslim Hall</title>
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"
@@ -255,15 +267,44 @@ export default function ContestResultBoard() {
                                     </div>
                                 )}
                             </div>
+
+                            <p className="sponsor-caption">
+                                {SPONSOR.caption}
+                            </p>
+                            <p className="sponsor-name">{SPONSOR.name}</p>
+                        </div>
+
+                        <div className="credits">
+                            <section className="credit-block">
+                                <h2>Our Collaborators</h2>
+                                <ol>
+                                    {COLLABORATORS.map((name) => (
+                                        <li key={name}>{name}</li>
+                                    ))}
+                                </ol>
+                            </section>
+
+                            <section className="credit-block">
+                                <h2>Adjudicators Panel</h2>
+                                <ol>
+                                    {ADJUDICATORS.map((judge) => (
+                                        <li key={judge.name}>
+                                            {judge.name}
+                                            <small>{judge.role}</small>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </section>
                         </div>
 
                         <h1>
-                            Calligraphy Contest<span>Results</span>
+                            Hadith Calligraphy Exhibition &rsquo;26
+                            <span>Results</span>
                         </h1>
                         <p className="announced">
-                            Judged on line, proportion and composition by a
-                            panel of three. Winners are listed in order of final
-                            score.
+                            Judged on line, proportion and composition by the
+                            adjudicators panel. Winners are listed in order of
+                            final score.
                         </p>
                         <hr className="rule" />
                     </header>
@@ -276,7 +317,7 @@ export default function ContestResultBoard() {
                                 <tr>
                                     <th scope="col">No.</th>
                                     <th scope="col">Participant</th>
-                                    <th scope="col">Email</th>
+                                    <th scope="col">Score</th>
                                     <th scope="col">Prize</th>
                                 </tr>
                             </thead>
@@ -284,7 +325,7 @@ export default function ContestResultBoard() {
                             <tbody>
                                 {WINNERS.map((winner, index) => (
                                     <tr
-                                        key={winner.email}
+                                        key={winner.entry}
                                         data-place={winner.place}
                                     >
                                         <td className="serial">
@@ -292,27 +333,36 @@ export default function ContestResultBoard() {
                                                 {index + 1}
                                             </span>
                                         </td>
-                                        <td className="name">{winner.name}</td>
-                                        <td className="email">
-                                            <a href={`mailto:${winner.email}`}>
-                                                {winner.email}
-                                            </a>
+                                        <td className="name">
+                                            {winner.name}
+                                            <small>Entry #{winner.entry}</small>
+                                        </td>
+                                        <td className="score">
+                                            {winner.score ?? "—"}
+                                            {winner.note && (
+                                                <small>{winner.note}</small>
+                                            )}
                                         </td>
                                         <td className="prize">
                                             {winner.prize}
-                                            <small>{winner.note}</small>
+                                            <small>Certificate + book</small>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+
+                        <p className="special">
+                            <span>Special award</span>
+                            Entry #{SPECIAL_AWARD.entry} — {SPECIAL_AWARD.title}
+                        </p>
                     </div>
 
                     <footer className="colophon">
                         <p className="closing">
-                            Winners will be contacted at the email listed above
-                            with collection details for the prize. Questions
-                            about scoring can be sent to{" "}
+                            Winners will be contacted with collection details
+                            for the prize, the certificate and the book.
+                            Questions about scoring can be sent to{" "}
                             <a href="mailto:contest@muslimhall.example">
                                 contest@muslimhall.example
                             </a>
@@ -545,16 +595,38 @@ export default function ContestResultBoard() {
 
                 .result-page tr[data-place] .name{font-weight:700;}
 
-                /* email */
-
-                .result-page .email{
-                    font-size:14px;
+                /* the entry number rides under the name rather than taking a
+                   column of its own — it identifies the piece, it is not a
+                   thing anyone reads down the page */
+                .result-page .name small{
+                    display:block;
+                    font-family:var(--text);
+                    font-size:12px;
+                    font-weight:500;
+                    letter-spacing:.04em;
                     color:var(--ink-soft);
-                    word-break:break-all;
+                    margin-top:2px;
                 }
 
-                .result-page .email a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(107,94,75,.35);}
-                .result-page .email a:hover{color:var(--vermilion);border-bottom-color:var(--vermilion);}
+                /* score */
+
+                .result-page .score{
+                    font-family:var(--display);
+                    font-size:clamp(16px,2.1vw,19px);
+                    color:var(--ink);
+                    font-variant-numeric:tabular-nums;
+                    white-space:nowrap;
+                }
+
+                .result-page .score small{
+                    display:block;
+                    font-family:var(--text);
+                    font-size:12px;
+                    font-weight:500;
+                    color:var(--ink-soft);
+                    margin-top:1px;
+                    white-space:normal;
+                }
 
                 /* prize */
 
@@ -574,6 +646,30 @@ export default function ContestResultBoard() {
                     font-weight:500;
                     color:var(--ink-soft);
                     margin-top:1px;
+                }
+
+                /* the special award sits outside the scored ranking, so it gets
+                   a line of its own under the roll rather than a numbered row */
+                .result-page .special{
+                    display:flex;
+                    flex-wrap:wrap;
+                    align-items:baseline;
+                    gap:10px;
+                    margin:clamp(14px,2.2vw,20px) 4px 0;
+                    padding-top:clamp(12px,2vw,16px);
+                    border-top:1.5px solid rgba(142,59,39,.45);
+                    font-family:var(--display);
+                    font-size:clamp(16px,2.1vw,19px);
+                    color:var(--ink);
+                }
+
+                .result-page .special span{
+                    font-family:var(--text);
+                    font-size:12px;
+                    font-weight:600;
+                    letter-spacing:.06em;
+                    text-transform:uppercase;
+                    color:var(--vermilion);
                 }
 
                 /* ---------- sponsor (sits in the crown, under the mark and
@@ -712,6 +808,80 @@ export default function ContestResultBoard() {
                     opacity:1;
                 }
 
+                /* the sponsor is named directly beneath its artwork */
+                .result-page .sponsor-caption{
+                    margin:clamp(10px,1.8vw,14px) 0 2px;
+                    font-size:clamp(11px,1.5vw,12px);
+                    font-weight:600;
+                    letter-spacing:.08em;
+                    text-transform:uppercase;
+                    color:rgba(243,233,214,.6);
+                }
+
+                .result-page .sponsor-name{
+                    margin:0;
+                    font-family:var(--display);
+                    font-size:clamp(17px,2.4vw,21px);
+                    font-weight:700;
+                    line-height:1.25;
+                    color:var(--parchment);
+                }
+
+                /* ---------- collaborators & adjudicators ---------- */
+
+                .result-page .credits{
+                    display:grid;
+                    grid-template-columns:repeat(2,minmax(0,1fr));
+                    gap:clamp(18px,3vw,34px);
+                    max-width:760px;
+                    margin:clamp(20px,3.2vw,30px) auto 0;
+                    padding-top:clamp(18px,2.8vw,26px);
+                    border-top:1px solid rgba(201,162,74,.28);
+                    text-align:left;
+                }
+
+                .result-page .credit-block h2{
+                    margin:0 0 10px;
+                    font-family:var(--text);
+                    font-size:clamp(11px,1.5vw,12px);
+                    font-weight:600;
+                    letter-spacing:.12em;
+                    text-transform:uppercase;
+                    color:var(--gold);
+                }
+
+                .result-page .credit-block ol{
+                    margin:0;
+                    padding-left:1.15em;
+                    display:flex;
+                    flex-direction:column;
+                    gap:9px;
+                }
+
+                .result-page .credit-block li{
+                    font-family:var(--display);
+                    font-size:clamp(14px,1.9vw,16px);
+                    line-height:1.35;
+                    color:var(--parchment);
+                }
+
+                .result-page .credit-block li::marker{
+                    color:var(--gold);
+                    font-family:var(--text);
+                    font-size:12px;
+                }
+
+                /* the affiliation is support for the name, not a second name */
+                .result-page .credit-block li small{
+                    display:block;
+                    font-family:var(--text);
+                    font-size:12px;
+                    font-weight:400;
+                    line-height:1.5;
+                    color:rgba(243,233,214,.6);
+                    margin-top:2px;
+                }
+
                 /* ---------- colophon ---------- */
 
                 .result-page .colophon{
@@ -756,6 +926,10 @@ export default function ContestResultBoard() {
                 /* ---------- small screens: rows stack into records ---------- */
 
                 @media (max-width:640px){
+                    .result-page .credits{
+                        grid-template-columns:minmax(0,1fr);
+                    }
+
                     .result-page .roll thead{
                         position:absolute;
                         width:1px;height:1px;
@@ -788,8 +962,7 @@ export default function ContestResultBoard() {
                         padding-left:0 !important;
                     }
 
-                    .result-page .email{font-size:13px;}
-
+                    .result-page .score,
                     .result-page .prize{
                         display:flex;
                         align-items:baseline;
@@ -800,6 +973,17 @@ export default function ContestResultBoard() {
                     }
 
                     /* the column header rides along with the value once the table stacks */
+                    .result-page .score::before{
+                        content:"Score";
+                        font-family:var(--text);
+                        font-size:12px;
+                        font-weight:600;
+                        letter-spacing:.06em;
+                        color:var(--ink-soft);
+                    }
+
+                    .result-page .score small{margin-top:0;}
+
                     .result-page .prize::before{
                         content:"Prize";
                         font-family:var(--text);
