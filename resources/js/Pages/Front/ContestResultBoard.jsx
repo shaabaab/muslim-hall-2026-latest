@@ -124,7 +124,10 @@ export default function ContestResultBoard() {
     return (
         <>
             <Head>
-                <title>Hadith Calligraphy Exhibition &rsquo;26 Results — Muslim Hall</title>
+                <title>
+                    Hadith Calligraphy Exhibition &rsquo;26 Results — Muslim
+                    Hall
+                </title>
                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                 <link
                     rel="preconnect"
@@ -268,9 +271,7 @@ export default function ContestResultBoard() {
                                 )}
                             </div>
 
-                            <p className="sponsor-caption">
-                                {SPONSOR.caption}
-                            </p>
+                            <p className="sponsor-caption">{SPONSOR.caption}</p>
                             <p className="sponsor-name">{SPONSOR.name}</p>
                         </div>
 
@@ -352,10 +353,10 @@ export default function ContestResultBoard() {
                             </tbody>
                         </table>
 
-                        <p className="special">
+                        {/* <p className="special">
                             <span>Special award</span>
                             Entry #{SPECIAL_AWARD.entry} — {SPECIAL_AWARD.title}
-                        </p>
+                        </p> */}
                     </div>
 
                     <footer className="colophon">
@@ -363,8 +364,8 @@ export default function ContestResultBoard() {
                             Winners will be contacted with collection details
                             for the prize, the certificate and the book.
                             Questions about scoring can be sent to{" "}
-                            <a href="mailto:contest@muslimhall.example">
-                                contest@muslimhall.example
+                            <a href="mailto:cgmstad@gmail.com">
+                                cgmstad@gmail.com
                             </a>
                             .
                         </p>

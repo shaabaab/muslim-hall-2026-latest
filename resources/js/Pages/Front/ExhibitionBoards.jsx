@@ -256,7 +256,7 @@ export default function ExhibitionBoards() {
                                                         board design. Remove
                                                         once the real results
                                                         page lands. */}
-                                                    {/* <Link
+                                                    <Link
                                                         href={route(
                                                             "contest-result-board",
                                                         )}
@@ -264,9 +264,9 @@ export default function ExhibitionBoards() {
                                                     >
                                                         <i className="fas fa-award"></i>
                                                         <span>
-                                                            View Contest Results
+                                                            View Results
                                                         </span>
-                                                    </Link> */}
+                                                    </Link>
                                                 </div>
                                             </div>
 
