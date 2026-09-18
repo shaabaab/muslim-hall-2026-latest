@@ -361,7 +361,7 @@ export default function Index({
                         </Tooltip>
                     )}
 
-                    <Popconfirm
+                    {/* <Popconfirm
                         title="Delete Item"
                         description="Are you sure to delete this exhibition item?"
                         onConfirm={() => handleDelete(record.id)}
@@ -375,7 +375,7 @@ export default function Index({
                                 size="small"
                             />
                         </Tooltip>
-                    </Popconfirm>
+                    </Popconfirm> */}
                 </Space>
             ),
         },
