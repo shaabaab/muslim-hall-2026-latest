@@ -14,40 +14,89 @@ import "swiper/css/pagination";
 const WINNERS = [
     {
         place: 1,
-        entry: "48",
+        // entry: "48",
+        exhibitionId: 35,
         name: "Afifa Jannat Zuma",
         score: 241,
         prize: "Tk 3,000",
     },
     {
         place: 2,
-        entry: "22",
+        // entry: "22",
+        exhibitionId: 65,
         name: "Abu Bokor Siddiq",
         score: 229,
         prize: "Tk 2,500",
     },
     {
         place: 3,
-        entry: "39",
+        // entry: "39",
+        exhibitionId: 45,
         name: "Fahim Chowdhury",
         score: 226,
         prize: "Tk 2,000",
     },
-    { entry: "32", name: "Samiullah Riyad", score: 224, prize: "Tk 1,500" },
-    { entry: "35", name: "Shamim Hossain", score: 223, prize: "Tk 1,000" },
-    { entry: "03", name: "Amatullah Bushra", score: 223, prize: "Tk 500" },
-    { entry: "23", name: "Israt Jahan Hafsa", score: 218, prize: "Tk 500" },
-    { entry: "24", name: "Rifah Sanjida", score: 217, prize: "Tk 500" },
-    { entry: "38", name: "Mohammad Akmam", score: 216, prize: "Tk 500" },
     {
-        entry: "36",
+        place: 4,
+        // entry: "32",
+        exhibitionId: 53,
+        name: "Samiullah Riyad",
+        score: 224,
+        prize: "Tk 1,500",
+    },
+    {
+        place: 5,
+        // entry: "35",
+        exhibitionId: 49,
+        name: "Shamim Hossain",
+        score: 223,
+        prize: "Tk 1,000",
+    },
+    {
+        place: 6,
+        // entry: "03",
+        exhibitionId: 87,
+        name: "Amatullah Bushra",
+        score: 223,
+        prize: "Tk 500",
+    },
+    {
+        place: 7,
+        // entry: "23",
+        exhibitionId: 64,
+        name: "Israt Jahan Hafsa",
+        score: 218,
+        prize: "Tk 500",
+    },
+    {
+        place: 8,
+        // entry: "24",
+        exhibitionId: 62,
+        name: "Rifah Sanjida",
+        score: 217,
+        prize: "Tk 500",
+    },
+    {
+        place: 9,
+        // entry: "38",
+        exhibitionId: 46,
+        name: "Mohammad Akmam",
+        score: 216,
+        prize: "Tk 500",
+    },
+    {
+        place: 10,
+        // entry: "36",
+        exhibitionId: 48,
         name: "Mohammad Shahedul Islam",
         score: 215,
         prize: "Tk 500",
     },
     // No score was published for the first participant's award.
     {
-        entry: "57",
+        place: 11,
+        // entry: "57",
+        exhibitionId: 19,
         name: "Hamida",
         score: null,
         prize: "Tk 500",
@@ -275,31 +324,8 @@ export default function ContestResultBoard() {
                             <p className="sponsor-name">{SPONSOR.name}</p>
                         </div>
 
-                        <div className="credits">
-                            <section className="credit-block">
-                                <h2>Our Collaborators</h2>
-                                <ol>
-                                    {COLLABORATORS.map((name) => (
-                                        <li key={name}>{name}</li>
-                                    ))}
-                                </ol>
-                            </section>
-
-                            <section className="credit-block">
-                                <h2>Adjudicators Panel</h2>
-                                <ol>
-                                    {ADJUDICATORS.map((judge) => (
-                                        <li key={judge.name}>
-                                            {judge.name}
-                                            <small>{judge.role}</small>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </section>
-                        </div>
-
                         <h1>
-                            Hadith Calligraphy Exhibition &rsquo;26
+                            Miladunnabi Hadith Calligraphy Exhibition &rsquo;26
                             <span>Results</span>
                         </h1>
                         <p className="announced">
@@ -312,11 +338,11 @@ export default function ContestResultBoard() {
 
                     <div className="sheet">
                         <table className="roll">
-                            <caption>Winners — 1447 / 2026</caption>
+                            <caption>Winners — 1448 / 2026</caption>
 
                             <thead>
                                 <tr>
-                                    <th scope="col">No.</th>
+                                    <th scope="col">Rank</th>
                                     <th scope="col">Participant</th>
                                     <th scope="col">Score</th>
                                     <th scope="col">Prize</th>
@@ -335,11 +361,17 @@ export default function ContestResultBoard() {
                                             </span>
                                         </td>
                                         <td className="name">
-                                            {winner.name}
-                                            <small>Entry #{winner.entry}</small>
+                                            <Link
+                                                href={route(
+                                                    "exhibition-detail",
+                                                    winner.exhibitionId,
+                                                )}
+                                            >
+                                                {winner.name}
+                                            </Link>
                                         </td>
                                         <td className="score">
-                                            {winner.score ?? "—"}
+                                            {winner.score ?? ""}
                                             {winner.note && (
                                                 <small>{winner.note}</small>
                                             )}
@@ -357,6 +389,29 @@ export default function ContestResultBoard() {
                             <span>Special award</span>
                             Entry #{SPECIAL_AWARD.entry} — {SPECIAL_AWARD.title}
                         </p> */}
+                    </div>
+
+                    <div className="credits">
+                        <section className="credit-block">
+                            <h2>Our Collaborators</h2>
+                            <ol>
+                                {COLLABORATORS.map((name) => (
+                                    <li key={name}>{name}</li>
+                                ))}
+                            </ol>
+                        </section>
+
+                        <section className="credit-block">
+                            <h2>Adjudicators Panel</h2>
+                            <ol>
+                                {ADJUDICATORS.map((judge) => (
+                                    <li key={judge.name}>
+                                        {judge.name}
+                                        <small>{judge.role}</small>
+                                    </li>
+                                ))}
+                            </ol>
+                        </section>
                     </div>
 
                     <footer className="colophon">
@@ -490,8 +545,8 @@ export default function ContestResultBoard() {
                 .result-page .crown h1 span{
                     display:block;
                     font-style:italic;
-                    font-weight:400;
-                    font-size:.54em;
+                    font-weight:800;
+                    font-size:1.50em;
                     color:var(--gold);
                     margin-top:.2em;
                 }
@@ -595,6 +650,18 @@ export default function ContestResultBoard() {
                 }
 
                 .result-page tr[data-place] .name{font-weight:700;}
+
+                .result-page .name a{
+                    color:inherit;
+                    text-decoration:none;
+                    border-bottom:1px solid transparent;
+                    transition:border-color .2s ease;
+                }
+
+                .result-page .name a:hover,
+                .result-page .name a:focus-visible{
+                    border-bottom-color:currentColor;
+                }
 
                 /* the entry number rides under the name rather than taking a
                    column of its own — it identifies the piece, it is not a
@@ -844,7 +911,7 @@ export default function ContestResultBoard() {
                 .result-page .credit-block h2{
                     margin:0 0 10px;
                     font-family:var(--text);
-                    font-size:clamp(11px,1.5vw,12px);
+                    font-size:clamp(13px,1.5vw,12px);
                     font-weight:600;
                     letter-spacing:.12em;
                     text-transform:uppercase;
