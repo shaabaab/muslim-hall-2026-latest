@@ -331,8 +331,13 @@ export default function ContestResultBoard() {
 
             <style>{`
                 .result-page{
-                    --lapis-deep:#0E1B3D;
-                    --lapis:#1B2F5F;
+                    /* sampled from the Muslim Hall mark: #20891B at the top of
+                       its gradient down to #006637 at the foot. The ground is
+                       those greens taken several stops darker so the gold
+                       ruling and the parchment sheet still carry the page. */
+                    --green-deep:#052A1B;
+                    --green:#0B5A2E;
+                    --green-logo:#20891B;
                     --gold:#C9A24A;
                     --gold-light:#E8CE8D;
                     --parchment:#F3E9D6;
@@ -346,7 +351,7 @@ export default function ContestResultBoard() {
 
                     padding:clamp(16px,4vw,56px) clamp(12px,4vw,40px);
                     background:
-                      radial-gradient(120% 90% at 50% 0%, #16264E 0%, var(--lapis-deep) 55%, #080F24 100%);
+                      radial-gradient(120% 90% at 50% 0%, var(--green) 0%, var(--green-deep) 55%, #01130A 100%);
                     color:var(--ink);
                     font-family:var(--text);
                     line-height:1.55;
@@ -360,14 +365,14 @@ export default function ContestResultBoard() {
                 .result-page .board{
                     max-width:920px;
                     margin:0 auto;
-                    background:var(--lapis-deep);
+                    background:var(--green-deep);
                     padding:clamp(14px,2.4vw,26px);
                     /* the jadwal: nested manuscript ruling, uneven weights on purpose */
                     box-shadow:
                       inset 0 0 0 1px var(--gold),
-                      inset 0 0 0 5px var(--lapis-deep),
+                      inset 0 0 0 5px var(--green-deep),
                       inset 0 0 0 7px rgba(201,162,74,.55),
-                      inset 0 0 0 10px var(--lapis-deep),
+                      inset 0 0 0 10px var(--green-deep),
                       inset 0 0 0 12px var(--gold),
                       0 30px 70px rgba(0,0,0,.45);
                     animation:result-settle .7s ease-out both;
@@ -386,7 +391,7 @@ export default function ContestResultBoard() {
                 }
 
                 /* the Muslim Hall mark sits on a parchment medallion so it
-                   reads against the lapis ground whatever colours it uses */
+                   reads against the green ground whatever colours it uses */
                 .result-page .hall-logo{
                     display:grid;
                     place-items:center;
@@ -396,8 +401,10 @@ export default function ContestResultBoard() {
                     padding:clamp(8px,1.4vw,12px);
                     border-radius:50%;
                     background:var(--parchment);
-                    box-shadow:0 0 0 1px var(--gold), 0 0 0 5px var(--lapis-deep),
-                        0 0 0 6px rgba(201,162,74,.55);
+                    /* the outermost ring picks up the mark's own leaf green so
+                       the medallion reads as part of the logo, not a sticker */
+                    box-shadow:0 0 0 1px var(--gold), 0 0 0 5px var(--green-deep),
+                        0 0 0 7px var(--green-logo), 0 0 0 8px rgba(201,162,74,.55);
                 }
 
                 .result-page .hall-logo img{
@@ -695,7 +702,7 @@ export default function ContestResultBoard() {
                     font-size:13px;
                 }
 
-                /* the default swiper bullets vanish on the lapis ground */
+                /* the default swiper bullets vanish on the green ground */
                 .result-page .header-ad-swiper .swiper-pagination-bullet{
                     background:var(--gold-light);
                     opacity:.45;
@@ -820,7 +827,7 @@ export default function ContestResultBoard() {
                         -webkit-print-color-adjust:exact;
                     }
                     .result-page .board{
-                        box-shadow:inset 0 0 0 1px var(--gold), inset 0 0 0 12px var(--lapis-deep);
+                        box-shadow:inset 0 0 0 1px var(--gold), inset 0 0 0 12px var(--green-deep);
                         max-width:none;
                     }
                     .result-page .roll tbody tr{page-break-inside:avoid;}
