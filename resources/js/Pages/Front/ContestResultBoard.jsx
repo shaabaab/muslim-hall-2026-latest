@@ -88,15 +88,26 @@ export default function ContestResultBoard() {
             : FALLBACK_LOGO,
     );
 
-    const headerAds = advertisement
-        .filter(
-            (ad) =>
-                (ad.type === "banner" || ad.type === "video_ad") &&
-                ad.status === "approved" &&
-                ad.is_active == 1 &&
-                ad.position === "header",
-        )
-        .slice(2, 3);
+    const approvedHeaderAds = advertisement.filter(
+        (ad) =>
+            (ad.type === "banner" || ad.type === "video_ad") &&
+            ad.status === "approved" &&
+            ad.is_active == 1 &&
+            ad.position === "header",
+    );
+
+    // One sponsor is shown. Picking it by index (.slice(2, 3)) only worked
+    // locally: production has one fewer approved header ad, so there was no
+    // third entry and the slot rendered empty. Prefer the first banner that
+    // actually carries artwork, and fall back to whatever is approved.
+    const bannerAds = approvedHeaderAds.filter(
+        (ad) => ad.type === "banner" && ad.image,
+    );
+
+    const headerAds = (bannerAds.length ? bannerAds : approvedHeaderAds).slice(
+        0,
+        1,
+    );
 
     return (
         <>
