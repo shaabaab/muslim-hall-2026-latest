@@ -151,6 +151,18 @@ export default function ExhibitionBoardShow() {
                                     <span>
                                         {boardViews.toLocaleString()} Views
                                     </span>
+
+                                    {/* TEMPORARY: same preview link to the
+                                        contest result board that the boards
+                                        listing card carries. Remove once the
+                                        real results page lands. */}
+                                    <Link
+                                        href={route("contest-result-board")}
+                                        className="result-board-btn"
+                                    >
+                                        <i className="fas fa-award"></i>
+                                        <span>View Results</span>
+                                    </Link>
                                 </div>
                             </div>
 
@@ -571,6 +583,100 @@ export default function ExhibitionBoardShow() {
                     padding: 8px 12px;
                     border-radius: 999px;
                     font-size: 13px;
+                }
+
+                /* Mirrors the CTA on the boards listing card, sized for the
+                   meta row: it sits inline beside the view count, so it drops
+                   the card version's top margin. The label override keeps
+                   .board-meta span from turning it into a second pill. */
+                .result-board-btn {
+                    position: relative;
+                    overflow: hidden;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 9px;
+                    padding: 8px 20px;
+                    border-radius: 999px;
+                    background: linear-gradient(135deg, #C9A24A 0%, #E8CE8D 48%, #C9A24A 100%);
+                    color: #12213f;
+                    font-size: 13px;
+                    font-weight: 900;
+                    letter-spacing: 0.02em;
+                    text-decoration: none;
+                    /* grows to the right so the pulse does not shift it
+                       against its neighbours in the row */
+                    transform-origin: left center;
+                    animation: cta-pulse 1.9s ease-in-out infinite;
+                    transition: filter 0.2s ease;
+                }
+
+                .board-meta .result-board-btn span {
+                    background: none;
+                    border: 0;
+                    padding: 0;
+                    border-radius: 0;
+                    font-size: inherit;
+                }
+
+                .result-board-btn::after {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    left: -60%;
+                    width: 45%;
+                    height: 100%;
+                    background: linear-gradient(
+                        120deg,
+                        transparent,
+                        rgba(255, 255, 255, 0.7),
+                        transparent
+                    );
+                    transform: skewX(-20deg);
+                    animation: cta-shine 2.8s ease-in-out infinite;
+                }
+
+                .result-board-btn i {
+                    animation: cta-blink 1.9s ease-in-out infinite;
+                }
+
+                .result-board-btn:hover {
+                    color: #12213f;
+                    filter: brightness(1.07);
+                }
+
+                @keyframes cta-pulse {
+                    0%, 100% {
+                        transform: scale(1);
+                        box-shadow: 0 10px 26px rgba(201, 162, 74, 0.35),
+                            0 0 0 0 rgba(201, 162, 74, 0.6);
+                    }
+                    50% {
+                        transform: scale(1.045);
+                        box-shadow: 0 14px 34px rgba(201, 162, 74, 0.5),
+                            0 0 0 15px rgba(201, 162, 74, 0);
+                    }
+                }
+
+                @keyframes cta-shine {
+                    0% { left: -60%; }
+                    55%, 100% { left: 130%; }
+                }
+
+                @keyframes cta-blink {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.35; }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .result-board-btn,
+                    .result-board-btn::after,
+                    .result-board-btn i {
+                        animation: none;
+                    }
+
+                    .result-board-btn {
+                        box-shadow: 0 10px 26px rgba(201, 162, 74, 0.45);
+                    }
                 }
 
                 .slider-section {
