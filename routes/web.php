@@ -41,6 +41,7 @@ use App\Http\Controllers\PostCommentController;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\admin\ExhibitionBoardController as AdminExhibitionBoardController;
 use App\Http\Controllers\ExhibitionController as AdminExhibitionController;
+use App\Models\Advertisement;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\File;
 
@@ -121,6 +122,18 @@ Route::get('/islamic/quran', [FrontendController::class, 'islamicQuren'])->name(
 Route::get('/category-details', [FrontendController::class, 'categoryDetails'])->name('category-details');
 Route::get('/book-details', [FrontendController::class, 'bookDetails'])->name('book-details');
 Route::get('/exhibition-details', [FrontendController::class, 'exhibitionDetails'])->name('exhibition-details');
+
+// TEMPORARY: static preview of the contest result board design, linked from the
+// exhibition boards page. Replace the sample rows with real contest data (or
+// drop the route) once the results feature is built.
+Route::get('/contest-result-board', function () {
+    // `advertisement` is not shared globally in HandleInertiaRequests, so the
+    // page has to be handed the same collection FrontendController@index gives
+    // the home page, otherwise the sponsor slot has nothing to render.
+    return Inertia::render('Front/ContestResultBoard', [
+        'advertisement' => Advertisement::approved()->get(),
+    ]);
+})->name('contest-result-board');
 
 Route::get('/prayer/calendar', function () {
     return Inertia::render('Front/IslamicPrayerCalender');

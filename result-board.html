@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calligraphy Contest Results — Muslim Hall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Karla:wght@400;500;600&family=Noto+Serif+Bengali:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --lapis-deep:#0E1B3D;
+    --lapis:#1B2F5F;
+    --gold:#C9A24A;
+    --gold-light:#E8CE8D;
+    --parchment:#F3E9D6;
+    --parchment-shade:#E7DAC1;
+    --vermilion:#8E3B27;
+    --ink:#221B12;
+    --ink-soft:#6B5E4B;
+
+    --display:"Amiri","Noto Serif Bengali",Georgia,serif;
+    --text:"Karla","Noto Serif Bengali",system-ui,sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+
+  html{-webkit-text-size-adjust:100%;}
+
+  body{
+    margin:0;
+    padding:clamp(16px,4vw,56px) clamp(12px,4vw,40px);
+    background:
+      radial-gradient(120% 90% at 50% 0%, #16264E 0%, var(--lapis-deep) 55%, #080F24 100%);
+    color:var(--ink);
+    font-family:var(--text);
+    line-height:1.55;
+    min-height:100vh;
+  }
+
+  /* ---------- the page ---------- */
+
+  .board{
+    max-width:920px;
+    margin:0 auto;
+    background:var(--lapis-deep);
+    padding:clamp(14px,2.4vw,26px);
+    /* the jadwal: nested manuscript ruling, uneven weights on purpose */
+    box-shadow:
+      inset 0 0 0 1px var(--gold),
+      inset 0 0 0 5px var(--lapis-deep),
+      inset 0 0 0 7px rgba(201,162,74,.55),
+      inset 0 0 0 10px var(--lapis-deep),
+      inset 0 0 0 12px var(--gold),
+      0 30px 70px rgba(0,0,0,.45);
+    animation:settle .7s ease-out both;
+  }
+
+  @keyframes settle{
+    from{opacity:0;transform:translateY(10px);}
+    to{opacity:1;transform:none;}
+  }
+
+  /* ---------- crown ---------- */
+
+  .crown{
+    text-align:center;
+    padding:clamp(22px,4vw,40px) clamp(14px,4vw,36px) clamp(20px,3.4vw,32px);
+  }
+
+  .shamsa{
+    display:block;
+    width:clamp(58px,9vw,80px);
+    height:auto;
+    margin:0 auto clamp(14px,2.4vw,20px);
+  }
+
+  .hall{
+    margin:0;
+    font-family:var(--text);
+    font-size:clamp(11px,1.5vw,13px);
+    font-weight:600;
+    letter-spacing:.14em;
+    color:var(--gold-light);
+    opacity:.85;
+  }
+
+  .crown h1{
+    margin:.28em 0 .18em;
+    font-family:var(--display);
+    font-weight:700;
+    font-size:clamp(30px,6.4vw,54px);
+    line-height:1.06;
+    color:var(--parchment);
+    letter-spacing:.005em;
+  }
+
+  .crown h1 span{
+    display:block;
+    font-style:italic;
+    font-weight:400;
+    font-size:.54em;
+    color:var(--gold);
+    margin-top:.2em;
+  }
+
+  .announced{
+    margin:.9em auto 0;
+    max-width:44ch;
+    font-size:clamp(13px,1.7vw,15px);
+    color:rgba(243,233,214,.72);
+  }
+
+  .rule{
+    width:min(220px,60%);
+    height:1px;
+    margin:clamp(18px,3vw,26px) auto 0;
+    border:0;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+
+  /* ---------- the written surface ---------- */
+
+  .sheet{
+    background:
+      linear-gradient(180deg,var(--parchment) 0%,#EFE3CB 100%);
+    padding:clamp(8px,2vw,20px) clamp(8px,2.2vw,26px) clamp(16px,2.6vw,28px);
+    box-shadow:0 0 0 1px rgba(201,162,74,.5), 0 8px 24px rgba(0,0,0,.28);
+  }
+
+  .roll{
+    width:100%;
+    border-collapse:collapse;
+    text-align:left;
+  }
+
+  .roll caption{
+    caption-side:top;
+    padding:clamp(14px,2.4vw,20px) 4px clamp(10px,1.8vw,14px);
+    font-family:var(--display);
+    font-size:clamp(17px,2.4vw,21px);
+    color:var(--vermilion);
+    text-align:left;
+  }
+
+  .roll th{
+    font-family:var(--text);
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    padding:0 12px 10px;
+    border-bottom:1.5px solid rgba(142,59,39,.45);
+    white-space:nowrap;
+  }
+
+  .roll th:first-child{padding-left:4px;}
+  .roll th:last-child{text-align:right;padding-right:4px;}
+
+  .roll td{
+    padding:clamp(12px,1.8vw,16px) 12px;
+    border-bottom:1px solid rgba(34,27,18,.12);
+    vertical-align:middle;
+  }
+
+  .roll tbody tr:last-child td{border-bottom:0;}
+
+  .roll tbody tr{transition:background .18s ease;}
+  .roll tbody tr:hover{background:rgba(201,162,74,.12);}
+
+  /* serial — verse-marker rosette */
+
+  .serial{width:1%;padding-left:4px !important;}
+
+  .mark{
+    display:grid;
+    place-items:center;
+    width:38px;height:38px;
+    border-radius:50%;
+    font-family:var(--display);
+    font-size:16px;
+    font-weight:700;
+    color:var(--ink-soft);
+    border:1px solid rgba(142,59,39,.35);
+    background:rgba(255,255,255,.4);
+  }
+
+  tr[data-place] .mark{
+    color:#2C1F0A;
+    border-color:var(--gold);
+    background:radial-gradient(circle at 32% 28%,var(--gold-light),var(--gold) 72%);
+    box-shadow:0 1px 6px rgba(201,162,74,.55);
+  }
+
+  /* name */
+
+  .name{
+    font-family:var(--display);
+    font-size:clamp(18px,2.4vw,22px);
+    font-weight:400;
+    color:var(--ink);
+    line-height:1.25;
+  }
+
+  tr[data-place] .name{font-weight:700;}
+
+  /* email */
+
+  .email{
+    font-size:14px;
+    color:var(--ink-soft);
+    word-break:break-all;
+  }
+
+  .email a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(107,94,75,.35);}
+  .email a:hover{color:var(--vermilion);border-bottom-color:var(--vermilion);}
+
+  /* prize */
+
+  .prize{
+    text-align:right;
+    padding-right:4px !important;
+    font-family:var(--display);
+    font-size:clamp(16px,2.1vw,19px);
+    color:var(--vermilion);
+    white-space:nowrap;
+  }
+
+  .prize small{
+    display:block;
+    font-family:var(--text);
+    font-size:12px;
+    font-weight:500;
+    color:var(--ink-soft);
+    margin-top:1px;
+  }
+
+  /* ---------- colophon / sponsor ---------- */
+
+  .colophon{
+    padding:clamp(22px,3.6vw,34px) clamp(14px,3vw,30px) clamp(18px,3vw,26px);
+    text-align:center;
+  }
+
+  .sponsor-title{
+    margin:0 0 14px;
+    font-family:var(--display);
+    font-style:italic;
+    font-size:clamp(15px,2vw,17px);
+    color:var(--gold);
+  }
+
+  .sponsor-slot{
+    display:grid;
+    place-items:center;
+    min-height:120px;
+    padding:20px 24px;
+    margin:0 auto;
+    max-width:520px;
+    background:rgba(243,233,214,.06);
+    border:1px dashed rgba(201,162,74,.55);
+  }
+
+  .sponsor-slot img{
+    display:block;
+    max-width:100%;
+    max-height:96px;
+    height:auto;
+    width:auto;
+  }
+
+  .sponsor-slot .placeholder{
+    font-size:13px;
+    color:rgba(243,233,214,.55);
+    margin:0;
+  }
+
+  /* real logo present -> drop the placeholder line and the dashed outline */
+  .sponsor-slot:has(img) .placeholder{display:none;}
+  .sponsor-slot:has(img){border-style:solid;border-color:rgba(201,162,74,.3);}
+
+  .closing{
+    margin:clamp(20px,3.4vw,28px) auto 0;
+    max-width:52ch;
+    font-size:13px;
+    line-height:1.7;
+    color:rgba(243,233,214,.6);
+  }
+
+  .closing a{color:var(--gold-light);}
+
+  /* ---------- focus ---------- */
+
+  a:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:3px;
+    border-radius:2px;
+  }
+
+  /* ---------- small screens: rows stack into records ---------- */
+
+  @media (max-width:640px){
+    .roll thead{
+      position:absolute;
+      width:1px;height:1px;
+      overflow:hidden;
+      clip:rect(0 0 0 0);
+      white-space:nowrap;
+    }
+
+    .roll caption{padding-bottom:6px;}
+
+    .roll tbody tr{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:2px 14px;
+      align-items:start;
+      padding:16px 4px;
+      border-bottom:1px solid rgba(34,27,18,.14);
+    }
+
+    .roll tbody tr:last-child{border-bottom:0;}
+
+    .roll td{
+      padding:0;
+      border:0;
+    }
+
+    .serial{
+      grid-row:1 / span 3;
+      width:auto;
+      padding-left:0 !important;
+    }
+
+    .email{font-size:13px;}
+
+    .prize{
+      display:flex;
+      align-items:baseline;
+      gap:8px;
+      text-align:left;
+      padding-right:0 !important;
+      margin-top:6px;
+    }
+
+    /* the column header rides along with the value once the table stacks */
+    .prize::before{
+      content:"Prize";
+      font-family:var(--text);
+      font-size:12px;
+      font-weight:600;
+      letter-spacing:.06em;
+      color:var(--ink-soft);
+    }
+
+    .prize small{margin-top:0;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .board{animation:none;}
+    .roll tbody tr{transition:none;}
+  }
+
+  /* ---------- print ---------- */
+
+  @media print{
+    body{
+      background:#fff;
+      padding:0;
+      print-color-adjust:exact;
+      -webkit-print-color-adjust:exact;
+    }
+    .board{
+      box-shadow:inset 0 0 0 1px var(--gold), inset 0 0 0 12px var(--lapis-deep);
+      max-width:none;
+    }
+    .roll tbody tr{page-break-inside:avoid;}
+  }
+</style>
+</head>
+
+<body>
+
+<main class="board">
+
+  <header class="crown">
+    <svg class="shamsa" viewBox="0 0 100 100" role="img" aria-label="Ornamental rosette">
+      <g fill="none" stroke="#C9A24A" stroke-width="1.6">
+        <circle cx="50" cy="50" r="46"/>
+        <circle cx="50" cy="50" r="41"/>
+        <rect x="21" y="21" width="58" height="58"/>
+        <rect x="21" y="21" width="58" height="58" transform="rotate(45 50 50)"/>
+        <circle cx="50" cy="50" r="19" stroke="#E8CE8D"/>
+      </g>
+      <circle cx="50" cy="50" r="7" fill="#C9A24A"/>
+    </svg>
+
+    <p class="hall">Muslim Hall</p>
+    <h1>Calligraphy Contest<span>Results</span></h1>
+    <p class="announced">Judged on line, proportion and composition by a panel of three. Winners are listed in order of final score.</p>
+    <hr class="rule">
+  </header>
+
+  <div class="sheet">
+    <table class="roll">
+      <caption>Winners — 1447 / 2026</caption>
+
+      <thead>
+        <tr>
+          <th scope="col">No.</th>
+          <th scope="col">Participant</th>
+          <th scope="col">Email</th>
+          <th scope="col">Prize</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr data-place="1">
+          <td class="serial"><span class="mark">1</span></td>
+          <td class="name">Nusrat Jahan Mim</td>
+          <td class="email"><a href="mailto:nusrat.mim@example.com">nusrat.mim@example.com</a></td>
+          <td class="prize">৳15,000<small>Champion</small></td>
+        </tr>
+
+        <tr data-place="2">
+          <td class="serial"><span class="mark">2</span></td>
+          <td class="name">Mohammad Ridwan Kabir</td>
+          <td class="email"><a href="mailto:ridwan.kabir@example.com">ridwan.kabir@example.com</a></td>
+          <td class="prize">৳10,000<small>Runner-up</small></td>
+        </tr>
+
+        <tr data-place="3">
+          <td class="serial"><span class="mark">3</span></td>
+          <td class="name">Ayesha Siddiqua</td>
+          <td class="email"><a href="mailto:ayesha.s@example.com">ayesha.s@example.com</a></td>
+          <td class="prize">৳7,000<small>Third place</small></td>
+        </tr>
+
+        <tr>
+          <td class="serial"><span class="mark">4</span></td>
+          <td class="name">Tanvir Hasan Rafi</td>
+          <td class="email"><a href="mailto:tanvir.rafi@example.com">tanvir.rafi@example.com</a></td>
+          <td class="prize">৳3,000<small>Merit</small></td>
+        </tr>
+
+        <tr>
+          <td class="serial"><span class="mark">5</span></td>
+          <td class="name">Sadia Afrin Nova</td>
+          <td class="email"><a href="mailto:sadia.nova@example.com">sadia.nova@example.com</a></td>
+          <td class="prize">৳3,000<small>Merit</small></td>
+        </tr>
+
+        <tr>
+          <td class="serial"><span class="mark">6</span></td>
+          <td class="name">Imran Chowdhury</td>
+          <td class="email"><a href="mailto:imran.ch@example.com">imran.ch@example.com</a></td>
+          <td class="prize">৳3,000<small>Merit</small></td>
+        </tr>
+
+        <tr>
+          <td class="serial"><span class="mark">7</span></td>
+          <td class="name">Farhana Yasmin</td>
+          <td class="email"><a href="mailto:farhana.y@example.com">farhana.y@example.com</a></td>
+          <td class="prize">Certificate<small>Finalist</small></td>
+        </tr>
+
+        <tr>
+          <td class="serial"><span class="mark">8</span></td>
+          <td class="name">Abdullah Al Mamun</td>
+          <td class="email"><a href="mailto:mamun.abdullah@example.com">mamun.abdullah@example.com</a></td>
+          <td class="prize">Certificate<small>Finalist</small></td>
+        </tr>
+
+        <tr>
+          <td class="serial"><span class="mark">9</span></td>
+          <td class="name">Rubaiya Islam Tisha</td>
+          <td class="email"><a href="mailto:rubaiya.tisha@example.com">rubaiya.tisha@example.com</a></td>
+          <td class="prize">Certificate<small>Finalist</small></td>
+        </tr>
+
+        <tr>
+          <td class="serial"><span class="mark">10</span></td>
+          <td class="name">Shahriar Alam Niloy</td>
+          <td class="email"><a href="mailto:shahriar.niloy@example.com">shahriar.niloy@example.com</a></td>
+          <td class="prize">Certificate<small>Finalist</small></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="colophon">
+    <p class="sponsor-title">Sponsored by</p>
+
+    <div class="sponsor-slot">
+      <!-- Drop the sponsor artwork here. Anything up to 96px tall fits without cropping. -->
+      <img src="sponsor-logo.png" alt="Sponsor logo"
+           onerror="this.remove()">
+      <p class="placeholder">Sponsor logo goes here</p>
+    </div>
+
+    <p class="closing">Winners will be contacted at the email listed above with collection details for the prize. Questions about scoring can be sent to <a href="mailto:contest@muslimhall.example">contest@muslimhall.example</a>.</p>
+  </footer>
+
+</main>
+
+</body>
+</html>
